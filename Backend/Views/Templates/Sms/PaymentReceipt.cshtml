@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Receipt SMS Simulation</title>
+    <style>
+        {{CSS_CONTENT}}
+    </style>
+</head>
+<body>
+    <div class="phone-wrapper">
+        <div class="phone-header">
+            <div class="status-bar">
+                <span>09:41</span>
+                <span>📶 🔋</span>
+            </div>
+            <div class="sender-info">
+                <div class="sender-avatar">💳</div>
+                <div class="sender-name">CAMPUS-PAY</div>
+                <div class="sender-sub">Campus Finance Department</div>
+            </div>
+        </div>
+
+        <div class="message-container">
+            <div class="time-divider">Today 9:41 AM</div>
+
+            <div class="sms-bubble">
+                <div class="bubble-header">
+                    <span class="lock-icon">✓</span>
+                    <span class="header-text">Payment Settled Confirmation</span>
+                </div>
+
+                <div class="bubble-body">
+                    <p class="greeting">Dear {{FULL_NAME}},</p>
+                    <p class="message-text">
+                        Payment confirmed! Your transaction clearing <strong class="amount-highlight">LKR {{AMOUNT}}</strong> for <em>Semester Fee Settlement</em> has been successfully processed.
+                    </p>
+
+                    <div class="receipt-box">
+                        <div class="receipt-row"><span>Ref Txn ID:</span> <code>{{TRANSACTION_ID}}</code></div>
+                        <div class="receipt-row"><span>Amount Paid:</span> <strong>LKR {{AMOUNT}}</strong></div>
+                        <div class="receipt-row"><span>Status:</span> <span class="status-cleared">CLEARED</span></div>
+                    </div>
+                </div>
+
+                <div class="bubble-footer">
+                    <span>Sent to {{PHONE_NUMBER}}</span>
+                    <span class="delivery-check">✓✓ Delivered</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="phone-footer">
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+</body>
+</html>

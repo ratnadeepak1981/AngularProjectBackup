@@ -134,7 +134,7 @@ namespace CampusServicesPortal.Services.Implementations
             return ServiceResult<object>.Success(new { Message = "Event registration cancelled successfully." }, 200);
         }
 
-        public async Task<ServiceResult<IEnumerable<EventResponseDto>>> GetAvailableEventsAsync()
+        public async Task<ServiceResult<IEnumerable<EventResponseDto>>> GetAvailableEventsAsync(int? studentId = null)
         {
             var events = await _eventRepository.GetUpcomingEventsAsync();
             var responseList = new List<EventResponseDto>();
@@ -142,7 +142,16 @@ namespace CampusServicesPortal.Services.Implementations
             foreach (var ev in events)
             {
                 int registeredCount = await _eventRepository.GetRegistrationCountAsync(ev.Id);
-                responseList.Add(MapToResponseDto(ev, ev.Venue?.Name ?? "Unknown Venue", registeredCount));
+                bool isReg = false;
+                if (studentId.HasValue && studentId.Value > 0)
+                {
+                    var existingReg = await _eventRepository.GetRegistrationAsync(ev.Id, studentId.Value);
+                    isReg = (existingReg != null);
+                }
+
+                var dto = MapToResponseDto(ev, ev.Venue?.Name ?? "Unknown Venue", registeredCount);
+                dto.IsRegistered = isReg;
+                responseList.Add(dto);
             }
 
             return ServiceResult<IEnumerable<EventResponseDto>>.Success(responseList, 200);

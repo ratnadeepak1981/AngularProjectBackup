@@ -7,21 +7,9 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { HostelApplication } from '../../../../core/models/hostel/hostel-application.model';
 
-export interface StudentHousingRecord {
-  id: number;
-  studentId?: number;
-  preferredHostelId?: number;
-  hostelName?: string;
-  preferredHostelName?: string;
-  termSemester: string;
-  specialRequirements?: string;
-  status: string;
-  assignedRoomId?: number;
-  assignedRoomNumber?: string;
-  roomNumber?: string;
-  createdAt?: string;
-}
+export type StudentHousingRecord = HostelApplication;
 
 @Component({
   selector: 'app-hostel-application-page',

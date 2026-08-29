@@ -1,13 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TabItem } from './models/tab-item.model';
 
-export interface TabItem {
-  id: string;
-  label: string;
-  icon?: string;
-  count?: number;
-  disabled?: boolean;
-}
+export type { TabItem };
 
 @Component({
   selector: 'app-tab-component',

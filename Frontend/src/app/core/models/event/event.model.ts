@@ -2,7 +2,7 @@ export interface CampusEvent {
   id: number;
   title: string;
   description?: string;
-  venueId: number;
+  venueId?: number;
   venueName?: string;
   startDateTime?: string;
   endDateTime?: string;
@@ -11,6 +11,8 @@ export interface CampusEvent {
   registeredCount: number;
   currentAttendeesCount?: number;
   usesReservedSeating?: boolean;
+  registeredStudentIds?: number[];
+  isRegistered?: boolean;
 }
 
 export type AdminEventItem = CampusEvent;

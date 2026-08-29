@@ -3,20 +3,9 @@ import { HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
+import { CampusEvent } from '../../../../core/models/event/event.model';
 
-export interface StudentEventDto {
-  id: number;
-  title: string;
-  venueName: string;
-  startDateTime: string;
-  endDateTime: string;
-  capacity: number;
-  registeredCount: number;
-  currentAttendeesCount?: number;
-  description?: string;
-  usesReservedSeating?: boolean;
-  registeredStudentIds?: number[];
-}
+export type StudentEventDto = CampusEvent;
 
 @Injectable({
   providedIn: 'root',

@@ -1,1 +1,258 @@
-<p>notification-monitor-page.component works!</p>
+<div class="space-y-6">
+  <!-- Reusable App Page Header Component -->
+  <app-page-header
+    [icon]="'📡'"
+    [title]="'System-Wide Notification Dispatch Audit Monitor'"
+    [description]="'Monitor automated alerts emitted across Hostel approvals, Lab holds, Events, Complaints, and Fee assignments.'"
+  >
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="openDispatchModal()"
+        class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+      >
+        <span>📤</span>
+        <span>+ Dispatch Notification</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="loadAuditLog()"
+        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+      >
+        <span>🔄</span>
+        <span>Refresh Log</span>
+      </button>
+    </div>
+  </app-page-header>
+
+  <!-- Search Filter Bar -->
+  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+          🔍
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search by student / type..."
+          class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">
+        Showing {{ displayAuditRecords().length }} of {{ auditNotifications().length }} total dispatched records
+      </div>
+    </div>
+  </div>
+
+  <!-- Reusable Data Table Component for Audit Monitor -->
+  <app-data-table
+    [columns]="tableColumns"
+    [data]="displayAuditRecords()"
+    [totalRecords]="displayAuditRecords().length"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize()"
+    [isLoading]="isLoading()"
+    [sortColumn]="sortColumn()"
+    [sortDirection]="sortDirection()"
+    [sortIconStyle]="'svg-arrows'"
+    [emptyMessage]="'No dispatched notifications recorded matching criteria.'"
+    (sortChange)="onSortChange($event)"
+  />
+</div>
+
+<!-- DUAL-MODE DISPATCH SYSTEM INTERNAL NOTIFICATION MODAL -->
+@if (isDispatchModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 flex flex-col space-y-4">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📤</span>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">
+            Dispatch System Internal Notification
+          </h3>
+        </div>
+        <button
+          type="button"
+          (click)="closeDispatchModal()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Reusable 3D Tab Navigation Component inside Modal -->
+      <app-tab-component
+        [tabs]="modalModeTabs()"
+        [activeTabId]="activeDispatchTab()"
+        [variant]="'3d'"
+        (tabChange)="setActiveDispatchTab($any($event))"
+      />
+
+      <!-- Modal Body -->
+      <div class="space-y-4 text-xs font-sans pt-1">
+        <!-- MODE 1: SINGLE STUDENT LIVE TYPEAHEAD SEARCH MATCHING FEE ASSIGNMENT SCREEN -->
+        @if (activeDispatchTab() === 'single') {
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Target Student Account <span class="text-rose-500">*</span>
+            </label>
+
+            @if (selectedStudentId() > 0) {
+              <!-- Selected Student Badge -->
+              <div class="flex justify-between items-center px-3 py-2 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">👤</span>
+                  <span class="text-xs font-bold text-blue-900 dark:text-blue-200">
+                    {{ selectedStudentLabel() }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  (click)="clearSelectedStudent()"
+                  class="text-2xs text-rose-600 hover:text-rose-700 font-bold px-2.5 py-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950 transition-colors cursor-pointer"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            } @else {
+              <!-- Live Typeahead Input & Floating Results Popover -->
+              <div class="relative">
+                <input
+                  type="text"
+                  [(ngModel)]="studentSearchTerm"
+                  placeholder="Type student name or index (e.g. STU/2026/001 or Kamal)..."
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+                />
+
+                <!-- Floating Results Autocomplete Menu -->
+                @if (searchedStudents().length > 0) {
+                  <div class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                    @for (s of searchedStudents(); track s.id) {
+                      <div
+                        (click)="selectStudent(s)"
+                        class="px-3.5 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer border-b border-slate-100 dark:border-slate-800/60 flex justify-between items-center transition-colors"
+                      >
+                        <div>
+                          <div class="font-bold text-slate-900 dark:text-white">
+                            {{ s.name }}
+                          </div>
+                          <div class="text-2xs text-slate-500 font-mono">
+                            {{ s.indexNumber || 'N/A' }} • {{ s.email || '' }}
+                          </div>
+                        </div>
+                        <span class="text-2xs font-bold text-blue-600 dark:text-blue-400">
+                          Select &rarr;
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- MODE 2: FACULTY BULK BROADCAST -->
+        @if (activeDispatchTab() === 'faculty') {
+          <div class="space-y-3 p-3.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
+                Select Target Academic Faculty Cohort *
+              </label>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
+                Bulk Broadcast
+              </span>
+            </div>
+
+            <select
+              [(ngModel)]="selectedFacultyId"
+              class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-slate-900 dark:text-white font-medium"
+            >
+              <option [value]="0">-- Select Target Faculty Cohort --</option>
+              @for (fac of faculties(); track fac.id) {
+                <option [value]="fac.id">
+                  {{ fac.name }} {{ fac.code ? '(' + fac.code + ')' : '' }}
+                </option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- COMMON INPUTS: NOTIFICATION TYPE DROPDOWN -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            Notification Category / Type *
+          </label>
+          <select
+            [(ngModel)]="notificationType"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-medium"
+          >
+            <option value="SYSTEMNOTICE">SYSTEMNOTICE</option>
+            <option value="FEEPAYMENTSETTLED">FEEPAYMENTSETTLED</option>
+            <option value="NEWFEEASSIGNED">NEWFEEASSIGNED</option>
+            <option value="HOSTELALLOCATED">HOSTELALLOCATED</option>
+            <option value="EVENTREGISTRATION">EVENTREGISTRATION</option>
+          </select>
+        </div>
+
+        <!-- COMMON INPUTS: MESSAGE PAYLOAD BODY -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            Message Payload Body *
+          </label>
+          <textarea
+            rows="3"
+            [(ngModel)]="notificationMessage"
+            placeholder="Type administrative notice message content..."
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeDispatchModal()"
+          class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          (click)="requestDispatchConfirmation()"
+          [disabled]="!notificationMessage().trim() || (activeDispatchTab() === 'single' && selectedStudentId() <= 0) || (activeDispatchTab() === 'faculty' && selectedFacultyId() <= 0)"
+          class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+        >
+          <span>Review & Dispatch</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- REUSABLE CONFIRMATION DIALOG MODAL -->
+<app-confirm-modal
+  [isOpen]="isConfirmModalOpen()"
+  [icon]="'📤'"
+  [iconVariant]="'info'"
+  [title]="'Confirm Notification Dispatch'"
+  [message]="
+    activeDispatchTab() === 'single'
+      ? 'Are you sure you want to dispatch this notification alert to ' + (selectedStudent()?.name || 'Selected Student') + ' (' + selectedStudent()?.indexNumber + ')?'
+      : 'Are you sure you want to broadcast this administrative notification alert to all students in ' + (selectedFaculty()?.name || 'Selected Faculty') + '?'
+  "
+  [confirmIcon]="'🚀'"
+  [confirmText]="'Dispatch Alert Now'"
+  [confirmVariant]="'primary'"
+  [cancelIcon]="'✕'"
+  [cancelText]="'Cancel'"
+  [isLoading]="isDispatching()"
+  (confirm)="confirmAndSubmitDispatch()"
+  (cancel)="isConfirmModalOpen.set(false)"
+/>

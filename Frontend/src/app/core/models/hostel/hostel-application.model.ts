@@ -1,8 +1,9 @@
 export interface HousingApplication {
   id: number;
-  studentId: number;
+  studentId?: number;
   studentIndexNumber?: string;
-  studentName: string;
+  studentName?: string;
+  hostelName?: string;
   preferredHostelId?: number;
   preferredHostelName?: string;
   termSemester?: string;

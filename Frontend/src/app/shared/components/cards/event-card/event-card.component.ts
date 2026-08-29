@@ -23,6 +23,17 @@ export class EventCardComponent {
     return !this.isRegistered() && e.capacity > 0 && e.registeredCount >= e.capacity;
   });
 
+  public readonly canCancel = computed<boolean>(() => {
+    const e = this.event();
+    if (!e.startDateTime) return true;
+    try {
+      const startDate = new Date(e.startDateTime);
+      return new Date() < startDate;
+    } catch {
+      return true;
+    }
+  });
+
   public readonly formattedStart = computed<string>(() => {
     const s = this.event().startDateTime;
     if (!s) return 'N/A';
@@ -70,7 +81,7 @@ export class EventCardComponent {
   }
 
   onCancelClick(): void {
-    if (!this.isProcessing() && this.isRegistered()) {
+    if (!this.isProcessing() && this.isRegistered() && this.canCancel()) {
       this.cancel.emit(this.event().id);
     }
   }

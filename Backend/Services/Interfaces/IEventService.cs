@@ -11,7 +11,7 @@ namespace CampusServicesPortal.Services.Interfaces
         Task<ServiceResult<EventResponseDto>> CreateEventAsync(CreateEventDto request);
         Task<ServiceResult<EventResponseDto>> RegisterForEventAsync(int studentId, RegisterEventDto request);
         Task<ServiceResult<object>> CancelRegistrationAsync(int eventId, int studentId);
-        Task<ServiceResult<IEnumerable<EventResponseDto>>> GetAvailableEventsAsync();
+        Task<ServiceResult<IEnumerable<EventResponseDto>>> GetAvailableEventsAsync(int? studentId = null);
         Task<ServiceResult<IEnumerable<object>>> GetEventRegistrationsAsync(int eventId);
         Task ProcessExpiredHoldsAsync();
     }

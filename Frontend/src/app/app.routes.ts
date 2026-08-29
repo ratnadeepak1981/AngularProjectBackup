@@ -97,6 +97,32 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'admin/notification-monitor',
+        loadComponent: () =>
+          import(
+            './features/admin/notification-monitor/pages/notification-monitor-page.component.component'
+          ).then((m) => m.NotificationMonitorPageComponentComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/notifications',
+        redirectTo: 'admin/notification-monitor',
+        pathMatch: 'full',
+      },
+      {
+        path: 'admin/faculty-management',
+        loadComponent: () =>
+          import(
+            './features/admin/faculty-management/pages/faculty-management.page/faculty-management.page.component'
+          ).then((m) => m.FacultyManagementPageComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/faculties',
+        redirectTo: 'admin/faculty-management',
+        pathMatch: 'full',
+      },
+      {
         path: 'student/dashboard',
         loadChildren: () =>
           import('./features/student/dashboard/student-dashboard.routes').then(
@@ -140,6 +166,18 @@ export const routes: Routes = [
           import('./features/student/billing/pages/student-payment-page.component').then(
             (m) => m.StudentPaymentPageComponent
           ),
+      },
+      {
+        path: 'student/notification',
+        loadComponent: () =>
+          import(
+            './features/student/notification/pages/student-notification-page/student-notification-page.component'
+          ).then((m) => m.StudentNotificationPageComponent),
+      },
+      {
+        path: 'student/notifications',
+        redirectTo: 'student/notification',
+        pathMatch: 'full',
       },
     ],
   },

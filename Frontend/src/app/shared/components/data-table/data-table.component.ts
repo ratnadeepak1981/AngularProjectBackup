@@ -28,7 +28,7 @@ export class DataTableComponent implements OnChanges {
   @Input() data: any[] = [];
   @Input() totalRecords: number = 0;
   @Input() currentPage: number = 1;
-  @Input() pageSize: number = 10;
+  @Input() pageSize: number = 5;
   @Input() isLoading: boolean = false;
   @Input() sortColumn: string = '';
   @Input() sortDirection: 'asc' | 'desc' = 'asc';
@@ -54,7 +54,7 @@ export class DataTableComponent implements OnChanges {
   public readonly currentSortColumn = signal<string>('');
   public readonly currentSortDirection = signal<'asc' | 'desc'>('asc');
   public readonly clientCurrentPage = signal<number>(1);
-  public readonly clientPageSize = signal<number>(10);
+  public readonly clientPageSize = signal<number>(5);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
@@ -70,7 +70,7 @@ export class DataTableComponent implements OnChanges {
       this.clientCurrentPage.set(this.currentPage || 1);
     }
     if (changes['pageSize']) {
-      this.clientPageSize.set(this.pageSize || 10);
+      this.clientPageSize.set(this.pageSize || 5);
     }
   }
 
@@ -141,9 +141,7 @@ export class DataTableComponent implements OnChanges {
 
   public readonly pagedData = computed(() => {
     const list = this.processedData();
-    // If parent component or backend API manages total records / pagination (totalRecords > 0 or serverSide),
-    // display list directly to prevent double-slicing array bounds.
-    if (this.serverSide || this.totalRecords > 0) {
+    if (this.serverSide) {
       return list;
     }
 

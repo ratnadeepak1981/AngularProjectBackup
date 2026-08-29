@@ -70,8 +70,9 @@ export class StudentEventPageComponent implements OnInit {
 
     return list.map((e) => {
       const isReg =
-        Array.isArray(e.registeredStudentIds) &&
-        e.registeredStudentIds.some((id) => Number(id) === Number(studentId) && Number(studentId) > 0);
+        e.isRegistered === true ||
+        (Array.isArray(e.registeredStudentIds) &&
+          e.registeredStudentIds.some((id) => Number(id) === Number(studentId) && Number(studentId) > 0));
 
       const isFull = !isReg && e.capacity > 0 && e.registeredCount >= e.capacity;
 
@@ -79,8 +80,8 @@ export class StudentEventPageComponent implements OnInit {
         id: e.id,
         title: e.title,
         venueName: e.venueName || 'Main Campus Venue',
-        startDateTime: e.startDateTime,
-        endDateTime: e.endDateTime,
+        startDateTime: e.startDateTime || '',
+        endDateTime: e.endDateTime || '',
         capacity: e.capacity,
         registeredCount: e.registeredCount || e.currentAttendeesCount || 0,
         description: e.description,

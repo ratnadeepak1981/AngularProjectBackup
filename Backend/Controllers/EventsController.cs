@@ -26,7 +26,17 @@ namespace CampusServicesPortal.Controllers
         [AllowAnonymous] // Allows prospective students to browse listings anonymously
         public async Task<IActionResult> GetAvailableEvents()
         {
-            var result = await _eventService.GetAvailableEventsAsync();
+            int? studentId = null;
+            try
+            {
+                if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    studentId = GetCurrentStudentId();
+                }
+            }
+            catch { }
+
+            var result = await _eventService.GetAvailableEventsAsync(studentId);
             return ProcessServiceResult(result, "Upcoming active event matrix aggregated successfully.");
         }
 

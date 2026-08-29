@@ -1,13 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
-
-export interface SubmitHostelApplicationPayload {
-  hostelId: number;
-  preferredHostelId: number;
-  termSemester: string;
-  specialRequirements?: string;
-}
+import { HostelApplication } from '../../../../core/models/hostel/hostel-application.model';
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +20,7 @@ export class HostelApplicationService {
     return this.apiService.get<any>(this.apiService.routes.hostel.studentApps);
   }
 
-  submitApplication(payload: SubmitHostelApplicationPayload): Observable<any> {
+  submitApplication(payload: Partial<HostelApplication>): Observable<any> {
     return this.apiService.post<any>(this.apiService.routes.hostel.submit, payload);
   }
 }

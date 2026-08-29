@@ -2,27 +2,19 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination/pagination.component';
+import { TableColumn } from '../../data-table/models/table-column.model';
 
-export interface TableColumn {
-  key: string;
-  label: string;
-  sortable?: boolean;
-  filterable?: boolean;
-  filterType?: 'text' | 'select' | 'boolean';
-  filterOptions?: { label: string; value: any }[];
-  align?: 'left' | 'center' | 'right';
-  width?: string;
-}
+export type { TableColumn };
 
-export interface SortEvent {
+export type SortEvent = {
   column: string;
   direction: 'asc' | 'desc' | null;
-}
+};
 
-export interface FilterChangeEvent {
+export type FilterChangeEvent = {
   filters: Record<string, any>;
   column: string;
-}
+};
 
 @Component({
   selector: 'app-data-table',

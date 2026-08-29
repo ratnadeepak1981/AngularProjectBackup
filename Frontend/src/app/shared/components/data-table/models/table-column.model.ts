@@ -1,6 +1,7 @@
 export interface TableColumn<T = any> {
   key: string;
   header: string;
+  label?: string;
   sortable?: boolean;
   filterable?: boolean;
   type?: 'text' | 'badge' | 'date' | 'custom' | 'actions';

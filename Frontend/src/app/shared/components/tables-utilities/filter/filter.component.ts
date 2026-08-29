@@ -1,11 +1,9 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FilterOption } from '../../../../core/models/common/filter-option.model';
 
-export interface FilterOption {
-  label: string;
-  value: any;
-}
+export type { FilterOption };
 
 @Component({
   selector: 'app-filter',

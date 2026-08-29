@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using CampusServicesPortal.DTOs.Requests.Sms;
 using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
 using CampusServicesPortal.Wrappers;
@@ -32,6 +33,39 @@ namespace CampusServicesPortal.Services.Implementations
             _logger.LogInformation("=========================================================================================");
 
             return Task.FromResult(true);
+        }
+
+        public async Task<ServiceResult<object>> DispatchSmsAsync(SendSmsRequestDto request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.PhoneNumber))
+            {
+                return ServiceResult<object>.Failure("Phone number is required.", 400);
+            }
+
+            string msg = request.MessageOverride ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(msg))
+            {
+                switch (request.Purpose)
+                {
+                    case SmsPurpose.ForgotPasswordOtp:
+                        msg = $"Campus Services Portal: Your password reset OTP is {request.OtpCode ?? "482910"}. Do not share this OTP with anyone.";
+                        break;
+                    case SmsPurpose.PaymentOtp:
+                        decimal amt = request.Amount ?? 5000.00m;
+                        msg = $"Campus Payment Gateway: OTP {request.OtpCode ?? "482910"} to authorize LKR {amt:N2} for Tuition Settlement (Ref: {request.TransactionId ?? "TXN-849201"}). Valid 5 mins. Do NOT share.";
+                        break;
+                    case SmsPurpose.PaymentReceipt:
+                        decimal receiptAmt = request.Amount ?? 5000.00m;
+                        msg = $"Campus Finance: Payment CLEARED! LKR {receiptAmt:N2} for Semester Fees processed (Ref: {request.TransactionId ?? "TXN-849201"}). Thank you.";
+                        break;
+                    default:
+                        msg = $"Campus Alert: {request.OtpCode}";
+                        break;
+                }
+            }
+
+            await SendSmsAsync(request.PhoneNumber, msg);
+            return ServiceResult<object>.Success(new { Message = "SMS dispatched successfully to simulation gateway.", To = request.PhoneNumber }, 200);
         }
 
         public async Task<ServiceResult<string>> GenerateForgotPasswordSmsPreviewAsync(string email)
@@ -71,6 +105,69 @@ namespace CampusServicesPortal.Services.Implementations
                 .Replace("{{PHONE_NUMBER}}", phoneNo)
                 .Replace("{{TOKEN_CODE}}", tokenCode)
                 .Replace("{{EXPIRES_AT_STR}}", expiresAtStr);
+
+            return ServiceResult<string>.Success(renderedHtml, 200);
+        }
+
+        public async Task<ServiceResult<string>> GeneratePaymentOtpSmsPreviewAsync(string email, decimal? amount = null, string? transactionId = null)
+        {
+            string cleanEmail = string.IsNullOrWhiteSpace(email) ? "ruwanbandara@univercity.co.lk" : email.Trim();
+            var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
+
+            string fullName = student?.FullName ?? "Ruwan Bandara";
+            string phoneNo = student?.ContactDetails ?? "+94 77 123 4567";
+            decimal finalAmt = amount ?? 5000.00m;
+            string txnId = string.IsNullOrWhiteSpace(transactionId) ? "TXN-" + new Random().Next(100000, 999999) : transactionId;
+
+            string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "PaymentOtp.cshtml");
+            string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "PaymentOtp.css");
+
+            if (!File.Exists(templatePath) || !File.Exists(cssPath))
+            {
+                return ServiceResult<string>.Failure("Payment OTP template files missing on server.", 500);
+            }
+
+            string cssContent = await File.ReadAllTextAsync(cssPath);
+            string htmlTemplate = await File.ReadAllTextAsync(templatePath);
+
+            string renderedHtml = htmlTemplate
+                .Replace("{{CSS_CONTENT}}", cssContent)
+                .Replace("{{FULL_NAME}}", fullName)
+                .Replace("{{PHONE_NUMBER}}", phoneNo)
+                .Replace("{{TOKEN_CODE}}", "482910")
+                .Replace("{{AMOUNT}}", finalAmt.ToString("N2"))
+                .Replace("{{TRANSACTION_ID}}", txnId);
+
+            return ServiceResult<string>.Success(renderedHtml, 200);
+        }
+
+        public async Task<ServiceResult<string>> GeneratePaymentReceiptSmsPreviewAsync(string email, decimal? amount = null, string? transactionId = null)
+        {
+            string cleanEmail = string.IsNullOrWhiteSpace(email) ? "ruwanbandara@univercity.co.lk" : email.Trim();
+            var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
+
+            string fullName = student?.FullName ?? "Ruwan Bandara";
+            string phoneNo = student?.ContactDetails ?? "+94 77 123 4567";
+            decimal finalAmt = amount ?? 5000.00m;
+            string txnId = string.IsNullOrWhiteSpace(transactionId) ? "TXN-" + new Random().Next(100000, 999999) : transactionId;
+
+            string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "PaymentReceipt.cshtml");
+            string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "PaymentReceipt.css");
+
+            if (!File.Exists(templatePath) || !File.Exists(cssPath))
+            {
+                return ServiceResult<string>.Failure("Payment receipt template files missing on server.", 500);
+            }
+
+            string cssContent = await File.ReadAllTextAsync(cssPath);
+            string htmlTemplate = await File.ReadAllTextAsync(templatePath);
+
+            string renderedHtml = htmlTemplate
+                .Replace("{{CSS_CONTENT}}", cssContent)
+                .Replace("{{FULL_NAME}}", fullName)
+                .Replace("{{PHONE_NUMBER}}", phoneNo)
+                .Replace("{{AMOUNT}}", finalAmt.ToString("N2"))
+                .Replace("{{TRANSACTION_ID}}", txnId);
 
             return ServiceResult<string>.Success(renderedHtml, 200);
         }

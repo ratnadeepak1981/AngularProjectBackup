@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CampusServicesPortal.DTOs.Responses.Events
 {
@@ -13,5 +13,6 @@ namespace CampusServicesPortal.DTOs.Responses.Events
         public int RegisteredCount { get; set; }
         public string? Description { get; set; }
         public bool UsesReservedSeating { get; set; }
+        public bool IsRegistered { get; set; }
     }
 }

@@ -3,15 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HostelBuilding, HostelManagementService, HousingApplication } from '../../services/hostel-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { HostelRoom } from '../../../../../core/models/hostel/room.model';
 
-export interface VacantRoomOption {
-  id: number;
-  roomNumber: string;
-  hostelName: string;
-  maxCapacity: number;
-  balanceCapacity: number;
-  isCurrent?: boolean;
-}
+export type VacantRoomOption = HostelRoom & { hostelName?: string; isCurrent?: boolean };
 
 @Component({
   selector: 'app-assign-room-modal',

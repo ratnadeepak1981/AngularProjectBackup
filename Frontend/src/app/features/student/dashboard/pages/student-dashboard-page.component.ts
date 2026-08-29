@@ -7,14 +7,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { Notification } from '../../../../core/models/system/notification.model';
 
-export interface NotificationItem {
-  id: number;
-  type?: string;
-  message: string;
-  createdAt?: string;
-  isRead?: boolean;
-}
+export type NotificationItem = Notification;
 
 @Component({
   selector: 'app-student-dashboard-page',
