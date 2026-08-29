@@ -1,0 +1,48 @@
+<div class="relative w-full overflow-x-auto pb-[2px]">
+  <!-- Chrome / Browser Tab Bar -->
+  <div
+    role="tablist"
+    class="chrome-tab-container border-b-2 border-slate-200 dark:border-slate-800 pt-2"
+  >
+    @for (tab of tabs(); track tab.id) {
+      <button
+        type="button"
+        role="tab"
+        [id]="'tab-' + tab.id"
+        [attr.aria-selected]="activeTabId() === tab.id"
+        [attr.aria-controls]="'panel-' + tab.id"
+        [disabled]="tab.disabled"
+        (click)="onTabClick(tab.id)"
+        class="chrome-tab-item disabled:opacity-50 disabled:cursor-not-allowed"
+        [ngClass]="activeTabId() === tab.id ? 'chrome-tab-active' : 'chrome-tab-inactive'"
+      >
+        <!-- Tab Icon -->
+        @if (tab.icon) {
+          <span class="text-base transition-transform duration-150 group-hover:scale-105">
+            {{ tab.icon }}
+          </span>
+        }
+
+        <!-- Tab Label -->
+        <span class="tracking-tight whitespace-nowrap">
+          {{ tab.label }}
+        </span>
+
+        <!-- Count Badge Pill -->
+        @if (tab.count !== undefined && tab.count !== null) {
+          <span
+            class="px-2 py-0.5 text-[11px] font-mono rounded-full transition-colors ml-0.5"
+            [ngClass]="
+              activeTabId() === tab.id
+                ? 'bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-bold'
+                : 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            "
+          >
+            {{ tab.count }}
+          </span>
+        }
+      </button>
+    }
+  </div>
+</div>
+

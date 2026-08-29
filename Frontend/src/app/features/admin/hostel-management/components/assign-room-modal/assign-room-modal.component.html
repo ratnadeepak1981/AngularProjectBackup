@@ -1,0 +1,73 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>{{ application?.assignedRoomNumber ? '🔄 Reassign / Transfer Room' : '🛏️ Assign Room to Student' }}</span>
+        </h3>
+        <button (click)="onClose()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1">
+        <p class="text-slate-500 dark:text-slate-400">
+          Student: <strong class="text-slate-900 dark:text-white">{{ application?.studentName }}</strong> ({{ application?.studentIndexNumber }})
+        </p>
+        <p class="text-slate-500 dark:text-slate-400">
+          Preferred Facility: <strong class="text-blue-600 dark:text-blue-400">{{ application?.preferredHostelName }}</strong>
+        </p>
+        @if (application?.assignedRoomNumber) {
+          <p class="text-slate-500 dark:text-slate-400">
+            Current Allocation: <strong class="text-emerald-600 dark:text-emerald-400 font-mono">Room #{{ application?.assignedRoomNumber }}</strong>
+          </p>
+        }
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          Available Vacant Room (Occupied / Max Capacity)
+        </label>
+        <select
+          [ngModel]="selectedRoomId()"
+          (ngModelChange)="selectedRoomId.set($event)"
+          class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+        >
+          <option [value]="0">-- Select Room --</option>
+          @for (room of vacantRooms(); track room.id) {
+            <option [value]="room.id">
+              Room #{{ room.roomNumber }} ({{ room.hostelName }} - {{ room.isCurrent ? '★ Current Room' : 'Balance: ' + room.balanceCapacity + ' / ' + room.maxCapacity }})
+            </option>
+          }
+        </select>
+        @if (vacantRooms().length === 0) {
+          <p class="text-[11px] text-rose-500 font-medium mt-1">
+            ⚠️ No vacant rooms currently available in this facility.
+          </p>
+        }
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="onSubmit()"
+          [disabled]="isSubmitting() || selectedRoomId() === 0"
+          class="w-1/2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 text-white font-semibold text-xs shadow-md transition-all cursor-pointer"
+        >
+          @if (isSubmitting()) {
+            <span>Processing...</span>
+          } @else {
+            <span>{{ application?.assignedRoomNumber ? 'Transfer Room →' : 'Confirm Room Assignment' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

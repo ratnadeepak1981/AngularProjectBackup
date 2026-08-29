@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Fee Management - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="billing-admin.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">💳 Tuition Fees & Fine Management</h1>
+                    <p class="text-secondary">Create fee types, assign single/bulk fees to students, issue lab fines, and manage unpaid assignments.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="AdminBillingModule.openAssignFeeModal()">+ Assign Fee / Fine</button>
+                    <button class="btn btn-secondary" onclick="AdminBillingModule.openCreateFeeTypeModal()">+ Create Fee Type</button>
+                </div>
+            </div>
+
+            <!-- Fee Ledger Audit Table Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 System Fee & Fine Payment Assignments</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Name / Index</th>
+                                <th>Fee Description</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Receipt / Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-admin-tbody">
+                            <tr><td colspan="6" class="text-secondary">Loading fee assignments...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fee Types Directory Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📁 Fee Types Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fee Type Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fee-types-tbody">
+                            <tr><td colspan="3" class="text-secondary">Loading fee types...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Assign Fee / Fine Modal Dialog -->
+    <div id="modal-assign-fee" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Assign Fee or Issue Lab Fine</h3>
+                <button class="modal-close" onclick="AdminBillingModule.closeAssignFeeModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Target Student</label>
+                <select id="select-assign-student" class="form-control" required>
+                    <option value="">-- Select Student --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fee Type</label>
+                <select id="select-assign-feetype" class="form-control" required>
+                    <option value="">-- Select Fee Type --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fee Amount ($)</label>
+                <input type="number" id="input-assign-amount" class="form-control" value="100.00" step="0.01" min="0.01" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Due Date</label>
+                <input type="date" id="input-assign-duedate" class="form-control" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminBillingModule.submitAssignFee()">Assign Fee to Student</button>
+        </div>
+    </div>
+
+    <!-- Create Fee Type Modal Dialog -->
+    <div id="modal-create-feetype" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Fee Type</h3>
+                <button class="modal-close" onclick="AdminBillingModule.closeFeeTypeModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fee Type Name</label>
+                <input type="text" id="input-feetype-name" class="form-control" placeholder="e.g. Science Lab Equipment Fine" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminBillingModule.submitCreateFeeType()">Create Fee Type</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="billing-admin.js"></script>
+</body>
+</html>

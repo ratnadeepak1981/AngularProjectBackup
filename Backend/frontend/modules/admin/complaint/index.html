@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Complaint Triage - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="complaint-admin.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📝 Complaint Triage & Category Management</h1>
+                    <p class="text-secondary">Triage student helpdesk tickets, edit resolution notes, and manage complaint categories with soft-deactivation.</p>
+                </div>
+                <button class="btn btn-primary" onclick="AdminComplaintModule.openCreateCategoryModal()">+ Create Category</button>
+            </div>
+
+            <!-- Complaint Tickets Triage Table Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 Student Complaint Triage Ledger</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Index</th>
+                                <th>Category</th>
+                                <th>Problem Description</th>
+                                <th>Status</th>
+                                <th>Staff Resolution Note</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaints-triage-tbody">
+                            <tr><td colspan="6" class="text-secondary">Loading complaint tickets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Complaint Categories Directory Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📁 Complaint Categories Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-tbody">
+                            <tr><td colspan="3" class="text-secondary">Loading complaint categories...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Resolution Note Modal Dialog -->
+    <div id="modal-resolve-ticket" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Update Ticket Status & Resolution Note</h3>
+                <button class="modal-close" onclick="AdminComplaintModule.closeResolveModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ticket Status</label>
+                <select id="select-ticket-status" class="form-control">
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Staff Resolution Note</label>
+                <textarea id="input-resolution-note" class="form-control" rows="4" placeholder="Enter investigation notes and resolution response..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminComplaintModule.submitResolveTicket()">Save Ticket Resolution</button>
+        </div>
+    </div>
+
+    <!-- Create Category Modal Dialog -->
+    <div id="modal-create-category" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Complaint Category</h3>
+                <button class="modal-close" onclick="AdminComplaintModule.closeCategoryModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category Name</label>
+                <input type="text" id="input-category-name" class="form-control" placeholder="e.g. IT & Network Helpdesk" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminComplaintModule.submitCreateCategory()">Create Category</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="complaint-admin.js"></script>
+</body>
+</html>

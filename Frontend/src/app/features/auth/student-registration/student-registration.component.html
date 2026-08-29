@@ -1,0 +1,227 @@
+<div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700/50 text-slate-800 dark:text-slate-100 max-w-lg w-full mx-auto transition-colors">
+  <!-- Card Header with Step Badge -->
+  <div class="text-center mb-6">
+    <span class="inline-block bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 text-[11px] font-bold px-3 py-1 rounded-full border border-blue-200 dark:border-blue-700/60 uppercase tracking-wider">
+      Registration Validation Gate
+    </span>
+    <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-2 tracking-tight">
+      Student Account Registration
+    </h1>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+      Your Index Number is verified against the official Registrar Master List.
+    </p>
+  </div>
+
+  <form [formGroup]="registrationForm" (ngSubmit)="handleRegistration()" class="space-y-4" novalidate>
+    <!-- Step 1: Index Master Verification Box -->
+    <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl">
+      <label for="indexNumber" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+        Student Index Number (Registrar Master List)
+      </label>
+      <div class="flex gap-2">
+        <input
+          type="text"
+          id="indexNumber"
+          formControlName="indexNumber"
+          placeholder="e.g. SE/2021/001"
+          class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white uppercase font-mono"
+        />
+        <button
+          type="button"
+          (click)="verifyMasterIndex()"
+          [disabled]="isVerifyingIndex()"
+          class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-600 transition-colors disabled:opacity-60 cursor-pointer whitespace-nowrap shadow-sm"
+        >
+          @if (isVerifyingIndex()) {
+            <span>Verifying...</span>
+          } @else {
+            <span>Verify Master List ✓</span>
+          }
+        </button>
+      </div>
+
+      @if (verificationStatusText()) {
+        <span
+          class="text-xs font-semibold block mt-2"
+          [ngClass]="{
+            'text-emerald-600 dark:text-emerald-400': verificationStatusType() === 'success',
+            'text-rose-600 dark:text-rose-400': verificationStatusType() === 'error',
+            'text-slate-500': !verificationStatusType()
+          }"
+        >
+          {{ verificationStatusText() }}
+        </span>
+      }
+    </div>
+
+    <!-- Step 2: Auto-Prefilled & User Fields -->
+    <div>
+      <label for="fullName" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Full Name (Authoritative Master Record)
+      </label>
+      <input
+        type="text"
+        id="fullName"
+        formControlName="fullName"
+        placeholder="Pre-filled upon index verification"
+        class="w-full px-3.5 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 cursor-not-allowed font-medium"
+      />
+    </div>
+
+    <div>
+      <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        University Email Address
+      </label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="student@kln.ac.lk"
+        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+        [ngClass]="{
+          'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+            registrationForm.get('email')?.touched && registrationForm.get('email')?.invalid
+        }"
+      />
+      @if (registrationForm.get('email')?.touched && registrationForm.get('email')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">University email address is required.</p>
+      }
+      @if (registrationForm.get('email')?.touched && registrationForm.get('email')?.hasError('email')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Please enter a valid email format.</p>
+      }
+    </div>
+
+    <div>
+      <label for="contactDetails" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Contact Details (Phone / Address)
+      </label>
+      <input
+        type="text"
+        id="contactDetails"
+        formControlName="contactDetails"
+        placeholder="+94 77 123 4567"
+        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+        [ngClass]="{
+          'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+            registrationForm.get('contactDetails')?.touched && registrationForm.get('contactDetails')?.invalid
+        }"
+      />
+      @if (registrationForm.get('contactDetails')?.touched && registrationForm.get('contactDetails')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Contact details are required.</p>
+      }
+    </div>
+
+    <div>
+      <label for="facultyId" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Faculty
+      </label>
+      <select
+        id="facultyId"
+        formControlName="facultyId"
+        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+      >
+        <option [value]="1">Faculty of Computing & Technology</option>
+        <option [value]="2">Faculty of Science</option>
+        <option [value]="3">Faculty of Commerce & Management</option>
+        <option [value]="4">Faculty of Humanities</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="password" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Account Password
+      </label>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        placeholder="••••••••"
+        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+        [ngClass]="{
+          'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+            registrationForm.get('password')?.touched && registrationForm.get('password')?.invalid
+        }"
+      />
+      @if (registrationForm.get('password')?.touched && registrationForm.get('password')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Password is required.</p>
+      }
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="isRegistering() || !isMasterVerified()"
+      class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 mt-2"
+    >
+      @if (isRegistering()) {
+        <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"></span>
+        <span>Creating Account...</span>
+      } @else {
+        <span>Create Student Account (POST /api/students/register)</span>
+      }
+    </button>
+  </form>
+
+  <div class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-4">
+    Already have an account?
+    <a routerLink="/auth/login" class="text-blue-600 dark:text-blue-400 hover:underline font-bold ml-1">
+      Sign In
+    </a>
+  </div>
+</div>
+
+<!-- EMAIL VERIFICATION TOKEN MODAL -->
+@if (isVerifyModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <span class="text-xl">📧</span>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">
+          Email Verification Required
+        </h3>
+      </div>
+
+      <p class="text-xs text-slate-600 dark:text-slate-400 my-3 leading-relaxed">
+        Your account was created with <code class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 rounded font-mono text-[11px]">EmailVerified = false</code>. Enter the single-use token sent to your email to activate login access.
+      </p>
+
+      <form [formGroup]="verificationForm" (ngSubmit)="submitEmailVerification()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+            Single-Use Verification Token
+          </label>
+          <input
+            type="text"
+            formControlName="token"
+            placeholder="Paste verification token"
+            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-mono tracking-wider text-center"
+          />
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="isVerifyingToken()"
+          class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+        >
+          @if (isVerifyingToken()) {
+            <span>Verifying Token...</span>
+          } @else {
+            <span>Verify Account Token (POST /api/account/verify-email)</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          (click)="resendVerificationToken()"
+          [disabled]="isResendingToken()"
+          class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg border border-slate-300 dark:border-slate-700 transition-colors disabled:opacity-60 cursor-pointer"
+        >
+          @if (isResendingToken()) {
+            <span>Resending...</span>
+          } @else {
+            <span>Resend Token Email (POST /api/account/resend-verification)</span>
+          }
+        </button>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,83 @@
+/* Student Billing & Official Checkout CSS */
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.invoice-summary-box {
+    background: var(--bg-body);
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.summary-row.total-row {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 2px dashed var(--border-color);
+}
+
+/* Official Printable Receipt Styling */
+.official-receipt-box {
+    background: #FFFFFF;
+    color: #1F2937;
+    padding: 24px;
+    border-radius: 8px;
+    border: 2px solid #E5E7EB;
+    position: relative;
+}
+
+.receipt-header {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1F2937;
+}
+
+.receipt-stamp {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.stamp-inner {
+    border: 3px double #059669;
+    color: #059669;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-align: center;
+    transform: rotate(-4deg);
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printable-receipt-content, #printable-receipt-content * {
+        visibility: visible;
+    }
+    #printable-receipt-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}

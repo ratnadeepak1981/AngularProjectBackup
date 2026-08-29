@@ -1,0 +1,42 @@
+﻿using CampusServicesPortal.Data; // Replace with your DbContext namespace
+using CampusServicesPortal.Models;
+using CampusServicesPortal.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace CampusServicesPortal.Repositories.Implementations;
+
+public class LabRepository : ILabRepository
+{
+    private readonly AppDbContext _context;
+
+    public LabRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Lab?> GetByIdAsync(int id) =>
+        await _context.Labs.FindAsync(id);
+
+    public async Task<IEnumerable<Lab>> GetAllAsync() =>
+        await _context.Labs.ToListAsync();
+
+    public async Task<IEnumerable<LabSeat>> GetSeatsByLabIdAsync(int labId) =>
+        await _context.LabSeats.Where(s => s.LabId == labId).ToListAsync();
+
+    public async Task<bool> HasFutureBookingsForSeatAsync(int seatId) =>
+        await _context.LabBookings.AnyAsync(b => b.SeatId == seatId
+            && b.BookingDate >= DateTime.Today
+            && (b.Status == "Confirmed" || b.Status == "Held"));
+
+    public async Task AddLabAsync(Lab lab) =>
+        await _context.Labs.AddAsync(lab);
+
+    public async Task AddSeatAsync(LabSeat seat) =>
+        await _context.LabSeats.AddAsync(seat);
+
+    public async Task DeleteSeatAsync(LabSeat seat) =>
+        _context.LabSeats.Remove(seat);
+
+    public async Task<bool> SaveChangesAsync() =>
+        await _context.SaveChangesAsync() > 0;
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Faculties Master - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="faculties.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">🏛️ University Faculties Master Directory</h1>
+                    <p class="text-secondary">Manage university faculties, academic departments, and faculty status with soft-delete support.</p>
+                </div>
+                <button class="btn btn-primary" onclick="AdminFacultiesModule.openCreateFacultyModal()">+ Create Faculty</button>
+            </div>
+
+            <!-- Faculties Table Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📁 University Faculties Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Faculty Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faculties-tbody">
+                            <tr><td colspan="3" class="text-secondary">Loading faculties master...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Faculty Modal Dialog -->
+    <div id="modal-create-faculty" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create University Faculty</h3>
+                <button class="modal-close" onclick="AdminFacultiesModule.closeFacultyModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Faculty Name</label>
+                <input type="text" id="input-faculty-name" class="form-control" placeholder="e.g. Faculty of Engineering & Technology" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminFacultiesModule.submitCreateFaculty()">Create Faculty</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="faculties.js"></script>
+</body>
+</html>

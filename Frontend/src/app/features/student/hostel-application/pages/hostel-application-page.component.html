@@ -1,0 +1,248 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header (Reusable PageHeaderComponent) -->
+  <app-page-header
+    [icon]="'🏢'"
+    [title]="'Hostel Housing Application'"
+    [description]="'Apply for university campus housing accommodation and track room allocation progress.'"
+  >
+    <button
+      (click)="loadData()"
+      class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 shadow-2xs"
+    >
+      <span>🔄</span> Refresh
+    </button>
+  </app-page-header>
+
+  <!-- Section 1: Submit Application Form Card / Active Application Alert -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+    <h2 class="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <span>Apply for Housing Accommodation</span>
+    </h2>
+
+    @if (hasActiveApplication()) {
+      <!-- Active Application Banner (One application per student rule) -->
+      <div class="rounded-xl p-4.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded-xl text-xl shrink-0">
+            ℹ️
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-blue-950 dark:text-blue-200">
+              Active Housing Allocation on File
+            </h3>
+            <p class="text-xs text-blue-800/80 dark:text-blue-300/80 mt-0.5">
+              You already have an active housing request for <strong class="text-blue-950 dark:text-white">{{ activeApplication()?.preferredHostelName }}</strong> (Term: {{ activeApplication()?.termSemester }}).
+            </p>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-200/70 dark:bg-blue-800/60 text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700">
+                Status: {{ activeApplication()?.status }}
+              </span>
+              @if (activeApplication()?.assignedRoomNumber) {
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  Allocated Room #{{ activeApplication()?.assignedRoomNumber }}
+                </span>
+              } @else {
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  ⏳ Pending Administrator Room Assignment
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Housing Application Submission Form -->
+      <form (ngSubmit)="promptSubmitApplication()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 1. Preferred Campus Hostel -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Preferred Campus Hostel <span class="text-rose-500">*</span>
+            </label>
+            <select
+              [ngModel]="selectedHostelId()"
+              (ngModelChange)="selectedHostelId.set(+$event)"
+              name="preferredHostelId"
+              required
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            >
+              <option [value]="0">-- Select Preferred Hostel --</option>
+              @for (h of hostelsList(); track h.id) {
+                <option [value]="h.id">{{ h.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- 2. Academic Term / Semester -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Academic Term / Semester <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              [ngModel]="termSemester()"
+              (ngModelChange)="termSemester.set($event)"
+              name="termSemester"
+              placeholder="e.g. 2026 / Semester 1"
+              required
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+        </div>
+
+        <!-- 3. Special Housing Requirements -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            Special Housing Requirements (Medical, Accessibility, Quiet Zone)
+          </label>
+          <textarea
+            [ngModel]="specialRequirements()"
+            (ngModelChange)="specialRequirements.set($event)"
+            name="specialRequirements"
+            rows="3"
+            placeholder="Enter any special requests..."
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          ></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <button
+            type="submit"
+            [disabled]="isSubmitting() || !selectedHostelId() || selectedHostelId() === 0"
+            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2"
+          >
+            @if (isSubmitting()) {
+              <span class="inline-block animate-spin text-sm">⏳</span>
+              <span>Submitting Application...</span>
+            } @else {
+              <span>Submit Housing Application</span>
+            }
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+
+  <!-- Section 2: My Housing Applications History Card -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+    <div class="flex items-center justify-between gap-4 mb-4">
+      <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>📋 My Housing Applications History</span>
+      </h2>
+      <button
+        (click)="loadData()"
+        class="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-1 font-medium"
+      >
+        <span>🔄</span>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- History Table -->
+    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="px-4 py-3">Preferred Hostel</th>
+            <th class="px-4 py-3">Term / Semester</th>
+            <th class="px-4 py-3">Special Requirements</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Assigned Room</th>
+            <th class="px-4 py-3">Submitted Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-slate-400 animate-pulse">
+                Loading housing records...
+              </td>
+            </tr>
+          } @else if (myApplications().length === 0) {
+            <tr>
+              <td colspan="6" class="px-4 py-10 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center space-y-1">
+                  <span class="text-3xl">🏠</span>
+                  <span class="font-semibold text-slate-500 dark:text-slate-400">No housing applications submitted yet.</span>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (app of myApplications(); track app.id) {
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <!-- 1. Preferred Hostel -->
+                <td class="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
+                  {{ app.preferredHostelName || app.hostelName }}
+                </td>
+
+                <!-- 2. Term / Semester -->
+                <td class="px-4 py-3.5 text-slate-700 dark:text-slate-300">
+                  {{ app.termSemester }}
+                </td>
+
+                <!-- 3. Special Requirements -->
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                  {{ app.specialRequirements || 'None' }}
+                </td>
+
+                <!-- 4. Status Badge -->
+                <td class="px-4 py-3.5">
+                  @if (app.status.toLowerCase() === 'approved' || app.status.toLowerCase() === 'roomassigned') {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                      {{ app.status }}
+                    </span>
+                  } @else if (app.status.toLowerCase() === 'pending') {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100/90 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                      PENDING
+                    </span>
+                  } @else if (app.status.toLowerCase() === 'rejected') {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100/90 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                      REJECTED
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                      {{ app.status }}
+                    </span>
+                  }
+                </td>
+
+                <!-- 5. Assigned Room -->
+                <td class="px-4 py-3.5">
+                  @if (app.assignedRoomNumber) {
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      ROOM #{{ app.assignedRoomNumber }}
+                    </span>
+                  } @else {
+                    <span class="text-slate-400 italic text-[11px]">
+                      Pending Allocation
+                    </span>
+                  }
+                </td>
+
+                <!-- 6. Submitted Date -->
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">
+                  {{ app.createdAt ? (app.createdAt | date:'M/d/yyyy') : 'N/A' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Reusable Confirmation Modal -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [iconVariant]="'primary'"
+    [confirmVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    (confirm)="onConfirmSubmit()"
+    (cancel)="onCancelConfirm()"
+  ></app-confirm-modal>
+</div>

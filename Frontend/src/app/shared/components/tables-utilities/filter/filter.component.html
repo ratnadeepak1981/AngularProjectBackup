@@ -1,0 +1,104 @@
+<div class="relative inline-block text-left">
+  <!-- Trigger Button -->
+  <button
+    type="button"
+    (click)="toggleOpen($event)"
+    [class]="
+      isFiltered()
+        ? 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-semibold shadow-xs'
+        : 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-lg text-xs font-medium transition-colors shadow-2xs'
+    "
+  >
+    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.972.206 7.372.601a.75.75 0 01.628.74v2.288a2.25 2.25 0 01-.659 1.59l-4.682 4.683a2.25 2.25 0 00-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 018 18.25v-5.757a2.25 2.25 0 00-.659-1.591L2.659 6.22A2.25 2.25 0 012 4.629V2.34a.75.75 0 01.628-.74z" clip-rule="evenodd" />
+    </svg>
+    <span>{{ label() }}</span>
+    @if (selectedValues().length > 0) {
+      <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+        {{ selectedValues().length }}
+      </span>
+    }
+  </button>
+
+  <!-- Filter Popover -->
+  @if (isOpen()) {
+    <div
+      (click)="$event.stopPropagation()"
+      class="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs text-slate-800 dark:text-slate-100 animate-fade-in"
+    >
+      @if (showSearch()) {
+        <div class="mb-2">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            [placeholder]="searchPlaceholder()"
+            class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+          />
+        </div>
+      }
+
+      <!-- Select All -->
+      <div class="pb-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800">
+        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded cursor-pointer font-semibold">
+          <input
+            type="checkbox"
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll()"
+            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          <span>(Select All)</span>
+        </label>
+      </div>
+
+      <!-- Options Checkbox List -->
+      <div class="max-h-40 overflow-y-auto space-y-1 pr-1">
+        @for (opt of filteredOptions(); track opt.value) {
+          <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded cursor-pointer">
+            <input
+              type="checkbox"
+              [checked]="isSelected(opt.value)"
+              (change)="toggleOption(opt.value)"
+              class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <span class="truncate">{{ opt.label }}</span>
+          </label>
+        } @empty {
+          <div class="py-2 text-center text-slate-400">
+            No options found
+          </div>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <button
+          type="button"
+          (click)="reset()"
+          class="px-2.5 py-1 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+        >
+          Clear
+        </button>
+        <div class="flex gap-1.5">
+          <button
+            type="button"
+            (click)="close()"
+            class="px-2.5 py-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="apply()"
+            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backdrop overlay -->
+    <div (click)="close()" class="fixed inset-0 z-40 bg-transparent"></div>
+  }
+</div>
+

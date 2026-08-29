@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Campus Services Portal - 5 University Themes × Dual Light/Dark Modes
+   ========================================================================== */
+
+/* 🏛️ 1. Oxford Royal Navy */
+:root, :root[data-theme="oxford-navy"] {
+  --primary-navy: #0F2C59;
+  --primary-navy-dark: #0A1E3D;
+  --primary-blue: #2563EB;
+  --primary-blue-hover: #1D4ED8;
+  --primary-light-blue: #EFF6FF;
+  --accent-gold: #D97706;
+  --bg-body: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-sidebar: #0F2C59;
+  --bg-card: #FFFFFF;
+  --border-color: #E2E8F0;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --glow-color: rgba(37, 99, 235, 0.15);
+}
+
+:root[data-theme="oxford-navy"].dark, :root[data-theme="oxford-navy"][data-mode="dark"], :root.dark, :root[data-mode="dark"] {
+  --primary-navy: #0A192F;
+  --primary-navy-dark: #060F1E;
+  --primary-blue: #38BDF8;
+  --primary-blue-hover: #0EA5E9;
+  --primary-light-blue: rgba(56, 189, 248, 0.12);
+  --accent-gold: #F59E0B;
+  --bg-body: #070D18;
+  --bg-surface: #0E1726;
+  --bg-sidebar: #091222;
+  --bg-card: #111D33;
+  --border-color: #1E2E4A;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --glow-color: rgba(56, 189, 248, 0.25);
+}
+
+/* 🌲 2. Cambridge Emerald */
+:root[data-theme="cambridge-emerald"] {
+  --primary-navy: #0A3622;
+  --primary-navy-dark: #062316;
+  --primary-blue: #059669;
+  --primary-blue-hover: #047857;
+  --primary-light-blue: #ECFDF5;
+  --accent-gold: #2A9D8F;
+  --bg-body: #F4F7F6;
+  --bg-surface: #FFFFFF;
+  --bg-sidebar: #0A3622;
+  --bg-card: #FFFFFF;
+  --border-color: #D1E7DD;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --glow-color: rgba(5, 150, 105, 0.15);
+}
+
+:root[data-theme="cambridge-emerald"].dark, :root[data-theme="cambridge-emerald"][data-mode="dark"] {
+  --primary-navy: #062417;
+  --primary-navy-dark: #03140C;
+  --primary-blue: #10B981;
+  --primary-blue-hover: #059669;
+  --primary-light-blue: rgba(16, 185, 129, 0.12);
+  --accent-gold: #34D399;
+  --bg-body: #04120B;
+  --bg-surface: #091E14;
+  --bg-sidebar: #051910;
+  --bg-card: #0D2B1D;
+  --border-color: #17402C;
+  --text-primary: #ECFDF5;
+  --text-secondary: #86EFAC;
+  --glow-color: rgba(16, 185, 129, 0.25);
+}
+
+/* 📜 3. Harvard Crimson */
+:root[data-theme="harvard-crimson"] {
+  --primary-navy: #701C1C;
+  --primary-navy-dark: #4A1212;
+  --primary-blue: #991B1B;
+  --primary-blue-hover: #7F1D1D;
+  --primary-light-blue: #FEF2F2;
+  --accent-gold: #D97706;
+  --bg-body: #FDFBF7;
+  --bg-surface: #FFFFFF;
+  --bg-sidebar: #701C1C;
+  --bg-card: #FFFFFF;
+  --border-color: #E7E5E4;
+  --text-primary: #1C1917;
+  --text-secondary: #57534E;
+  --glow-color: rgba(153, 27, 27, 0.15);
+}
+
+:root[data-theme="harvard-crimson"].dark, :root[data-theme="harvard-crimson"][data-mode="dark"] {
+  --primary-navy: #2B0B0B;
+  --primary-navy-dark: #1A0606;
+  --primary-blue: #F87171;
+  --primary-blue-hover: #EF4444;
+  --primary-light-blue: rgba(248, 113, 113, 0.12);
+  --accent-gold: #FBBF24;
+  --bg-body: #120505;
+  --bg-surface: #1E0C0C;
+  --bg-sidebar: #190909;
+  --bg-card: #281111;
+  --border-color: #3D1A1A;
+  --text-primary: #FEF2F2;
+  --text-secondary: #FCA5A5;
+  --glow-color: rgba(248, 113, 113, 0.25);
+}
+
+/* ⚡ 4. MIT Tech Cyber */
+:root[data-theme="mit-cyber-dark"] {
+  --primary-navy: #1E293B;
+  --primary-navy-dark: #0F172A;
+  --primary-blue: #0284C7;
+  --primary-blue-hover: #0369A1;
+  --primary-light-blue: #F0F9FF;
+  --accent-gold: #F59E0B;
+  --bg-body: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-sidebar: #1E293B;
+  --bg-card: #FFFFFF;
+  --border-color: #CBD5E1;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --glow-color: rgba(2, 132, 199, 0.15);
+}
+
+:root[data-theme="mit-cyber-dark"].dark, :root[data-theme="mit-cyber-dark"][data-mode="dark"] {
+  --primary-navy: #0D1117;
+  --primary-navy-dark: #05080C;
+  --primary-blue: #00F5D4;
+  --primary-blue-hover: #00B4D8;
+  --primary-light-blue: rgba(0, 245, 212, 0.12);
+  --accent-gold: #F59E0B;
+  --bg-body: #05080E;
+  --bg-surface: #0D111A;
+  --bg-sidebar: #090C12;
+  --bg-card: #121824;
+  --border-color: #1E2638;
+  --text-primary: #F0F6FC;
+  --text-secondary: #8B949E;
+  --glow-color: rgba(0, 245, 212, 0.25);
+}
+
+/* ☀️ 5. Stanford Cardinal */
+:root[data-theme="stanford-cardinal"] {
+  --primary-navy: #8C1515;
+  --primary-navy-dark: #5C0E0E;
+  --primary-blue: #B83A4B;
+  --primary-blue-hover: #9E2A2B;
+  --primary-light-blue: #FFF5F5;
+  --accent-gold: #E6AF2E;
+  --bg-body: #FAF7F2;
+  --bg-surface: #FFFFFF;
+  --bg-sidebar: #8C1515;
+  --bg-card: #FFFFFF;
+  --border-color: #E6DFD5;
+  --text-primary: #2B2D42;
+  --text-secondary: #5C677D;
+  --glow-color: rgba(184, 58, 75, 0.15);
+}
+
+:root[data-theme="stanford-cardinal"].dark, :root[data-theme="stanford-cardinal"][data-mode="dark"] {
+  --primary-navy: #300808;
+  --primary-navy-dark: #1E0505;
+  --primary-blue: #FB7185;
+  --primary-blue-hover: #F43F5E;
+  --primary-light-blue: rgba(251, 113, 133, 0.12);
+  --accent-gold: #FBBF24;
+  --bg-body: #140506;
+  --bg-surface: #200C0E;
+  --bg-sidebar: #1A090B;
+  --bg-card: #2B1215;
+  --border-color: #401B20;
+  --text-primary: #FFF1F2;
+  --text-secondary: #FDA4AF;
+  --glow-color: rgba(251, 113, 133, 0.25);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Custom Gradient & Dynamic Ambient Classes */
+.theme-header {
+  background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-navy-dark) 100%);
+}
+
+.theme-sidebar {
+  background: linear-gradient(180deg, var(--bg-sidebar) 0%, rgba(10, 15, 25, 0.98) 100%);
+}
+
+.theme-canvas {
+  background-color: var(--bg-body);
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, var(--glow-color), transparent 80%);
+}
+
+.theme-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  transition: all 0.2s ease-in-out;
+}
+
+.theme-surface {
+  background-color: var(--bg-surface);
+}
+
+.theme-border {
+  border-color: var(--border-color);
+}
+
+/* 📊 Dynamic Theme-Aware Table Classes */
+.theme-table-header {
+  background-color: var(--bg-body);
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.theme-table-row-even {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.theme-table-row-odd {
+  background-color: var(--primary-light-blue);
+  color: var(--text-primary);
+}
+
+.theme-table-row-hover {
+  transition: all 0.15s ease-in-out;
+  border-left: 4px solid transparent;
+  color: var(--text-primary);
+}
+
+.theme-table-row-hover:hover {
+  background-color: var(--glow-color) !important;
+  border-left-color: var(--primary-blue) !important;
+}
+
+/* Light Mode: High contrast dark text */
+:root:not(.dark) .theme-table-header th,
+:root:not(.dark) .theme-table-row-even td,
+:root:not(.dark) .theme-table-row-odd td {
+  color: #0F172A !important;
+}
+
+/* Dark Mode: High contrast bright white/light text */
+:root.dark .theme-table-header th,
+:root.dark .theme-table-row-even td,
+:root.dark .theme-table-row-odd td,
+:root.dark .theme-table-row-hover td {
+  color: #F8FAFC !important;
+}

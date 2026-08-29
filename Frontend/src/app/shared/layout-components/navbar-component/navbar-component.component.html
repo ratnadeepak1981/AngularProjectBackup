@@ -1,0 +1,170 @@
+<aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 min-h-[calc(100vh-53px)] text-slate-300 transition-colors duration-200">
+  <div>
+    <div class="px-4 py-3 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      Main Navigation
+    </div>
+
+    <nav class="p-2 space-y-0.5 text-xs font-medium">
+      @if (authService.isAdmin()) {
+        <a
+          routerLink="/admin/dashboard"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📊</span>
+          <span>Admin Dashboard</span>
+        </a>
+        <a
+          routerLink="/admin/studentmaster"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📋</span>
+          <span>Student Master Intake</span>
+        </a>
+        <a
+          routerLink="/admin/students"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">👥</span>
+          <span>Student Accounts</span>
+        </a>
+        <a
+          routerLink="/admin/hostel-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">🏢</span>
+          <span>Hostels & Rooms</span>
+        </a>
+        <a
+          routerLink="/admin/lab-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">💻</span>
+          <span>Lab & Seat Builder</span>
+        </a>
+        <a
+          routerLink="/admin/event-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📅</span>
+          <span>Events & Venues</span>
+        </a>
+        <a
+          routerLink="/admin/complaint-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📝</span>
+          <span>Complaint Triage</span>
+        </a>
+        <a
+          routerLink="/admin/certificate-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📜</span>
+          <span>Certificate Approvals</span>
+        </a>
+        <a
+          routerLink="/admin/billing-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">💳</span>
+          <span>Fees & Fine Management</span>
+        </a>
+        <a
+          routerLink="/admin/notification-monitor"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📡</span>
+          <span>Notification Monitor</span>
+        </a>
+        <a
+          routerLink="/admin/faculty-management"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">🏛️</span>
+          <span>Faculties Master</span>
+        </a>
+      } @else {
+        <a
+          routerLink="/student/dashboard"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">🏠</span>
+          <span>Student Dashboard</span>
+        </a>
+        <a
+          routerLink="/student/hostel"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">🏢</span>
+          <span>Hostel Accommodation</span>
+        </a>
+        <a
+          routerLink="/student/lab-booking"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">💻</span>
+          <span>Lab Seat Booking</span>
+        </a>
+        <a
+          routerLink="/student/event"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📅</span>
+          <span>Campus Events</span>
+        </a>
+        <a
+          routerLink="/student/billing"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">💳</span>
+          <span>Tuition & Fee Ledger</span>
+        </a>
+        <a
+          routerLink="/student/complaint"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📝</span>
+          <span>Submit Complaint</span>
+        </a>
+        <a
+          routerLink="/student/certificate"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">📜</span>
+          <span>Request Certificate</span>
+        </a>
+        <a
+          routerLink="/student/notification"
+          routerLinkActive="bg-blue-600/20 text-blue-400 border-l-4 border-blue-500 font-semibold"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+        >
+          <span class="text-sm">🔔</span>
+          <span>Activity Notifications</span>
+        </a>
+      }
+    </nav>
+  </div>
+
+  <div class="p-4 border-t border-slate-800 text-[11px] text-slate-500">
+    <div>Campus Services v2.0</div>
+    <div class="text-[10px] text-slate-600">System Build: 2026.08</div>
+  </div>
+</aside>

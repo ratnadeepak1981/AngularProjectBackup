@@ -1,0 +1,132 @@
+<div class="space-y-6">
+  <!-- Header Bar (Reusable PageHeaderComponent) -->
+  <app-page-header
+    [icon]="'🏢'"
+    [title]="'Hostel & Room Allocation Management'"
+    [description]="'Manage campus hostel buildings, room capacities, application approvals, and student room assignments.'"
+  >
+    <button
+      (click)="openCreateRoomModal()"
+      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+    >
+      <span>+</span> Add Room
+    </button>
+  </app-page-header>
+
+  <!-- Chrome 3D Reusable Tab Component -->
+  <app-tab-component
+    [tabs]="hostelTabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  />
+
+  <!-- TAB 1: Pending Housing Applications -->
+  @if (activeTabId() === 'pending-apps') {
+    <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Pending Housing Applications
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Review and assign vacant residential rooms to incoming applicant students.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pending Applications Data Table (Common Reusable Data Table Component) -->
+      <app-data-table
+        [columns]="pendingAppColumns"
+        [data]="pendingApplications()"
+        [isLoading]="isLoading()"
+        [sortIconStyle]="'svg-arrows'"
+        [emptyMessage]="'No pending student housing applications found.'"
+      >
+        <ng-template #cellActions let-row>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="openAssignRoomModal(row)"
+              class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>Approve & Assign Room</span>
+              <span>&rarr;</span>
+            </button>
+            <button
+              (click)="promptRejectApplication(row)"
+              class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+            >
+              Reject
+            </button>
+          </div>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- TAB 2: Approved Housing Allocations -->
+  @if (activeTabId() === 'approved-apps') {
+    <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>✅</span> Approved Housing Allocations
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            View allocated student rooms and reassign housing slots when necessary.
+          </p>
+        </div>
+      </div>
+
+      <!-- Approved Allocations Data Table (Common Reusable Data Table Component) -->
+      <app-data-table
+        [columns]="approvedAppColumns"
+        [data]="allApplications()"
+        [isLoading]="isLoading()"
+        [sortIconStyle]="'svg-arrows'"
+        [emptyMessage]="'No approved student allocations found.'"
+      >
+        <ng-template #cellActions let-row>
+          <button
+            (click)="openAssignRoomModal(row)"
+            class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer inline-flex items-center gap-1"
+          >
+            <span>Reassign Room</span>
+            <span>&rarr;</span>
+          </button>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- TAB 3: Hostels & Rooms Directory (Modular Component) -->
+  @if (activeTabId() === 'directory') {
+    <app-hostels-rooms-directory
+      [hostels]="hostels()"
+      [selectedHostelId]="selectedHostelId()"
+      [isLoading]="isLoading()"
+      (hostelTabChange)="onHostelBuildingTabChange($event)"
+      (createRoom)="openCreateRoomModal($event)"
+      (editRoom)="openEditRoomModal($event)"
+      (refreshed)="loadData()"
+    />
+  }
+
+  <!-- MODAL 1: Assign / Reassign Room Modal (Modular Component) -->
+  <app-assign-room-modal
+    [isOpen]="isAssignModalOpen()"
+    [application]="assignApp()"
+    [hostels]="hostels()"
+    (close)="isAssignModalOpen.set(false)"
+    (assigned)="loadData()"
+  />
+
+  <!-- MODAL 2: Create & Edit Hostel Room Modal (Modular Component) -->
+  <app-create-room-modal
+    [isOpen]="isCreateRoomModalOpen()"
+    [hostels]="hostels()"
+    [initialHostelId]="initialHostelIdForRoom()"
+    [roomToEdit]="roomToEdit()"
+    (close)="isCreateRoomModalOpen.set(false)"
+    (saved)="loadData()"
+  />
+</div>

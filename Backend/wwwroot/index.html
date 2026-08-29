@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Services Portal - University Gateway</title>
+    <!-- Combined Enterprise Theme & Layout Stylesheets -->
+    <link rel="stylesheet" href="assets/styles/theme.css">
+    <link rel="stylesheet" href="assets/styles/index.css">
+</head>
+<body>
+
+    <div class="hero-card">
+        <div class="hero-header-section">
+            <span class="badge badge-available custom-badge">Official University Services Network</span>
+            <h1 class="portal-main-title">Campus Services Portal</h1>
+            <p class="portal-subtitle">
+                One centralized portal for university students and administrators to manage hostel applications, computer lab seat reservations, campus event sign-ups, tuition fees, and official document requests.
+            </p>
+        </div>
+
+        <div class="portal-grid">
+            <!-- Student Workspace Launcher -->
+            <div class="portal-card">
+                <div>
+                    <h3 class="card-title">🎓 Student Workspace</h3>
+                    <p class="card-description">
+                        Access computer lab workstation maps, 15-minute reservation hold protection, hostel housing, event sign-ups, and fee receipts.
+                    </p>
+                </div>
+                <a href="modules/auth/login.html" class="btn btn-primary full-width-btn">
+                    Launch Student Portal →
+                </a>
+            </div>
+
+            <!-- Staff & Admin Console Launcher -->
+            <div class="portal-card">
+                <div>
+                    <h3 class="card-title">🛡️ Administrative Console</h3>
+                    <p class="card-description">
+                        Verify StudentMasterList intake files, assign hostel rooms, execute faculty fee runs, and manage helpdesk ticket triages.
+                    </p>
+                </div>
+                <a href="modules/auth/login.html" class="btn btn-outline full-width-btn">
+                    Launch Staff Console →
+                </a>
+            </div>
+        </div>
+
+        <div class="portal-footer">
+            &copy; 2026 University Campus Web Services Portal. Powered by ASP.NET Core Web API & Vanilla JS Fetch Engine.
+        </div>
+    </div>
+
+    <!-- Automated Session Guard Handling Local State Checks -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+
+            if (token && role) {
+                window.location.href = role === 'Admin' 
+                    ? 'modules/admin/dashboard/index.html' 
+                    : 'modules/student/dashboard/index.html';
+            }
+        });
+    </script>
+</body>
+</html>

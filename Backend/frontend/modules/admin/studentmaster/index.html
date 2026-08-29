@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Master Intake - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="studentmaster.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📋 Student Master Intake List</h1>
+                    <p class="text-secondary">Pre-approved university intake list used to validate self-service student registration eligibility.</p>
+                </div>
+                <button class="btn btn-primary" onclick="AdminStudentMasterModule.openImportModal()">+ Import CSV Master File</button>
+            </div>
+
+            <!-- Master List Directory Table -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Student Master Intake Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Index Number</th>
+                                <th>Full Name</th>
+                                <th>Faculty ID</th>
+                                <th>Registration Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-tbody">
+                            <tr><td colspan="4" class="text-secondary">Loading master intake list...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Import CSV Modal Dialog -->
+    <div id="modal-import-csv" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Import Student Master CSV File</h3>
+                <button class="modal-close" onclick="AdminStudentMasterModule.closeImportModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select CSV File (IndexNumber, FullName, FacultyId)</label>
+                <input type="file" id="input-csv-file" class="form-control" accept=".csv" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminStudentMasterModule.submitImportCSV()">Upload & Import Master Records</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="studentmaster.js"></script>
+</body>
+</html>

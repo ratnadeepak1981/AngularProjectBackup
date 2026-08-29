@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Student Accounts - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="students.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">👥 Registered Student Accounts Directory</h1>
+                    <p class="text-secondary">Manage registered student profiles, verify email status, and execute safety deactivation checks.</p>
+                </div>
+            </div>
+
+            <!-- Student Directory Table Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Student Accounts Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Index Number</th>
+                                <th>Full Name</th>
+                                <th>Email Address</th>
+                                <th>Faculty</th>
+                                <th>Email Verified</th>
+                                <th>Account Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-directory-tbody">
+                            <tr><td colspan="7" class="text-secondary">Loading student directory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Safety Deactivation Check Modal Dialog -->
+    <div id="modal-deactivate-check" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Student Account Deactivation Safety Check</h3>
+                <button class="modal-close" onclick="AdminStudentsModule.closeSafetyModal()">✕</button>
+            </div>
+            <p id="safety-student-name" class="text-secondary" style="font-size: 14px;">Checking active dependencies across modules...</p>
+            
+            <div id="safety-check-details" style="background: var(--bg-body); padding: 16px; border-radius: var(--radius-sm); margin: 16px 0; font-size: 13px;">
+                Checking 5 core domain tables...
+            </div>
+
+            <button id="btn-confirm-deactivate" class="btn btn-danger" style="width: 100%;" onclick="AdminStudentsModule.confirmDeactivation()">Proceed with Soft Deactivation</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="students.js"></script>
+</body>
+</html>

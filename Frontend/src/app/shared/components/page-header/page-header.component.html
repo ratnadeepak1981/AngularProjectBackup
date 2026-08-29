@@ -1,0 +1,29 @@
+<div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
+  <div>
+    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+      @if (icon()) {
+        <span>{{ icon() }}</span>
+      }
+      <span>{{ title() }}</span>
+    </h1>
+    @if (description()) {
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+        {{ description() }}
+      </p>
+    }
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2.5">
+    @if (badgeText()) {
+      <span class="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold rounded-lg shadow-2xs">
+        {{ badgeText() }}
+      </span>
+    } @else if (showIndexBadge() && authService.isStudent() && authService.userProfile()?.indexNumber) {
+      <span class="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-lg shadow-2xs font-mono">
+        Index: {{ authService.userProfile()?.indexNumber }}
+      </span>
+    }
+
+    <ng-content />
+  </div>
+</div>

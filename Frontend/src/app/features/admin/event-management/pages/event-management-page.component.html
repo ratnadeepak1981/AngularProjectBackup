@@ -1,0 +1,509 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header (Reusable PageHeaderComponent) -->
+  <app-page-header
+    [icon]="'📅'"
+    [title]="'Event Scheduling & Venue Management'"
+    [description]="'Schedule campus events, assign venues with schedule overlap protection, and monitor student participation.'"
+  >
+    <button
+      (click)="openScheduleEventModal()"
+      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+    >
+      <span>+ 📅</span> Schedule Event
+    </button>
+    <button
+      (click)="openCreateVenueModal()"
+      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-sm transition-all cursor-pointer"
+    >
+      <span>+ 🏛️</span> Create Venue
+    </button>
+  </app-page-header>
+
+  <!-- Chrome 3D Reusable Tab Component -->
+  <app-tab-component
+    [tabs]="eventTabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="setActiveTab($event)"
+  />
+
+  <!-- TAB 1: SCHEDULED CAMPUS EVENTS -->
+  @if (activeTabId() === 'events') {
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📅 Scheduled Campus Events</span>
+          <span class="px-2 py-0.5 text-2xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-md border border-blue-200 dark:border-blue-800">
+            {{ displayEvents().length }} Total
+          </span>
+        </h3>
+        <button
+          (click)="loadEvents()"
+          class="px-3.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+        >
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+
+      <!-- Events Data Table (Common Reusable Data Table Component) -->
+      <app-data-table
+        [columns]="eventColumns"
+        [data]="displayEvents()"
+        [isLoading]="isLoadingEvents()"
+        [sortIconStyle]="'svg-arrows'"
+        [emptyMessage]="'No scheduled campus events found. Click &quot;+ Schedule Event&quot; to create one.'"
+      >
+        <ng-template #cellTitle let-row>
+          <div>
+            <div class="font-bold text-slate-900 dark:text-white">{{ row.title }}</div>
+            @if (row.description) {
+              <div class="text-2xs text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">{{ row.description }}</div>
+            }
+          </div>
+        </ng-template>
+
+        <ng-template #cellVenueName let-row>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-2xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span>🏛️</span> {{ row.venueName || 'Venue' }}
+          </span>
+        </ng-template>
+
+        <ng-template #cellActions let-row>
+          <button
+            (click)="openAttendeesModal(row)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 text-2xs font-semibold border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer shadow-2xs"
+          >
+            <span>👥</span> Monitor Attendees →
+          </button>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- TAB 2: UNIVERSITY VENUES DIRECTORY -->
+  @if (activeTabId() === 'venues') {
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏛️ University Venues Directory</span>
+          <span class="px-2 py-0.5 text-2xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-md border border-emerald-200 dark:border-emerald-800">
+            {{ displayVenues().length }} Total
+          </span>
+        </h3>
+        <button
+          (click)="loadVenues()"
+          class="px-3.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+        >
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+
+      <!-- Venues Data Table (Common Reusable Data Table Component) -->
+      <app-data-table
+        [columns]="venueColumns"
+        [data]="displayVenues()"
+        [isLoading]="isLoadingVenues()"
+        [sortIconStyle]="'svg-arrows'"
+        [emptyMessage]="'No university venues found. Click &quot;+ Create Venue&quot; to register a new venue.'"
+      >
+        <ng-template #cellType let-row>
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider"
+            [ngClass]="{
+              'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800': row.type === 'Event Hall',
+              'bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800': row.type === 'Open Space',
+              'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700': row.type !== 'Event Hall' && row.type !== 'Open Space'
+            }"
+          >
+            <span>🏢</span> {{ row.type || 'Event Hall' }}
+          </span>
+        </ng-template>
+
+        <ng-template #cellActions let-row>
+          @if (row.isActive) {
+            <button
+              (click)="promptToggleVenue(row)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 text-2xs font-semibold border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer shadow-2xs"
+            >
+              <span>🗑️</span> Deactivate
+            </button>
+          } @else {
+            <button
+              (click)="promptToggleVenue(row)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer shadow-2xs"
+            >
+              <span>🛡️</span> Reactivate
+            </button>
+          }
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- MODAL 1: SCHEDULE NEW UNIVERSITY EVENT -->
+  @if (isScheduleEventModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden animate-scale-in">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">📅</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Schedule New University Event</h3>
+              <p class="text-2xs text-slate-500 dark:text-slate-400">Configure event details and assign campus venue with overlap protection.</p>
+            </div>
+          </div>
+          <button
+            (click)="closeScheduleEventModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Event Title <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              [ngModel]="newEventTitle()"
+              (ngModelChange)="newEventTitle.set($event)"
+              placeholder="e.g. Annual AI Innovation Symposium"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Assigned Venue <span class="text-rose-500">*</span>
+            </label>
+            <select
+              [ngModel]="newEventVenueId()"
+              (ngModelChange)="onVenueSelectionChange($event)"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
+            >
+              <option [value]="0">-- Select Venue --</option>
+              @for (v of venuesList(); track v.id) {
+                <option [value]="v.id" [disabled]="!v.isActive">
+                  {{ v.name }} ({{ v.type }} - Max: {{ v.capacity }} People) {{ !v.isActive ? '[DEACTIVATED]' : '' }}
+                </option>
+              }
+            </select>
+            @if (selectedVenue()) {
+              <p class="text-2xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                <span>🏛️</span> Maximum Seating Capacity: <strong>{{ selectedVenueCapacity() }} People</strong>
+              </p>
+            }
+          </div>
+
+          <div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Start Date & Time <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  [ngModel]="newEventStartDateTime()"
+                  (ngModelChange)="onStartDateChange($event)"
+                  [min]="minStartDateTime()"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 text-slate-900 dark:text-white"
+                  [ngClass]="{
+                    'border-rose-500 focus:ring-rose-500 text-rose-900 dark:text-rose-200 bg-rose-50/30': isScheduleDatePast(),
+                    'border-slate-200 dark:border-slate-700 focus:ring-blue-500': !isScheduleDatePast()
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  End Date & Time <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  [ngModel]="newEventEndDateTime()"
+                  (ngModelChange)="onEndDateChange($event)"
+                  [min]="newEventStartDateTime() || minStartDateTime()"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 text-slate-900 dark:text-white"
+                  [ngClass]="{
+                    'border-rose-500 focus:ring-rose-500 text-rose-900 dark:text-rose-200 bg-rose-50/30': isScheduleDateInvalid(),
+                    'border-slate-200 dark:border-slate-700 focus:ring-blue-500': !isScheduleDateInvalid()
+                  }"
+                />
+              </div>
+            </div>
+
+            @if (isScheduleDateInvalid()) {
+              <div class="mt-2 p-2.5 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-800 dark:text-rose-300 text-2xs flex items-center gap-2 animate-fade-in">
+                <span class="text-sm">⚠️</span>
+                <span><strong>Invalid Schedule:</strong> End Date & Time must be scheduled strictly after Start Date & Time.</span>
+              </div>
+            }
+            @if (isScheduleDatePast()) {
+              <div class="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-2xs flex items-center gap-2 animate-fade-in">
+                <span class="text-sm">⚠️</span>
+                <span><strong>Past Schedule:</strong> Please select a future date and time for the event.</span>
+              </div>
+            }
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Max Student Capacity <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              [ngModel]="newEventCapacity()"
+              (ngModelChange)="newEventCapacity.set($event)"
+              min="1"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 text-slate-900 dark:text-white"
+              [ngClass]="{
+                'border-rose-500 focus:ring-rose-500 text-rose-900 dark:text-rose-200': isCapacityExceeded(),
+                'border-slate-200 dark:border-slate-700 focus:ring-blue-500': !isCapacityExceeded()
+              }"
+            />
+
+            @if (isCapacityExceeded()) {
+              <div class="mt-2 p-3 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-800 dark:text-rose-300 text-2xs space-y-1 animate-fade-in">
+                <div class="font-bold flex items-center gap-1">
+                  <span>⚠️</span> Capacity Limit Exceeded (BRD Rule #13)
+                </div>
+                <p>
+                  The requested event capacity (<strong>{{ newEventCapacity() }}</strong>) exceeds the maximum structural limit of
+                  "<strong>{{ selectedVenue()?.name }}</strong>" (<strong>{{ selectedVenueCapacity() }} seats</strong>).
+                  Please reduce the capacity or assign a larger venue.
+                </p>
+              </div>
+            }
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Event Description (Optional)
+            </label>
+            <textarea
+              [ngModel]="newEventDescription()"
+              (ngModelChange)="newEventDescription.set($event)"
+              rows="3"
+              placeholder="Enter event summary, agenda, and participation requirements..."
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-2.5 bg-slate-50/50 dark:bg-slate-800/50">
+          <button
+            type="button"
+            (click)="closeScheduleEventModal()"
+            class="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl transition-colors cursor-pointer"
+          >
+            <span>✕</span> Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitScheduleEvent()"
+            [disabled]="isSubmittingEvent() || isCapacityExceeded() || isScheduleDateInvalid() || isScheduleDatePast() || !newEventTitle() || newEventVenueId() === 0 || !newEventStartDateTime() || !newEventEndDateTime()"
+            class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            @if (isSubmittingEvent()) {
+              <span class="animate-spin text-xs">⏳</span> Scheduling...
+            } @else {
+              <span>📅</span> Schedule Event
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 2: CREATE UNIVERSITY VENUE -->
+  @if (isCreateVenueModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden animate-scale-in">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">🏛️</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Create University Venue</h3>
+              <p class="text-2xs text-slate-500 dark:text-slate-400">Add a new campus hall, auditorium, or open ground.</p>
+            </div>
+          </div>
+          <button
+            (click)="closeCreateVenueModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Venue Name <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              [ngModel]="newVenueName()"
+              (ngModelChange)="newVenueName.set($event)"
+              placeholder="e.g. Great Hall A"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Venue Type [BRD Page 10] <span class="text-rose-500">*</span>
+            </label>
+            <select
+              [ngModel]="newVenueType()"
+              (ngModelChange)="newVenueType.set($event)"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
+            >
+              <option value="Event Hall">🏢 Event Hall</option>
+              <option value="Open Space">🌳 Open Space</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Max Seating Capacity <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              [ngModel]="newVenueCapacity()"
+              (ngModelChange)="newVenueCapacity.set($event)"
+              min="1"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-2.5 bg-slate-50/50 dark:bg-slate-800/50">
+          <button
+            type="button"
+            (click)="closeCreateVenueModal()"
+            class="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl transition-colors cursor-pointer"
+          >
+            <span>✕</span> Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitCreateVenue()"
+            [disabled]="isSubmittingVenue() || !newVenueName() || newVenueCapacity() <= 0"
+            class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            @if (isSubmittingVenue()) {
+              <span class="animate-spin text-xs">⏳</span> Creating...
+            } @else {
+              <span>🏛️</span> Create Venue
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 3: STUDENT ATTENDANCE MONITOR -->
+  @if (isAttendeesModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl overflow-hidden animate-scale-in">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">👥</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                Attendance Monitor: {{ selectedEventForAttendees()?.title }}
+              </h3>
+              <p class="text-2xs text-slate-500 dark:text-slate-400">
+                Registered student roster for this event.
+              </p>
+            </div>
+          </div>
+          <button
+            (click)="closeAttendeesModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="p-5 max-h-[60vh] overflow-y-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/75 text-slate-600 dark:text-slate-300 uppercase tracking-wider font-semibold text-2xs">
+                <th class="py-2.5 px-3">Student Index</th>
+                <th class="py-2.5 px-3">Student Name</th>
+                <th class="py-2.5 px-3">Registration Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              @if (isLoadingAttendees()) {
+                <tr>
+                  <td colspan="3" class="py-6 text-center text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="animate-spin text-sm">⏳</span> Loading registered attendees...
+                    </div>
+                  </td>
+                </tr>
+              } @else if (attendeesList().length === 0) {
+                <tr>
+                  <td colspan="3" class="py-6 text-center text-slate-500 dark:text-slate-400">
+                    <p class="font-medium">No students registered for this event yet.</p>
+                  </td>
+                </tr>
+              } @else {
+                @for (r of attendeesList(); track r.id) {
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-2.5 px-3 font-bold font-mono text-slate-900 dark:text-white">
+                      {{ r.student?.indexNumber || 'N/A' }}
+                    </td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300">
+                      {{ r.student?.fullName || 'Student' }}
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <span>●</span> {{ r.status || 'Confirmed' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50/50 dark:bg-slate-800/50">
+          <button
+            type="button"
+            (click)="closeAttendeesModal()"
+            class="px-4 py-2 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition-colors cursor-pointer"
+          >
+            <span>✕</span> Close
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- REUSABLE CONFIRM & ALERT MODALS -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [confirmVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    (confirm)="onConfirmAction()"
+    (cancel)="onCancelConfirm()"
+  />
+
+  <app-alert-modal
+    [isOpen]="isAlertOpen()"
+    [title]="alertTitle()"
+    [message]="alertMessage()"
+    [icon]="alertIcon()"
+    [iconVariant]="alertVariant()"
+    [buttonText]="alertButtonText()"
+    (close)="closeAlert()"
+  />
+</div>

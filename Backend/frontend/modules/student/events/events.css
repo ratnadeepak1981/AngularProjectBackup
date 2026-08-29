@@ -1,0 +1,4 @@
+/* Student Events Module CSS */
+#events-grid .card {
+    border-top: 4px solid var(--primary-blue);
+}

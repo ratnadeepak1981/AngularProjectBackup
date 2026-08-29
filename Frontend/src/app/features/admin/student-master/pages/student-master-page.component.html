@@ -1,0 +1,330 @@
+<div class="space-y-6">
+  <!-- Reusable 3D Real Tab Navigation Component -->
+  <app-tab-component
+    [tabs]="adminTabs()"
+    [activeTabId]="activeTab()"
+    [variant]="'3d'"
+    (tabChange)="setActiveTab($any($event))"
+  />
+
+  <!-- TAB 1: STUDENT MASTER INTAKE DIRECTORY -->
+  @if (activeTab() === 'intake') {
+    <!-- Page Header & Action Bar (Reusable PageHeaderComponent) -->
+    <app-page-header
+      [icon]="'📋'"
+      [title]="'Student Master Intake Directory'"
+      [description]="'Pre-approved university registrar intake list used to validate self-service student registration eligibility.'"
+    >
+      <button
+        type="button"
+        (click)="openImportModal()"
+        class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+      >
+        <span>📥</span>
+        <span>+ Import CSV Master File</span>
+      </button>
+    </app-page-header>
+
+  <!-- Search Filter Bar -->
+  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+          🔍
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search by Index Number (e.g. SE/2021/001) or Student Name..."
+          class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">
+        Showing {{ masterRecords().length }} of {{ totalRecords() }} total records
+      </div>
+    </div>
+  </div>
+
+  <!-- Master List Directory Table (Common Reusable Data Table Component) -->
+  <app-data-table
+    [columns]="intakeColumns"
+    [data]="displayIntakeRecords()"
+    [totalRecords]="totalRecords()"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize()"
+    [isLoading]="isLoading()"
+    [sortColumn]="sortColumn() || ''"
+    [sortDirection]="sortDirection() || 'asc'"
+    [sortIconStyle]="'svg-arrows'"
+    [emptyMessage]="'No student master intake records found matching criteria.'"
+    (sortChange)="onIntakeSortChange($event)"
+    (filterChange)="onIntakeFilterChange($event)"
+    (pageChange)="changePage($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
+}
+
+  <!-- TAB 2: REGISTERED STUDENT ACCOUNTS DIRECTORY -->
+  @if (activeTab() === 'accounts') {
+    <!-- Page Header & Overview Bar (Reusable PageHeaderComponent) -->
+    <app-page-header
+      [icon]="'👥'"
+      [title]="'Registered Student Accounts Directory'"
+      [description]="'Manage registered student profiles, verify email confirmation status, and execute cross-module safety deactivation audits.'"
+    >
+      <button
+        type="button"
+        (click)="loadStudentAccounts()"
+        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+      >
+        <span>🔄</span>
+        <span>Refresh Accounts</span>
+      </button>
+    </app-page-header>
+
+    <!-- Search Filter Bar -->
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
+      <div class="flex flex-col sm:flex-row items-center gap-3">
+        <div class="relative flex-1 w-full">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            🔍
+          </span>
+          <input
+            type="text"
+            [(ngModel)]="accountsSearchTerm"
+            (ngModelChange)="onAccountsSearchChange()"
+            placeholder="Search by Index Number, Student Name, Email, or Faculty..."
+            class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">
+          Showing {{ studentAccounts().length }} of {{ accountsTotalRecords() }} total student accounts
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Accounts Directory Table Card (Common Reusable Data Table Component) -->
+    <app-data-table
+      [columns]="accountColumns"
+      [data]="displayFormattedStudentAccounts()"
+      [totalRecords]="accountsTotalRecords()"
+      [currentPage]="accountsCurrentPage()"
+      [pageSize]="accountsPageSize()"
+      [isLoading]="isAccountsLoading()"
+      [sortColumn]="accSortColumn() || ''"
+      [sortDirection]="accSortDirection() || 'asc'"
+      [sortIconStyle]="'svg-arrows'"
+      [emptyMessage]="'No registered student accounts found matching criteria.'"
+      (sortChange)="onAccSortChange($event)"
+      (filterChange)="onAccFilterChange($event)"
+      (pageChange)="changeAccountsPage($event)"
+      (pageSizeChange)="onAccountsPageSizeChange($event)"
+    >
+      <ng-template #cellActions let-row>
+        @if (row.isActive) {
+          <button
+            type="button"
+            (click)="openSafetyModal(row)"
+            class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs rounded-lg border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+          >
+            Deactivate Account
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="reactivateAccount(row)"
+            class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-lg border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+          >
+            Reactivate Account
+          </button>
+        }
+      </ng-template>
+    </app-data-table>
+  }
+</div>
+
+<!-- 1. ALERT MODAL: Displayed when deactivation is BLOCKED by active dependencies -->
+<app-alert-modal
+  [isOpen]="isAlertModalOpen()"
+  [icon]="'🚫'"
+  [iconVariant]="'danger'"
+  [title]="'Safety Deactivation Rejection'"
+  [message]="'Cannot deactivate account for ' + selectedStudentForDeactivate()?.name + ' (' + selectedStudentForDeactivate()?.indexNumber + '). Active university dependencies block deactivation:'"
+  [buttonIcon]="'✓'"
+  [buttonText]="'Understood & Close'"
+  [buttonVariant]="'secondary'"
+  (close)="closeAlertModal()"
+>
+  <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 text-xs mt-1">
+    <span class="font-bold text-rose-800 dark:text-rose-200 block mb-1">Blocking Dependencies Found:</span>
+    <ul class="list-disc pl-5 space-y-1 text-rose-700 dark:text-rose-300 font-medium">
+      @for (reason of safetyCheckReasons(); track $index) {
+        <li>{{ reason }}</li>
+      }
+    </ul>
+  </div>
+</app-alert-modal>
+
+<!-- 2. CONFIRM MODAL: Displayed when deactivation is PERMITTED (Safety audit passed) -->
+<app-confirm-modal
+  [isOpen]="isConfirmModalOpen()"
+  [icon]="'🛡️'"
+  [iconVariant]="'danger'"
+  [title]="'Confirm Student Account Deactivation'"
+  [message]="'Safety audit check passed. No active room allocations, lab bookings, events, complaints, or billing dependencies exist for ' + selectedStudentForDeactivate()?.name + ' (' + selectedStudentForDeactivate()?.indexNumber + '). Are you sure you want to soft-deactivate this account?'"
+  [confirmIcon]="'🗑️'"
+  [confirmText]="'Proceed with Soft Deactivation'"
+  [confirmVariant]="'danger'"
+  [cancelIcon]="'✕'"
+  [cancelText]="'Keep Account Active'"
+  [isLoading]="isDeactivating()"
+  (confirm)="confirmDeactivation()"
+  (cancel)="closeConfirmModal()"
+>
+  <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+    <span>✅</span>
+    <span class="font-semibold">Safety Check Passed: Account is clean for deactivation.</span>
+  </div>
+</app-confirm-modal>
+
+
+<!-- CSV BULK IMPORT MODAL WITH LIVE VALIDATION ENGINE -->
+@if (isImportModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📥</span>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">
+            Import Student Master CSV File
+          </h3>
+        </div>
+        <button
+          type="button"
+          (click)="closeImportModal()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- File Picker & Format Spec -->
+      <div class="overflow-y-auto flex-1 py-4 space-y-4 text-xs font-sans">
+        <div class="p-3 bg-blue-50 dark:bg-blue-950/50 rounded-xl border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200">
+          <span class="font-bold block mb-1">Expected CSV File Structure:</span>
+          <code class="font-mono text-[11px] bg-white/70 dark:bg-slate-900/80 px-2 py-1 rounded block">
+            IndexNumber, FullName, FacultyId
+          </code>
+          <p class="text-[11px] text-blue-700 dark:text-blue-300 mt-1">
+            Example row: <span class="font-mono">SE/2026/001, Kamal Bandara, 1</span>
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+            Select CSV File from Computer
+          </label>
+          <input
+            type="file"
+            accept=".csv"
+            (change)="onFileSelected($event)"
+            class="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800"
+          />
+        </div>
+
+        <!-- Header Error Alert -->
+        @if (csvHeaderError()) {
+          <div class="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-xl font-medium">
+            {{ csvHeaderError() }}
+          </div>
+        }
+
+        <!-- Validation Summary Badges -->
+        @if (parsedCsvRows().length > 0) {
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 rounded-lg font-bold text-xs">
+              ✅ {{ validRowCount() }} Valid Records
+            </span>
+            @if (errorRowCount() > 0) {
+              <span class="px-3 py-1 bg-rose-100 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300 rounded-lg font-bold text-xs">
+                ❌ {{ errorRowCount() }} Validation Errors
+              </span>
+            }
+          </div>
+
+          <!-- Interactive CSV Preview Table -->
+          <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+            <table class="w-full text-left text-xs text-slate-700 dark:text-slate-200">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] uppercase font-bold sticky top-0 border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="px-3 py-2">Line</th>
+                  <th class="px-3 py-2">Index Number</th>
+                  <th class="px-3 py-2">Full Name</th>
+                  <th class="px-3 py-2">Faculty ID</th>
+                  <th class="px-3 py-2">Validation Diagnostics</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
+                @for (row of parsedCsvRows(); track row.lineNumber) {
+                  <tr
+                    [ngClass]="{
+                      'bg-emerald-50/40 dark:bg-emerald-950/20': row.isValid,
+                      'bg-rose-50/70 dark:bg-rose-950/30': !row.isValid
+                    }"
+                  >
+                    <td class="px-3 py-2 text-slate-400 font-sans">#{{ row.lineNumber }}</td>
+                    <td class="px-3 py-2 font-bold">{{ row.indexNumber || '—' }}</td>
+                    <td class="px-3 py-2 font-sans">{{ row.fullName || '—' }}</td>
+                    <td class="px-3 py-2">{{ row.facultyId || '—' }}</td>
+                    <td class="px-3 py-2 font-sans">
+                      @if (row.isValid) {
+                        <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Ready</span>
+                      } @else {
+                        <div class="space-y-0.5">
+                          @for (err of row.errors; track $index) {
+                            <span class="inline-block px-1.5 py-0.5 bg-rose-200 dark:bg-rose-900/80 text-rose-900 dark:text-rose-200 rounded text-[10px] font-semibold">
+                              {{ err }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeImportModal()"
+          class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          (click)="submitImportCSV()"
+          [disabled]="isUploading() || !selectedFile() || errorRowCount() > 0 || validRowCount() === 0"
+          class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+        >
+          @if (isUploading()) {
+            <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full"></span>
+            <span>Uploading...</span>
+          } @else {
+            <span>Upload & Import Master Records</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

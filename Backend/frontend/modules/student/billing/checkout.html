@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Official Fee Checkout - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="billing.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">💳 Secure University Payment Checkout</h1>
+                    <p class="text-secondary">Official University Bursar Office Online Payment Gateway & Fee Clearance Portal</p>
+                </div>
+            </div>
+
+            <div class="checkout-grid">
+                <!-- Left Column: Fee & Student Order Summary -->
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 16px;">📋 Fee Summary & Invoice Details</h3>
+
+                    <div class="invoice-summary-box">
+                        <div class="summary-row">
+                            <span class="text-secondary">Student Account:</span>
+                            <strong id="checkout-student-name">Loading Student...</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span class="text-secondary">Index Number:</span>
+                            <strong id="checkout-student-index">N/A</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span class="text-secondary">Fee Category:</span>
+                            <strong id="checkout-desc" style="color: var(--primary-navy);">Loading Fee Category...</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span class="text-secondary">Due Date:</span>
+                            <span id="checkout-due-date">N/A</span>
+                        </div>
+                        
+                        <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                        <div class="summary-row">
+                            <span>Subtotal Amount:</span>
+                            <span id="checkout-subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Gateway Processing Fee:</span>
+                            <span style="color: green; font-weight: 600;">$0.00 (Waived)</span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <strong>Total Amount Due:</strong>
+                            <strong id="checkout-amount" style="color: var(--primary-navy); font-size: 22px;">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); font-size: 12px; color: #065F46;">
+                        🛡️ <strong>Official Clearance Guarantee:</strong> Payment instantly settles your student ledger statement and issues a downloadable official university bursar receipt.
+                    </div>
+                </div>
+
+                <!-- Right Column: Payment Form -->
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 16px;">🔒 Select Payment Method</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Payment Channel</label>
+                        <select id="checkout-method" class="form-control" onchange="StudentBillingModule.togglePaymentFields()">
+                            <option value="Visa / Mastercard">💳 Visa / Mastercard Credit & Debit Card</option>
+                            <option value="American Express (Amex)">💳 American Express (Amex)</option>
+                            <option value="UnionPay Card">💳 UnionPay Card</option>
+                            <option value="Direct Bank Transfer">🏦 Direct University Online Bank Gateway</option>
+                        </select>
+                    </div>
+
+                    <div id="card-payment-fields">
+                        <div class="form-group">
+                            <label class="form-label">Cardholder Name</label>
+                            <input type="text" id="checkout-cardholder" class="form-control" placeholder="Name as printed on card" value="Student Cardholder">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Card Number</label>
+                            <input type="text" id="checkout-cardnumber" class="form-control" placeholder="•••• •••• •••• ••••" maxlength="19" value="4532 •••• •••• 8892">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="text" id="checkout-expiry" class="form-control" placeholder="MM/YY" maxlength="5" value="12/28">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVC / CVV</label>
+                                <input type="password" id="checkout-cvc" class="form-control" placeholder="•••" maxlength="4" value="882">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bank-payment-fields" style="display: none; background: var(--bg-body); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 13px;">
+                        🏦 <strong>University Bank Account Details:</strong><br>
+                        Bank: Bank of Ceylon - Campus Branch<br>
+                        Account Name: University Bursar Fund<br>
+                        Account No: 0008891042<br>
+                        Reference: Automatic Index Number Verification
+                    </div>
+
+                    <button id="btn-process-payment" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 10px;" onclick="StudentBillingModule.processPayment()">
+                        🔒 Complete Payment & Clear Fee →
+                    </button>
+                    
+                    <a href="index.html" class="btn btn-secondary" style="width: 100%; margin-top: 10px; text-align: center; display: block;">Cancel & Return to Ledger</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Official University Printable Receipt Modal -->
+    <div id="modal-official-receipt" class="modal-overlay">
+        <div class="modal-card" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📄 Official University Bursar Payment Receipt</h3>
+                <button class="modal-close" onclick="StudentBillingModule.closeReceiptModal()">✕</button>
+            </div>
+            
+            <div id="printable-receipt-content" class="official-receipt-box">
+                <div class="receipt-header">
+                    <div style="font-size: 24px; font-weight: 800; color: var(--primary-navy);">UNIVERSITY OF KELANIYA</div>
+                    <div style="font-size: 12px; letter-spacing: 1px; color: var(--text-secondary);">OFFICE OF THE UNIVERSITY BURSAR • PAYMENT RECEIPT</div>
+                    <div id="receipt-no" style="font-weight: 700; color: var(--accent-gold); margin-top: 6px;">Receipt #: REC-2026-889104</div>
+                </div>
+
+                <div class="receipt-body" style="margin: 20px 0; font-size: 13px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--bg-body); padding: 14px; border-radius: var(--radius-sm);">
+                        <div><strong>Student Name:</strong> <span id="receipt-student-name">Student Account</span></div>
+                        <div><strong>Index Number:</strong> <span id="receipt-student-index">S1002</span></div>
+                        <div><strong>Payment Date:</strong> <span id="receipt-date">07-Aug-2026</span></div>
+                        <div><strong>Payment Method:</strong> <span id="receipt-method">Visa Card</span></div>
+                    </div>
+
+                    <table class="table" style="margin-top: 16px;">
+                        <thead>
+                            <tr>
+                                <th>Description / Fee Category</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Amount Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="receipt-fee-name">Tuition Semester Fee</td>
+                                <td><span class="badge badge-approved">PAID & CLEARED</span></td>
+                                <td id="receipt-amount" style="text-align: right; font-weight: 700; color: var(--primary-navy);">$0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="receipt-stamp">
+                        <div class="stamp-inner">
+                            OFFICIAL BURSAR STAMP<br>
+                            VERIFIED & CLEARED<br>
+                            PAID IN FULL
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="StudentBillingModule.printCurrentReceipt()">🖨️ Print / Download PDF Receipt</button>
+                <button class="btn btn-secondary" onclick="StudentBillingModule.closeReceiptModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="billing.js"></script>
+</body>
+</html>

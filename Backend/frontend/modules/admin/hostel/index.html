@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Hostel Management - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="hostel-admin.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">🏢 Hostel & Room Allocation Management</h1>
+                    <p class="text-secondary">Manage campus hostel buildings, room capacities, application approvals, and student room assignments.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="AdminHostelModule.openCreateHostelModal()">+ Create Hostel</button>
+                    <button class="btn btn-secondary" onclick="AdminHostelModule.openCreateRoomModal()">+ Add Room</button>
+                </div>
+            </div>
+
+            <!-- Pending Housing Applications Table -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 Pending Housing Applications</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Index</th>
+                                <th>Student Name</th>
+                                <th>Preferred Hostel</th>
+                                <th>Term / Semester</th>
+                                <th>Special Requirements</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-apps-tbody">
+                            <tr><td colspan="7" class="text-secondary">Loading pending applications...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Hostel Directory & Room Capacity Analysis -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">🏢 Hostels & Rooms Directory</h3>
+                <div id="hostels-directory-container">
+                    <p class="text-secondary">Loading hostel buildings...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Room Allocation Modal Dialog -->
+    <div id="modal-assign-room" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Assign Room to Student</h3>
+                <button class="modal-close" onclick="AdminHostelModule.closeAssignModal()">✕</button>
+            </div>
+            <p id="assign-student-name" class="text-secondary" style="margin-bottom: 16px;">Assigning room for student...</p>
+            <div class="form-group">
+                <label class="form-label">Available Room (Occupied / Max Capacity)</label>
+                <select id="select-assign-room" class="form-control" required>
+                    <option value="">-- Select Vacant Room --</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminHostelModule.confirmRoomAssignment()">Confirm Room Assignment</button>
+        </div>
+    </div>
+
+    <!-- Create Hostel Modal Dialog -->
+    <div id="modal-create-hostel" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Campus Hostel Building</h3>
+                <button class="modal-close" onclick="AdminHostelModule.closeHostelModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hostel Building Name</label>
+                <input type="text" id="input-hostel-name" class="form-control" placeholder="e.g. Oxford Hall A" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminHostelModule.submitCreateHostel()">Create Building</button>
+        </div>
+    </div>
+
+    <!-- Create Room Modal Dialog -->
+    <div id="modal-create-room" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Hostel Room</h3>
+                <button class="modal-close" onclick="AdminHostelModule.closeRoomModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hostel Building</label>
+                <select id="select-room-hostel" class="form-control" required>
+                    <option value="">-- Select Hostel --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Room Number / Identifier</label>
+                <input type="text" id="input-room-number" class="form-control" placeholder="e.g. R-101" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Max Student Capacity</label>
+                <input type="number" id="input-room-capacity" class="form-control" value="2" min="1" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminHostelModule.submitCreateRoom()">Create Room</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="hostel-admin.js"></script>
+</body>
+</html>

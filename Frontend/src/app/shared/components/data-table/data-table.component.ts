@@ -1,0 +1,331 @@
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ContentChild,
+  TemplateRef,
+  OnChanges,
+  SimpleChanges,
+  signal,
+  computed,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TableColumn } from './models/table-column.model';
+import { TableSortState } from './models/table-sort.model';
+import { PaginationComponent } from '../tables-utilities/pagination/pagination.component';
+
+@Component({
+  selector: 'app-data-table',
+  standalone: true,
+  imports: [CommonModule, FormsModule, PaginationComponent],
+  templateUrl: './data-table.component.html',
+  styleUrl: './data-table.component.css',
+})
+export class DataTableComponent implements OnChanges {
+  @Input() columns: TableColumn<any>[] = [];
+  @Input() data: any[] = [];
+  @Input() totalRecords: number = 0;
+  @Input() currentPage: number = 1;
+  @Input() pageSize: number = 10;
+  @Input() isLoading: boolean = false;
+  @Input() sortColumn: string = '';
+  @Input() sortDirection: 'asc' | 'desc' = 'asc';
+  @Input() sortIconStyle: 'svg-arrows' | 'unicode-arrows' | 'minimal' = 'svg-arrows';
+  @Input() emptyMessage: string = 'No records found matching criteria.';
+  @Input() serverSide: boolean = false;
+
+  @ContentChild('cellActions') cellActionsTemplate?: TemplateRef<any>;
+  @ContentChild('cellCustom') cellCustomTemplate?: TemplateRef<any>;
+
+  @Output() sortChange = new EventEmitter<TableSortState>();
+  @Output() filterChange = new EventEmitter<Record<string, string[]>>();
+  @Output() pageChange = new EventEmitter<number>();
+  @Output() pageSizeChange = new EventEmitter<number>();
+
+  // Filter Popover & Sorting Internal Signals
+  public readonly activeFilterMenu = signal<string | null>(null);
+  public readonly activeFilters = signal<Record<string, string[]>>({});
+  public readonly tempSelectedFilters = signal<Record<string, string[]>>({});
+  public readonly columnSearchTerms = signal<Record<string, string>>({});
+
+  public readonly inputDataSignal = signal<any[]>([]);
+  public readonly currentSortColumn = signal<string>('');
+  public readonly currentSortDirection = signal<'asc' | 'desc'>('asc');
+  public readonly clientCurrentPage = signal<number>(1);
+  public readonly clientPageSize = signal<number>(10);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['data']) {
+      this.inputDataSignal.set(this.data || []);
+    }
+    if (changes['sortColumn']) {
+      this.currentSortColumn.set(this.sortColumn || '');
+    }
+    if (changes['sortDirection']) {
+      this.currentSortDirection.set(this.sortDirection || 'asc');
+    }
+    if (changes['currentPage']) {
+      this.clientCurrentPage.set(this.currentPage || 1);
+    }
+    if (changes['pageSize']) {
+      this.clientPageSize.set(this.pageSize || 10);
+    }
+  }
+
+  public readonly activeFilterCount = computed(() => {
+    return Object.keys(this.activeFilters()).filter(
+      (k) => (this.activeFilters()[k] || []).length > 0
+    ).length;
+  });
+
+  // Processed Data Signal (Automatic Client-Side Sorting & Filtering)
+  public readonly processedData = computed(() => {
+    const raw = this.inputDataSignal();
+    if (this.serverSide) {
+      return raw;
+    }
+
+    let list = [...raw];
+
+    // 1. Column Funnel Filters
+    const colFilters = this.activeFilters();
+    Object.entries(colFilters).forEach(([colKey, allowedVals]) => {
+      if (allowedVals && allowedVals.length > 0) {
+        list = list.filter((row) => {
+          const val = row[colKey];
+          const strVal = val !== undefined && val !== null ? String(val) : '';
+          return allowedVals.includes(strVal);
+        });
+      }
+    });
+
+    // 2. Column Sorting
+    const sCol = this.currentSortColumn();
+    const sDir = this.currentSortDirection();
+    if (sCol) {
+      list.sort((a, b) => {
+        let vA: any = a[sCol];
+        let vB: any = b[sCol];
+
+        if (vA === undefined || vA === null) vA = '';
+        if (vB === undefined || vB === null) vB = '';
+
+        if (typeof vA === 'number' && typeof vB === 'number') {
+          return sDir === 'asc' ? vA - vB : vB - vA;
+        }
+
+        const dateA = Date.parse(vA);
+        const dateB = Date.parse(vB);
+        if (!isNaN(dateA) && !isNaN(dateB) && typeof vA === 'string' && (vA.includes('-') || vA.includes('/') || vA.includes(':'))) {
+          return sDir === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+
+        const strA = String(vA).toLowerCase();
+        const strB = String(vB).toLowerCase();
+        return sDir === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
+      });
+    }
+
+    return list;
+  });
+
+  public readonly displayTotalRecords = computed(() => {
+    const raw = this.inputDataSignal();
+    if (this.serverSide || this.totalRecords > 0) {
+      return this.totalRecords || raw.length;
+    }
+    return this.processedData().length;
+  });
+
+  public readonly pagedData = computed(() => {
+    const list = this.processedData();
+    // If parent component or backend API manages total records / pagination (totalRecords > 0 or serverSide),
+    // display list directly to prevent double-slicing array bounds.
+    if (this.serverSide || this.totalRecords > 0) {
+      return list;
+    }
+
+    const page = this.clientCurrentPage();
+    const size = this.clientPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  // Sorting Handlers
+  toggleSort(columnKey: string): void {
+    const col = this.columns.find((c) => c.key === columnKey);
+    if (!col || col.sortable === false) return;
+
+    let nextDir: 'asc' | 'desc' = 'asc';
+    if (this.currentSortColumn() === columnKey) {
+      nextDir = this.currentSortDirection() === 'asc' ? 'desc' : 'asc';
+    }
+
+    this.currentSortColumn.set(columnKey);
+    this.currentSortDirection.set(nextDir);
+    this.sortChange.emit({ column: columnKey, direction: nextDir });
+  }
+
+  setSort(columnKey: string, direction: 'asc' | 'desc'): void {
+    this.currentSortColumn.set(columnKey);
+    this.currentSortDirection.set(direction);
+    this.sortChange.emit({ column: columnKey, direction });
+  }
+
+  // Pagination Handlers
+  onPageChange(newPage: number): void {
+    this.clientCurrentPage.set(newPage);
+    this.pageChange.emit(newPage);
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.clientPageSize.set(newSize);
+    this.clientCurrentPage.set(1);
+    this.pageSizeChange.emit(newSize);
+  }
+
+  // Filter Popover Menu Controls
+  toggleColumnFilter(columnKey: string, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.activeFilterMenu() === columnKey) {
+      this.activeFilterMenu.set(null);
+    } else {
+      const currentApplied = this.activeFilters()[columnKey] || [];
+      const distinct = this.getDistinctValues(columnKey);
+      const initialSelected = currentApplied.length > 0 ? [...currentApplied] : [...distinct];
+
+      this.tempSelectedFilters.set({
+        ...this.tempSelectedFilters(),
+        [columnKey]: initialSelected,
+      });
+
+      this.activeFilterMenu.set(columnKey);
+    }
+  }
+
+  closeColumnFilter(): void {
+    this.activeFilterMenu.set(null);
+  }
+
+  isColumnFiltered(columnKey: string): boolean {
+    return (this.activeFilters()[columnKey] || []).length > 0;
+  }
+
+  getDistinctValues(columnKey: string): string[] {
+    const raw = this.inputDataSignal();
+    if (!raw) return [];
+    const set = new Set<string>();
+    raw.forEach((row) => {
+      const val = row[columnKey];
+      if (val !== undefined && val !== null) {
+        set.add(String(val));
+      }
+    });
+    return Array.from(set).sort();
+  }
+
+  getFilteredDistinctVals(columnKey: string): string[] {
+    const all = this.getDistinctValues(columnKey);
+    const search = (this.columnSearchTerms()[columnKey] || '').toLowerCase().trim();
+    if (!search) return all;
+    return all.filter((v) => v.toLowerCase().includes(search));
+  }
+
+  onColSearch(columnKey: string, search: string): void {
+    this.columnSearchTerms.set({
+      ...this.columnSearchTerms(),
+      [columnKey]: search,
+    });
+  }
+
+  isValSelected(columnKey: string, val: string): boolean {
+    const list = this.tempSelectedFilters()[columnKey] || [];
+    return list.includes(val);
+  }
+
+  toggleValSelection(columnKey: string, val: string): void {
+    const list = [...(this.tempSelectedFilters()[columnKey] || [])];
+    const idx = list.indexOf(val);
+    if (idx > -1) {
+      list.splice(idx, 1);
+    } else {
+      list.push(val);
+    }
+    this.tempSelectedFilters.set({
+      ...this.tempSelectedFilters(),
+      [columnKey]: list,
+    });
+  }
+
+  isAllValSelected(columnKey: string): boolean {
+    const filtered = this.getFilteredDistinctVals(columnKey);
+    const selected = this.tempSelectedFilters()[columnKey] || [];
+    return filtered.length > 0 && filtered.every((v) => selected.includes(v));
+  }
+
+  toggleSelectAllVals(columnKey: string): void {
+    const filtered = this.getFilteredDistinctVals(columnKey);
+    const currentSelected = [...(this.tempSelectedFilters()[columnKey] || [])];
+    const allSelected = this.isAllValSelected(columnKey);
+
+    let updated: string[];
+    if (allSelected) {
+      updated = currentSelected.filter((v) => !filtered.includes(v));
+    } else {
+      updated = Array.from(new Set([...currentSelected, ...filtered]));
+    }
+
+    this.tempSelectedFilters.set({
+      ...this.tempSelectedFilters(),
+      [columnKey]: updated,
+    });
+  }
+
+  applyColumnFilter(columnKey: string): void {
+    const selected = this.tempSelectedFilters()[columnKey] || [];
+    const allVals = this.getDistinctValues(columnKey);
+
+    const isFiltered = selected.length > 0 && selected.length < allVals.length;
+
+    const newActive = { ...this.activeFilters() };
+    if (isFiltered) {
+      newActive[columnKey] = selected;
+    } else {
+      delete newActive[columnKey];
+    }
+
+    this.clientCurrentPage.set(1);
+    this.activeFilters.set(newActive);
+    this.filterChange.emit(newActive);
+    this.closeColumnFilter();
+  }
+
+  clearColumnFilter(columnKey: string): void {
+    const newActive = { ...this.activeFilters() };
+    delete newActive[columnKey];
+    this.activeFilters.set(newActive);
+
+    const newSearch = { ...this.columnSearchTerms() };
+    delete newSearch[columnKey];
+    this.columnSearchTerms.set(newSearch);
+
+    this.clientCurrentPage.set(1);
+    this.filterChange.emit(newActive);
+    this.closeColumnFilter();
+  }
+
+  clearAllColumnFilters(): void {
+    this.activeFilters.set({});
+    this.columnSearchTerms.set({});
+    this.tempSelectedFilters.set({});
+    this.clientCurrentPage.set(1);
+    this.filterChange.emit({});
+    this.closeColumnFilter();
+  }
+
+  getCellValue(row: any, col: TableColumn<any>): any {
+    return row[col.key];
+  }
+}

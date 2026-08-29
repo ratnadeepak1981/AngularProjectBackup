@@ -1,0 +1,78 @@
+/* assets/styles/main.css */
+:root {
+    --primary: #004b36;         /* Deep Premium Emerald Green */
+    --primary-light: #e6f2ed;   /* Smooth light accent green */
+    --accent-gold: #bfa15f;     /* Subtle Academic Gold for high contrast alerts */
+    --bg-light: #f7faf9;        /* Soft premium ivory-gray backdrop */
+    --text-main: #1a202c;       /* Clear dark slate for readable text */
+    --text-muted: #5a6a85;      /* High-contrast accessible descriptive text */
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --radius: 10px;             /* Sleeker rounded edges */
+    --shadow: 0 4px 20px -2px rgba(0, 75, 54, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.02);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;           /* Prevents whole-page scroll breakages */
+}
+
+/* Common Header Layout */
+header {
+    background-color: var(--primary);
+    color: var(--white);
+    height: 65px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 3px solid var(--accent-gold); /* Premium structural boundary separator */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-badge {
+    background-color: var(--accent-gold);
+    color: var(--primary);
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.logo-title {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+/* Fixed Base Layout Footer */
+/* Fixes the footer text contrast and adds the primary emerald backdrop */
+footer {
+    flex-shrink: 0;
+    padding: 18px 0;
+    border-top: 1px solid var(--primary-hover);
+    color: rgba(255, 255, 255, 0.8) !important; /* Soft inherited white tone */
+    font-size: 13px;
+    text-align: center;
+    background-color: var(--primary) !important; /* Forces the premium emerald color */
+    width: 100%;
+    font-weight: 500;
+}

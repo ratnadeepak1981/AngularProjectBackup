@@ -1,0 +1,91 @@
+/* assets/styles/layout.css */
+
+/* 1. Core Page Framework Layout */
+.page-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: calc(100vh - 65px); /* Forces main view to fit screen window height */
+}
+
+/* 2. Left Structural Sidebar Design */
+aside {
+    background-color: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-left: 12px;
+}
+
+/* Removes bullet points and margins from list container */
+.sidebar-menu {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Removes list item markers explicitly */
+.sidebar-menu li {
+    list-style-type: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+/* Formats menu navigation links beautifully */
+.sidebar-link {
+    display: block;
+    color: var(--text-main) !important;
+    text-decoration: none !important;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-link:hover {
+    background-color: var(--bg-light);
+    color: var(--primary) !important;
+}
+
+.sidebar-link.active {
+    background-color: var(--primary-light) !important;
+    color: var(--primary) !important;
+    font-weight: 600;
+}
+
+/* 3. Main Frame Viewport Controller */
+main {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.scrollable-content {
+    flex-grow: 1;
+    min-height: 0; /* Keeps the container from overflowing and hiding the footer */
+    padding: 40px;
+    overflow-y: auto; /* Activates internal scrolling cleanly */
+}
+
+/* 4. Adaptive Layout Media Queries */
+@media (max-width: 768px) {
+    .page-wrapper {
+        grid-template-columns: 1fr;
+    }
+    aside {
+        display: none;
+    }
+}

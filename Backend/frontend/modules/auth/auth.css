@@ -1,0 +1,100 @@
+/* Authentication Layer Layout Rules */
+body {
+    background: linear-gradient(135deg, #0F2C59 0%, #1E3A8A 50%, #2563EB 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 440px;
+    padding: 36px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.auth-brand {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.auth-brand .logo-badge {
+    background: var(--primary-blue);
+    color: white;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.auth-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary-navy);
+    margin-top: 12px;
+}
+
+.auth-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.password-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.label-no-margin {
+    margin-bottom: 0;
+}
+
+.forgot-password-link {
+    font-size: 12px;
+    color: var(--primary-blue);
+    text-decoration: none;
+}
+
+.login-submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+}
+
+.register-redirect-container {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.register-link {
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Modal Internal Rules */
+.modal-instruction-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.full-width-btn {
+    width: 100%;
+}
+
+.modal-step-2-hidden {
+    display: none;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}

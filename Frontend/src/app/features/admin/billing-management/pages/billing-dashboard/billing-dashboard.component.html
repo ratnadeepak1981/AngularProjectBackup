@@ -1,0 +1,100 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header (Reusable PageHeaderComponent) -->
+  <app-page-header
+    [icon]="'💳'"
+    [title]="'Tuition Fees & Fine Management'"
+    [description]="'Create fee types, assign single/bulk fees to students, issue lab fines, and manage unpaid assignments.'"
+  >
+    <button
+      (click)="isAssignModalOpen.set(true)"
+      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+    >
+      <span>+ 💳</span> Assign Fee / Fine
+    </button>
+    <button
+      (click)="isCreateFeeTypeModalOpen.set(true)"
+      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-sm transition-all cursor-pointer"
+    >
+      <span>+ 🏷️</span> Create Fee Type
+    </button>
+  </app-page-header>
+
+  <!-- Chrome 3D Reusable Tab Component -->
+  <app-tab-component
+    [tabs]="billingTabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="setActiveTab($event)"
+  />
+
+  <!-- TAB 1: SYSTEM FEE & FINE PAYMENT ASSIGNMENTS LEDGER -->
+  @if (activeTabId() === 'ledger') {
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
+      <app-fee-assignments-list
+        [ledgerItems]="ledgerItems()"
+        [isLoading]="isLoadingLedger()"
+        [totalRecords]="ledgerTotalRecords()"
+        [currentPage]="ledgerCurrentPage()"
+        [pageSize]="ledgerPageSize()"
+        (pageChange)="onLedgerPageChange($event)"
+        (pageSizeChange)="onLedgerPageSizeChange($event)"
+        (cancelUnpaid)="onCancelUnpaidFee($event)"
+        (refresh)="loadLedger()"
+      />
+    </div>
+  }
+
+  <!-- TAB 2: FEE TYPES DIRECTORY -->
+  @if (activeTabId() === 'feetypes') {
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
+      <app-fee-types-list
+        [feeTypes]="feeTypes()"
+        [isLoading]="isLoadingFeeTypes()"
+        (deactivate)="onDeactivateFeeType($event)"
+        (refresh)="loadFeeTypes()"
+      />
+    </div>
+  }
+
+  <!-- MODAL 1: ASSIGN FEE OR ISSUE LAB FINE -->
+  <app-assign-fee-modal
+    [isOpen]="isAssignModalOpen()"
+    [feeTypes]="feeTypes()"
+    [students]="students()"
+    [faculties]="faculties()"
+    (close)="isAssignModalOpen.set(false)"
+    (saved)="loadLedger()"
+    (triggerAlert)="onTriggerAlert($event)"
+    (triggerConfirm)="onTriggerConfirm($event)"
+  />
+
+  <!-- MODAL 2: CREATE FEE TYPE -->
+  <app-create-fee-type-modal
+    [isOpen]="isCreateFeeTypeModalOpen()"
+    (close)="isCreateFeeTypeModalOpen.set(false)"
+    (saved)="loadFeeTypes()"
+    (triggerConfirm)="onTriggerConfirm($event)"
+  />
+
+  <!-- REUSABLE CONFIRM & ALERT MODALS -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [confirmVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    (confirm)="onConfirmAction()"
+    (cancel)="onCancelConfirm()"
+  />
+
+  <app-alert-modal
+    [isOpen]="isAlertOpen()"
+    [title]="alertTitle()"
+    [message]="alertMessage()"
+    [icon]="alertIcon()"
+    [iconVariant]="alertVariant()"
+    [buttonText]="alertButtonText()"
+    (close)="closeAlert()"
+  />
+</div>

@@ -1,0 +1,72 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+    (click)="onClose()"
+  >
+    <div
+      class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 flex flex-col transition-colors"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          @if (icon()) {
+            <span
+              class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+              [ngClass]="{
+                'bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-300': iconVariant() === 'danger',
+                'bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-300': iconVariant() === 'warning',
+                'bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-300': iconVariant() === 'info',
+                'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-300': iconVariant() === 'success'
+              }"
+            >
+              {{ icon() }}
+            </span>
+          }
+          <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
+            {{ title() }}
+          </h3>
+        </div>
+        <button
+          type="button"
+          (click)="onClose()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition-colors cursor-pointer"
+          title="Close dialog"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Body / Message -->
+      <div class="py-4 space-y-3">
+        @if (message()) {
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            {{ message() }}
+          </p>
+        }
+
+        <!-- Custom Content Projection Slot (e.g. error lists, diagnostic reasons) -->
+        <ng-content></ng-content>
+      </div>
+
+      <!-- Single Action Button Footer -->
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+          [ngClass]="{
+            'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200': buttonVariant() === 'secondary',
+            'bg-blue-600 hover:bg-blue-700 text-white': buttonVariant() === 'primary',
+            'bg-rose-600 hover:bg-rose-700 text-white': buttonVariant() === 'danger'
+          }"
+        >
+          @if (buttonIcon()) {
+            <span>{{ buttonIcon() }}</span>
+          }
+          <span>{{ buttonText() }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

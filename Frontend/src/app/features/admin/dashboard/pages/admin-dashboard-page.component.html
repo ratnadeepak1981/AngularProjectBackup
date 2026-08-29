@@ -1,0 +1,146 @@
+<div class="space-y-6">
+  <!-- Page Title & Header (Reusable PageHeaderComponent) -->
+  <app-page-header
+    [icon]="'🛡️'"
+    [title]="'Administrative Control Console'"
+    [description]="'System analytics, housing allocations, student intake verification, and global system configuration.'"
+  >
+    <button
+      (click)="loadAnalytics()"
+      class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 border border-slate-300 dark:border-slate-700 cursor-pointer shadow-2xs"
+    >
+      <span>🔄</span> Refresh Metrics
+    </button>
+  </app-page-header>
+
+  <!-- 4 Overview Metrics Grid (Reusable DashboardCardComponent) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Card 1: Pending Hostel Apps -->
+    <app-dashboard-card
+      [title]="'Pending Hostel Apps'"
+      [value]="pendingHostels()"
+      [icon]="'🏢'"
+      [iconVariant]="'amber'"
+      [valueVariant]="'amber'"
+      [linkText]="'Review Allocations'"
+      [linkRoute]="'/admin/hostel-management'"
+      [isLoading]="isLoadingMetrics()"
+    />
+
+    <!-- Card 2: Pending Helpdesk Tickets -->
+    <app-dashboard-card
+      [title]="'Pending Helpdesk Tickets'"
+      [value]="pendingComplaints()"
+      [icon]="'🎫'"
+      [iconVariant]="'rose'"
+      [valueVariant]="'rose'"
+      [linkText]="'Triage Tickets'"
+      [linkRoute]="'/admin/complaint-management'"
+      [isLoading]="isLoadingMetrics()"
+    />
+
+    <!-- Card 3: Pending Certificate Requests -->
+    <app-dashboard-card
+      [title]="'Pending Certificates'"
+      [value]="pendingCertificates()"
+      [icon]="'🎓'"
+      [iconVariant]="'blue'"
+      [valueVariant]="'blue'"
+      [linkText]="'Approve Documents'"
+      [linkRoute]="'/admin/certificate-management'"
+      [isLoading]="isLoadingMetrics()"
+    />
+
+    <!-- Card 4: Registered Students -->
+    <app-dashboard-card
+      [title]="'Registered Students'"
+      [value]="totalStudents()"
+      [icon]="'👥'"
+      [iconVariant]="'emerald'"
+      [valueVariant]="'emerald'"
+      [linkText]="'View Accounts'"
+      [linkRoute]="'/admin/students'"
+      [isLoading]="isLoadingMetrics()"
+    />
+  </div>
+
+  <!-- Global System Configuration Card -->
+  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
+    <div class="border-b border-slate-100 dark:border-slate-800 pb-3 mb-5">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>⚙️</span> Global System Configuration Settings
+      </h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure system reservation timeouts and pagination parameters.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Setting 1: Lab Seat Hold Timeout -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            Lab Seat Hold Timeout (Minutes) [BRD Page 12]
+          </label>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            Minutes before an unconfirmed seat reservation expires and frees back to the pool.
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <input
+            type="number"
+            [ngModel]="holdMinutes()"
+            (ngModelChange)="holdMinutes.set($event)"
+            min="1"
+            class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-slate-900 dark:text-white"
+          />
+          <button
+            (click)="saveHoldMinutes()"
+            [disabled]="isSavingHold()"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+          >
+            @if (isSavingHold()) {
+              <span>Saving...</span>
+            } @else {
+              <span>Save Timeout</span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Setting 2: Default Page Size -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            System Default Records Per Page (Pagination) [BRD Page 21]
+          </label>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            Default item limit for paginated data tables across all administrative modules.
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <select
+            [ngModel]="defaultPageSize()"
+            (ngModelChange)="defaultPageSize.set($event)"
+            class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-slate-900 dark:text-white"
+          >
+            <option [value]="5">5 per page</option>
+            <option [value]="10">10 per page</option>
+            <option [value]="15">15 per page</option>
+            <option [value]="20">20 per page</option>
+            <option [value]="25">25 per page</option>
+          </select>
+          <button
+            (click)="saveDefaultPageSize()"
+            [disabled]="isSavingPageSize()"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+          >
+            @if (isSavingPageSize()) {
+              <span>Saving...</span>
+            } @else {
+              <span>Save Default</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

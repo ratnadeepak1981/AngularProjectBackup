@@ -1,0 +1,181 @@
+<div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-slate-700/50 text-slate-800">
+  <!-- Brand Header -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-800 text-white font-extrabold text-xl rounded-xl shadow-md mb-3 tracking-wider">
+      UOK
+    </div>
+    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Campus Services Portal</h1>
+    <p class="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">
+      University Identity & Access Management Gateway
+    </p>
+  </div>
+
+  <!-- Error Alert -->
+  @if (errorMessage()) {
+    <div class="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-lg flex items-center gap-2 animate-shake">
+      <span>⚠️</span>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Sign-in Form -->
+  <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5" novalidate>
+    <div>
+      <label for="email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+        Registered Email Address
+      </label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="admin@university.edu.lk"
+        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-400"
+        [ngClass]="{
+          'border-rose-400 focus:ring-rose-500 bg-rose-50/30':
+            loginForm.get('email')?.touched && loginForm.get('email')?.invalid
+        }"
+      />
+      @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Email address is required.</p>
+      }
+      @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('email')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Please enter a valid email format.</p>
+      }
+    </div>
+
+    <div>
+      <div class="flex justify-between items-center mb-1.5">
+        <label for="password" class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+          Password
+        </label>
+        <button
+          type="button"
+          (click)="openForgotPassword()"
+          class="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+        >
+          Forgot password?
+        </button>
+      </div>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        placeholder="••••••••"
+        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-400"
+        [ngClass]="{
+          'border-rose-400 focus:ring-rose-500 bg-rose-50/30':
+            loginForm.get('password')?.touched && loginForm.get('password')?.invalid
+        }"
+      />
+      @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Password is required.</p>
+      }
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="isLoading()"
+      class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold text-sm rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+    >
+      @if (isLoading()) {
+        <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"></span>
+        <span>Authenticating...</span>
+      } @else {
+        <span>Sign In to Portal Account →</span>
+      }
+    </button>
+  </form>
+
+  <!-- Register Redirection -->
+  <div class="mt-8 text-center text-xs text-slate-500 border-t border-slate-200 pt-5">
+    Don't have an account?
+    <a routerLink="/auth/register" class="text-blue-600 hover:text-blue-800 font-bold hover:underline ml-1">
+      Register with Student Master List
+    </a>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+@if (isForgotPasswordOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 text-slate-800">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <span>🔐</span> Request Password Reset
+        </h3>
+        <button
+          (click)="closeForgotPassword()"
+          class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none"
+        >
+          &times;
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-600 my-3 leading-relaxed">
+        Enter your registered email address to receive a single-use time-limited password reset verification code via SMS.
+      </p>
+
+      <form [formGroup]="resetForm" class="space-y-4">
+        @if (resetStep() === 1) {
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="student@kln.ac.lk"
+              class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+            />
+          </div>
+          <button
+            type="button"
+            (click)="onRequestResetToken()"
+            [disabled]="isResetLoading()"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60"
+          >
+            @if (isResetLoading()) {
+              <span>Generating Code...</span>
+            } @else {
+              <span>Generate Reset Token →</span>
+            }
+          </button>
+        }
+
+        @if (resetStep() === 2) {
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs font-medium mb-3">
+            OTP Token dispatched via SMS! Please check your SMS and enter the code below.
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password Reset Token (OTP)</label>
+            <input
+              type="text"
+              formControlName="token"
+              placeholder="e.g. 482910"
+              class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono tracking-widest text-center text-slate-900"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Strong Password</label>
+            <input
+              type="password"
+              formControlName="newPassword"
+              placeholder="Enter new password"
+              class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+            />
+          </div>
+          <button
+            type="button"
+            (click)="onSubmitPasswordReset()"
+            [disabled]="isResetLoading()"
+            class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60"
+          >
+            @if (isResetLoading()) {
+              <span>Updating Password...</span>
+            } @else {
+              <span>Confirm & Update Password</span>
+            }
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+}

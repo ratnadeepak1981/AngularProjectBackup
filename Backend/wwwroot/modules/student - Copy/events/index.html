@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Events - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="events.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📅 University Campus Events</h1>
+                    <p class="text-secondary">Browse upcoming academic conferences, workshops, and campus activities.</p>
+                </div>
+            </div>
+
+            <!-- Events Grid Directory -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Upcoming University Events</h3>
+                <div id="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+                    <p class="text-secondary">Loading university events catalog...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="events.js"></script>
+</body>
+</html>

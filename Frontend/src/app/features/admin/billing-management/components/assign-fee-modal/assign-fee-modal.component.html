@@ -1,0 +1,220 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden animate-scale-in">
+      <!-- Header -->
+      <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">💳</span>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Assign Fee or Issue Lab Fine</h3>
+            <p class="text-2xs text-slate-500 dark:text-slate-400">Allocate tuition, lab fine, or campus fee (Single or Faculty Bulk Run).</p>
+          </div>
+        </div>
+        <button
+          (click)="onClose()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <!-- Assignment Scope Selector -->
+        <div>
+          <label class="block text-2xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+            Assignment Target Scope (BRD Page 15)
+          </label>
+          <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              (click)="scopeMode.set('single')"
+              [class]="scopeMode() === 'single' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium'"
+              class="px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>👤</span> Single Student
+            </button>
+            <button
+              type="button"
+              (click)="scopeMode.set('faculty')"
+              [class]="scopeMode() === 'faculty' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium'"
+              class="px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>🏛️</span> Faculty Bulk Run
+            </button>
+          </div>
+        </div>
+
+        <!-- MODE A: SINGLE STUDENT LIVE SEARCH AUTOCOMPLETE -->
+        @if (scopeMode() === 'single') {
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Target Student <span class="text-rose-500">*</span>
+            </label>
+
+            @if (selectedStudentId() > 0) {
+              <!-- Selected Student Badge -->
+              <div class="flex justify-between items-center px-3 py-2 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">👤</span>
+                  <span class="text-xs font-bold text-blue-900 dark:text-blue-200">{{ selectedStudentLabel() }}</span>
+                </div>
+                <button
+                  type="button"
+                  (click)="clearSelectedStudent()"
+                  class="text-2xs text-rose-600 hover:text-rose-700 font-bold px-2 py-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950 cursor-pointer"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            } @else {
+              <!-- Search Input & Live Results -->
+              <div class="relative">
+                <input
+                  type="text"
+                  [ngModel]="studentSearchTerm()"
+                  (ngModelChange)="onStudentSearchInput($event)"
+                  placeholder="Type student name or index (e.g. STU/2026/001 or Kamal)..."
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                />
+
+                @if (isSearchingStudents()) {
+                  <div class="absolute right-3 top-2.5 text-2xs text-slate-400 animate-pulse">Searching...</div>
+                }
+
+                <!-- Live Results Dropdown Popover -->
+                @if (searchedStudents().length > 0) {
+                  <div class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                    @for (s of searchedStudents(); track s.id || s.Id) {
+                      <div
+                        (click)="selectStudent(s)"
+                        class="px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer border-b border-slate-100 dark:border-slate-800/60 flex justify-between items-center transition-colors"
+                      >
+                        <div>
+                          <div class="font-bold text-slate-900 dark:text-white">{{ s.fullName || s.name || s.FullName }}</div>
+                          <div class="text-2xs text-slate-500 font-mono">{{ s.indexNumber || s.IndexNumber || 'N/A' }}</div>
+                        </div>
+                        <span class="text-2xs font-semibold text-blue-600 dark:text-blue-400">Select →</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- MODE B: FACULTY BULK RUN COHORT SELECTOR -->
+        @if (scopeMode() === 'faculty') {
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Target Faculty Cohort <span class="text-rose-500">*</span>
+            </label>
+            <select
+              [ngModel]="selectedFacultyId()"
+              (ngModelChange)="selectedFacultyId.set(+$event)"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
+            >
+              <option [value]="0">-- Select Faculty Cohort --</option>
+              @for (f of faculties; track f.id || f.Id) {
+                <option [value]="f.id || f.Id">
+                  {{ f.name || f.Name }}
+                </option>
+              }
+            </select>
+            <p class="text-2xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
+              ⚠️ Warning: Bulk run will issue this fee to ALL students enrolled in the selected faculty.
+            </p>
+          </div>
+        }
+
+        <!-- Fee Type -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Fee Type <span class="text-rose-500">*</span>
+          </label>
+          <select
+            [ngModel]="selectedFeeTypeId()"
+            (ngModelChange)="selectedFeeTypeId.set(+$event)"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
+          >
+            <option [value]="0">-- Select Fee Type --</option>
+            @for (ft of feeTypes; track ft.id) {
+              <option [value]="ft.id" [disabled]="!ft.isActive">
+                {{ ft.name }} {{ !ft.isActive ? '[DEACTIVATED]' : '' }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Fee Amount ($) <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            [ngModel]="amount()"
+            (ngModelChange)="amount.set($event)"
+            placeholder="100.00"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono"
+          />
+        </div>
+
+        <!-- Due Date -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Due Date <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="date"
+            [ngModel]="dueDate()"
+            (ngModelChange)="dueDate.set($event)"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <!-- Optional Description -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Description / Memo (Optional)
+          </label>
+          <textarea
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+            rows="2"
+            placeholder="e.g. Science Lab Equipment Fine or Semester Tuition"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-2.5 bg-slate-50/50 dark:bg-slate-800/50">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl transition-colors cursor-pointer"
+        >
+          <span>✕</span> Cancel
+        </button>
+        <button
+          type="button"
+          (click)="onSubmit()"
+          [disabled]="isSubmitting() || (scopeMode() === 'single' && selectedStudentId() === 0) || (scopeMode() === 'faculty' && selectedFacultyId() === 0) || selectedFeeTypeId() === 0 || amount() <= 0 || !dueDate()"
+          class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          @if (isSubmitting()) {
+            <span class="animate-spin text-xs">⏳</span> Assigning...
+          } @else if (scopeMode() === 'faculty') {
+            <span>🏛️</span> Execute Faculty Bulk Run
+          } @else {
+            <span>💳</span> Assign Fee to Student
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

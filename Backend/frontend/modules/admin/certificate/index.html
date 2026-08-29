@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Certificate Approvals - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="certificate-admin.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📜 Certificate Request Approvals & Types Management</h1>
+                    <p class="text-secondary">Approve student document requests, update collection status, and manage certificate types with soft-delete.</p>
+                </div>
+                <button class="btn btn-primary" onclick="AdminCertificateModule.openCreateTypeModal()">+ Create Certificate Type</button>
+            </div>
+
+            <!-- Certificate Requests Approvals Table Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 Student Certificate Requests Ledger</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Index</th>
+                                <th>Certificate Type</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Requested Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="certificates-admin-tbody">
+                            <tr><td colspan="6" class="text-secondary">Loading certificate requests...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Certificate Types Directory Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📁 Certificate Types Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Certificate Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="types-tbody">
+                            <tr><td colspan="3" class="text-secondary">Loading certificate types...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Type Modal Dialog -->
+    <div id="modal-create-type" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Certificate Type</h3>
+                <button class="modal-close" onclick="AdminCertificateModule.closeTypeModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Certificate Type Name</label>
+                <input type="text" id="input-type-name" class="form-control" placeholder="e.g. Official Academic Transcript" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminCertificateModule.submitCreateType()">Create Type</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="certificate-admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<div class="space-y-4">
+  <!-- Top Level: Dynamic Hostel Tabs Component -->
+  @if (hostels.length > 0) {
+    <app-tab-component
+      [tabs]="hostelBuildingTabs()"
+      [activeTabId]="selectedHostelId.toString()"
+      (tabChange)="onHostelTabChange($event)"
+    />
+  }
+
+  @if (!selectedHostel()) {
+    <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-10 text-center text-slate-400">
+      <span class="text-3xl">🏢</span>
+      <p class="mt-2 font-semibold text-slate-500 dark:text-slate-400">No hostel buildings configured yet.</p>
+      <button
+        (click)="openCreateHostelModal()"
+        class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm"
+      >
+        + Create First Hostel Building
+      </button>
+    </div>
+  } @else {
+    <!-- Selected Hostel Building Detail Card -->
+    <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+      <!-- Building Overview Header & Action Buttons -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl font-bold border border-blue-200 dark:border-blue-800 shrink-0">
+            🏢
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h3 class="text-lg font-black text-slate-900 dark:text-white">
+                {{ selectedHostel()?.name }}
+              </h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                {{ selectedHostel()?.rooms?.length || 0 }} Rooms
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span>Total Capacity: <strong class="text-slate-800 dark:text-slate-200">{{ selectedHostelTotalCapacity() }} Students</strong></span>
+              <span>•</span>
+              <span>Occupied: <strong class="text-emerald-600 dark:text-emerald-400">{{ selectedHostelCurrentOccupancy() }} Students</strong></span>
+              <span>•</span>
+              <span>Vacant Balance: <strong class="text-blue-600 dark:text-blue-400">{{ selectedHostelTotalCapacity() - selectedHostelCurrentOccupancy() }} Slots</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button
+            (click)="openEditHostelModal(selectedHostel()!)"
+            class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <span>✏️</span> Edit Hostel
+          </button>
+          <button
+            (click)="createRoom.emit(selectedHostel()!.id)"
+            class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <span>+</span> Add Room
+          </button>
+          <button
+            (click)="deactivateHostel(selectedHostel()!)"
+            class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+          >
+            Deactivate Hostel
+          </button>
+        </div>
+      </div>
+
+      <!-- Room Filters Toolbar -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div class="sm:col-span-5 relative">
+          <input
+            type="text"
+            [ngModel]="roomSearchTerm()"
+            (ngModelChange)="roomSearchTerm.set($event); roomPage.set(1)"
+            placeholder="Search room number (e.g. B-102)..."
+            class="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+          />
+          <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+          @if (roomSearchTerm()) {
+            <button
+              (click)="roomSearchTerm.set(''); roomPage.set(1)"
+              class="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              ✕
+            </button>
+          }
+        </div>
+
+        <div class="sm:col-span-3">
+          <select
+            [ngModel]="roomCapacityFilter()"
+            (ngModelChange)="roomCapacityFilter.set($event); roomPage.set(1)"
+            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          >
+            <option value="">All Capacity Sizes</option>
+            <option value="1">Single Room (1 Student)</option>
+            <option value="2">Double Room (2 Students)</option>
+            <option value="3">Shared Room (3+ Students)</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-3">
+          <select
+            [ngModel]="roomOccupancyFilter()"
+            (ngModelChange)="roomOccupancyFilter.set($event); roomPage.set(1)"
+            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          >
+            <option value="">All Occupancy States</option>
+            <option value="vacant">Vacant Slots Available</option>
+            <option value="full">Fully Occupied</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-1 flex justify-end">
+          @if (roomSearchTerm() || roomCapacityFilter() || roomOccupancyFilter()) {
+            <button
+              (click)="roomSearchTerm.set(''); roomCapacityFilter.set(''); roomOccupancyFilter.set(''); roomPage.set(1)"
+              class="px-2.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+            >
+              Reset
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Rooms Data Table (Common Reusable Data Table Component) -->
+      <app-data-table
+        [columns]="roomColumns"
+        [data]="pagedRooms()"
+        [totalRecords]="filteredRooms().length"
+        [currentPage]="roomPage()"
+        [pageSize]="roomPageSize()"
+        [isLoading]="isLoading"
+        [sortColumn]="roomSortColumn()"
+        [sortDirection]="roomSortAsc() ? 'asc' : 'desc'"
+        [sortIconStyle]="'svg-arrows'"
+        [emptyMessage]="'No rooms found matching your search. Click &quot;+ Add Room&quot; to create a new room.'"
+        (sortChange)="onRoomSortChange($event)"
+        (filterChange)="onRoomFilterChange($event)"
+        (pageChange)="roomPage.set($event)"
+        (pageSizeChange)="roomPageSize.set($event); roomPage.set(1)"
+      >
+        <ng-template #cellActions let-row>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="editRoom.emit(row)"
+              class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-semibold text-xs border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>✏️</span> Edit
+            </button>
+            <button
+              (click)="deactivateRoom(row)"
+              class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+            >
+              Deactivate
+            </button>
+          </div>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- Create Campus Hostel Building Modal -->
+  @if (isCreateHostelModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🏢</span> Create Campus Hostel Building
+          </h3>
+          <button (click)="closeCreateHostelModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+            Hostel Building Name
+          </label>
+          <input
+            type="text"
+            [ngModel]="newHostelName()"
+            (ngModelChange)="newHostelName.set($event)"
+            placeholder="e.g. Oxford Hall A"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          />
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            type="button"
+            (click)="closeCreateHostelModal()"
+            class="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitCreateHostel()"
+            [disabled]="isCreatingHostel() || !newHostelName().trim()"
+            class="w-1/2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 text-white font-semibold text-xs shadow-md transition-all cursor-pointer"
+          >
+            @if (isCreatingHostel()) {
+              <span>Creating...</span>
+            } @else {
+              <span>Create Building</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Hostel Modal -->
+  @if (isEditHostelModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>✏️</span> Edit Hostel Building
+          </h3>
+          <button (click)="closeEditHostelModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-3 py-1">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+              Hostel Building Name
+            </label>
+            <input
+              type="text"
+              [ngModel]="editHostelName()"
+              (ngModelChange)="editHostelName.set($event)"
+              placeholder="e.g. Sangamitta Hall (Girls)"
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            type="button"
+            (click)="closeEditHostelModal()"
+            class="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitEditHostel()"
+            [disabled]="isUpdatingHostel() || !editHostelName().trim()"
+            class="w-1/2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 text-white font-semibold text-xs shadow-md transition-all cursor-pointer"
+          >
+            @if (isUpdatingHostel()) {
+              <span>Saving...</span>
+            } @else {
+              <span>Update Hostel</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,180 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header Component with Automatic Student Index Badge -->
+  <app-page-header
+    [icon]="'📅'"
+    [title]="'University Campus Events'"
+    [description]="'Browse upcoming academic conferences, workshops, and campus activities.'"
+  >
+    <button
+      type="button"
+      (click)="loadEvents()"
+      [disabled]="isLoading()"
+      class="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+      title="Refresh Events Feed"
+    >
+      <span [class.animate-spin]="isLoading()">🔄</span>
+      <span>Refresh</span>
+    </button>
+  </app-page-header>
+
+  <!-- Filter & Search Controls Bar -->
+  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+    <!-- Search Bar -->
+    <div class="relative w-full md:w-80">
+      <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        🔍
+      </span>
+      <input
+        type="text"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        placeholder="Search events by title, venue..."
+        class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+      />
+    </div>
+
+    <!-- Filter Pills / Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+      <button
+        type="button"
+        (click)="activeFilter.set('all')"
+        class="px-3.5 py-1.5 text-xs rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+        [ngClass]="{
+          'bg-blue-600 text-white shadow-xs': activeFilter() === 'all',
+          'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700': activeFilter() !== 'all'
+        }"
+      >
+        <span>📅</span>
+        <span>All Events</span>
+        <span
+          class="px-1.5 py-0.2 rounded-full text-2xs font-bold"
+          [ngClass]="activeFilter() === 'all' ? 'bg-blue-800 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'"
+        >
+          {{ eventCards().length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeFilter.set('registered')"
+        class="px-3.5 py-1.5 text-xs rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+        [ngClass]="{
+          'bg-emerald-600 text-white shadow-xs': activeFilter() === 'registered',
+          'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700': activeFilter() !== 'registered'
+        }"
+      >
+        <span>✓</span>
+        <span>My Registered</span>
+        <span
+          class="px-1.5 py-0.2 rounded-full text-2xs font-bold"
+          [ngClass]="activeFilter() === 'registered' ? 'bg-emerald-800 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'"
+        >
+          {{ totalRegisteredCount() }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeFilter.set('available')"
+        class="px-3.5 py-1.5 text-xs rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+        [ngClass]="{
+          'bg-blue-600 text-white shadow-xs': activeFilter() === 'available',
+          'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700': activeFilter() !== 'available'
+        }"
+      >
+        <span>🟢</span>
+        <span>Available Only</span>
+        <span
+          class="px-1.5 py-0.2 rounded-full text-2xs font-bold"
+          [ngClass]="activeFilter() === 'available' ? 'bg-blue-800 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'"
+        >
+          {{ totalAvailableCount() }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Events Catalog Section -->
+  <div class="space-y-4">
+    <div class="flex justify-between items-center px-1">
+      <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>Upcoming University Events</span>
+        @if (filteredEvents().length > 0) {
+          <span class="px-2 py-0.5 text-2xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md">
+            Showing {{ filteredEvents().length }}
+          </span>
+        }
+      </h2>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="py-16 text-center text-slate-500 dark:text-slate-400 bg-white/60 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div class="flex flex-col items-center justify-center gap-2">
+          <span class="animate-spin text-2xl">⏳</span>
+          <p class="font-semibold text-xs">Loading university events catalog...</p>
+        </div>
+      </div>
+    } @else if (filteredEvents().length === 0) {
+      <!-- Empty State -->
+      <div class="py-16 text-center text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto px-4">
+          <span class="text-4xl">📅</span>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">No University Events Found</h3>
+          <p class="text-xs text-slate-400 mb-3">
+            @if (activeFilter() === 'registered') {
+              You have not registered for any upcoming university events yet.
+            } @else {
+              There are currently no events matching your search or selected filter.
+            }
+          </p>
+          @if (searchTerm() || activeFilter() !== 'all') {
+            <button
+              type="button"
+              (click)="searchTerm.set(''); activeFilter.set('all')"
+              class="px-3.5 py-1.5 text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- Responsive Events Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        @for (ev of filteredEvents(); track ev.id) {
+          <app-event-card
+            [event]="ev"
+            [isProcessing]="isActionProcessing() && processingEventId() === ev.id"
+            (register)="promptRegisterEvent($event)"
+            (cancel)="promptCancelRegistration($event)"
+          />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- REUSABLE CONFIRM & ALERT MODALS -->
+  <!-- ========================================================================= -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [confirmVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    (confirm)="onConfirmAction()"
+    (cancel)="onCancelConfirm()"
+  />
+
+  <app-alert-modal
+    [isOpen]="isAlertOpen()"
+    [title]="alertTitle()"
+    [message]="alertMessage()"
+    [icon]="alertIcon()"
+    [iconVariant]="alertVariant()"
+    (close)="closeAlert()"
+  />
+</div>

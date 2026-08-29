@@ -1,0 +1,46 @@
+/* Student Lab Booking Module Styles */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+}
+
+.seat-node {
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-color);
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.seat-node.available {
+    background-color: var(--status-available-bg);
+    color: var(--status-available-text);
+    border-color: var(--status-available-border);
+}
+
+.seat-node.available:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-blue);
+}
+
+.seat-node.held {
+    background-color: var(--status-held-bg);
+    color: var(--status-held-text);
+    border-color: var(--status-held-border);
+    cursor: not-allowed;
+}
+
+.seat-node.occupied {
+    background-color: var(--status-occupied-bg);
+    color: var(--status-occupied-text);
+    border-color: var(--status-occupied-border);
+    cursor: not-allowed;
+}

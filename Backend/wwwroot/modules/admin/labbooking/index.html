@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Lab & Seat Management - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="labbooking-admin.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">💻 Laboratory & Workstation Seat Management</h1>
+                    <p class="text-secondary">Configure Computer vs Science laboratories, build workstation seat layouts, and inspect real-time matrix holds.</p>
+                </div>
+                <button class="btn btn-primary" onclick="AdminLabModule.openCreateLabModal()">+ Create New Lab</button>
+            </div>
+
+            <!-- Labs Directory Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Campus Laboratories Directory</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Lab Name</th>
+                                <th>Lab Type</th>
+                                <th>Max Capacity</th>
+                                <th>Configured Seats</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="labs-directory-tbody">
+                            <tr><td colspan="5" class="text-secondary">Loading laboratories...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Seat Builder & Layout Matrix Inspector Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" id="inspector-lab-title">Inspect Workstation Seat Layout Matrix</h3>
+                    <button id="btn-add-seat" class="btn btn-sm btn-outline" style="display: none;" onclick="AdminLabModule.addSeatToSelectedLab()">+ Add Workstation Seat</button>
+                </div>
+                <div id="admin-seat-grid-container" class="seat-grid-container">
+                    <p class="text-secondary" style="text-align: center; padding: 20px;">Select a laboratory above to inspect workstation seat map.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Lab Modal Dialog -->
+    <div id="modal-create-lab" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Campus Laboratory</h3>
+                <button class="modal-close" onclick="AdminLabModule.closeLabModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Laboratory Name</label>
+                <input type="text" id="input-lab-name" class="form-control" placeholder="e.g. Advanced AI Computer Lab" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Laboratory Type [BRD Page 8]</label>
+                <select id="select-lab-type" class="form-control" required>
+                    <option value="Computer">Computer Lab (Individual Workstation Seats)</option>
+                    <option value="Science">Science Lab (Bench Slot Capacity)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Max Student Capacity</label>
+                <input type="number" id="input-lab-capacity" class="form-control" value="20" min="1" required>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="AdminLabModule.submitCreateLab()">Create Laboratory</button>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="labbooking-admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+  <!-- Header & SSL Encrypted Badge -->
+  <div>
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>🔒 Select Payment Channel & Bank Gateway</span>
+      </h3>
+      <span class="text-2xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
+        256-Bit SSL Encrypted
+      </span>
+    </div>
+    <p class="text-2xs text-slate-500 dark:text-slate-400">Official Sri Lankan University Bursar Online Payment Gateway Simulation.</p>
+  </div>
+
+  <!-- Channel Navigation Tabs -->
+  <div class="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+    <button
+      type="button"
+      (click)="selectedChannel.set('card')"
+      [class]="selectedChannel() === 'card' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium'"
+      class="px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+    >
+      <span>💳</span> Credit / Debit Card
+    </button>
+    <button
+      type="button"
+      (click)="selectedChannel.set('lankapay')"
+      [class]="selectedChannel() === 'lankapay' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium'"
+      class="px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+    >
+      <span>📱</span> LankaPay Direct
+    </button>
+    <button
+      type="button"
+      (click)="selectedChannel.set('slip')"
+      [class]="selectedChannel() === 'slip' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium'"
+      class="px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+    >
+      <span>📄</span> Bank Slip Upload
+    </button>
+  </div>
+
+  <!-- CHANNEL 1: CREDIT / DEBIT CARD SIMULATION -->
+  @if (selectedChannel() === 'card') {
+    <div class="space-y-4 animate-fade-in">
+      <!-- Card Brand Selector Badges (Visa, Mastercard, Amex, UnionPay, Discover) -->
+      <div>
+        <label class="block text-2xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          Select Card Brand / Network
+        </label>
+        <div class="grid grid-cols-4 sm:grid-cols-5 gap-2">
+          @for (brand of cardBrands; track brand.id) {
+            <button
+              type="button"
+              (click)="selectCardBrand(brand.id)"
+              [class]="selectedCardBrand() === brand.id ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-md ring-2 ring-blue-400/40' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'"
+              class="px-2 py-2 rounded-xl border text-2xs transition-all cursor-pointer flex flex-col items-center justify-center gap-1 truncate"
+            >
+              <span class="text-base">{{ brand.icon }}</span>
+              <span class="font-bold tracking-tight text-[10px] uppercase truncate">{{ brand.name }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Cardholder Name -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Cardholder Name
+        </label>
+        <input
+          type="text"
+          [ngModel]="cardholderName()"
+          (ngModelChange)="cardholderName.set($event)"
+          placeholder="e.g. Kamal Perera"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <!-- Card Number -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Card Number
+        </label>
+        <div class="relative">
+          <input
+            type="text"
+            [ngModel]="cardNumber()"
+            (ngModelChange)="cardNumber.set($event)"
+            placeholder="4532 **** **** 8892"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono tracking-wider"
+          />
+          <span class="absolute right-3 top-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">
+            {{ selectedCardBrand() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Expiry & CVC Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Expiry Date
+          </label>
+          <input
+            type="text"
+            [ngModel]="expiryDate()"
+            (ngModelChange)="expiryDate.set($event)"
+            placeholder="MM/YY (12/28)"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            CVC / CVV
+          </label>
+          <input
+            type="password"
+            maxlength="4"
+            [ngModel]="cvc()"
+            (ngModelChange)="cvc.set($event)"
+            placeholder="***"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono"
+          />
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- CHANNEL 2: LANKAPAY DIRECT BANK TRANSFER SIMULATION -->
+  @if (selectedChannel() === 'lankapay') {
+    <div class="space-y-4 animate-fade-in">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Select LankaPay Participating Bank Online Portal
+        </label>
+        <select
+          [ngModel]="selectedLankaBank()"
+          (ngModelChange)="selectedLankaBank.set($event)"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
+        >
+          @for (bank of lankaBanks; track bank.id) {
+            <option [value]="bank.id">{{ bank.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Bank Account Holder Name (Optional)
+        </label>
+        <input
+          type="text"
+          [ngModel]="bankAccountHolder()"
+          (ngModelChange)="bankAccountHolder.set($event)"
+          placeholder="e.g. K. A. Perera"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          LankaPay Direct Transaction Reference ID
+        </label>
+        <input
+          type="text"
+          [ngModel]="lankaRefNo()"
+          (ngModelChange)="lankaRefNo.set($event)"
+          placeholder="e.g. LKP-2026-987654"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- CHANNEL 3: BANK DEPOSIT SLIP UPLOAD SIMULATION -->
+  @if (selectedChannel() === 'slip') {
+    <div class="space-y-4 animate-fade-in">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Upload Bank Deposit Receipt Slip (.pdf, .jpg, .png)
+        </label>
+        <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-4 text-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 transition-colors">
+          <input
+            type="file"
+            id="slip-upload"
+            (change)="onSlipFileSelected($event)"
+            accept=".pdf,.jpg,.jpeg,.png"
+            class="hidden"
+          />
+          <label for="slip-upload" class="cursor-pointer block space-y-1">
+            <span class="text-2xl block">📄</span>
+            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 block">
+              {{ slipFileName() ? slipFileName() : 'Click or Drag & Drop Deposit Slip' }}
+            </span>
+            <span class="text-2xs text-slate-400 block">Max file size: 5MB</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Bank Teller Deposit Slip Reference No.
+        </label>
+        <input
+          type="text"
+          [ngModel]="slipRefNo()"
+          (ngModelChange)="slipRefNo.set($event)"
+          placeholder="e.g. BARS-SLIP-2026-00123"
+          class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- Actions -->
+  <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+    <button
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="isSubmitting"
+      class="w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+    >
+      @if (isSubmitting) {
+        <span class="animate-spin text-sm">⏳</span> Processing Clearing Transaction...
+      } @else {
+        <span>🔒</span> Complete Payment & Submit (${{ (item?.amount || 0).toFixed(2) }}) →
+      }
+    </button>
+    <button
+      type="button"
+      (click)="cancelCheckout.emit()"
+      class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+    >
+      Cancel & Return to Ledger
+    </button>
+  </div>
+</div>
+
+<!-- 🛡️ 3D SECURE CARD SMS OTP VERIFICATION MODAL -->
+@if (is3DSecureOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in space-y-5">
+      <!-- Modal Header -->
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-xl text-blue-600 dark:text-blue-400">
+          🛡️
+        </div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+          {{ selectedCardBrand().toUpperCase() }} 3D Secure SMS OTP Verification
+        </h3>
+        <p class="text-2xs text-slate-500 dark:text-slate-400">
+          An SMS One-Time Password (OTP) has been sent to your registered card mobile line (+94 77 *** 4567).
+        </p>
+      </div>
+
+      <!-- 6-Digit OTP Code Input (Starts EMPTY for user input / paste) -->
+      <div>
+        <label class="block text-2xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 text-center">
+          Enter 6-Digit Numeric Card OTP
+        </label>
+        <input
+          type="text"
+          maxlength="6"
+          [ngModel]="cardOtpCode()"
+          (ngModelChange)="cardOtpCode.set($event)"
+          placeholder="e.g. 852914"
+          class="w-full px-3 py-2.5 text-center text-lg tracking-widest font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="space-y-2 pt-1">
+        <button
+          type="button"
+          (click)="onAuthorize3DSecure()"
+          class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+        >
+          <span>🔒</span> Authenticate & Authorize Payment (${{ (item?.amount || 0).toFixed(2) }})
+        </button>
+        <button
+          type="button"
+          (click)="close3DSecureModal()"
+          class="w-full py-2 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold transition-colors cursor-pointer"
+        >
+          ✕ Cancel 3D Secure Verification
+        </button>
+      </div>
+    </div>
+  </div>
+}

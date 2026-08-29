@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Services Portal - Student Self-Registration</title>
+    <!-- Enterprise Theme Stylesheet -->
+    <link rel="stylesheet" href="../../assets/styles/theme.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0F2C59 0%, #1E3A8A 50%, #2563EB 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .register-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 560px;
+            padding: 36px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        .step-badge {
+            background: #EFF6FF;
+            color: var(--primary-blue);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #BFDBFE;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-card">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <span class="step-badge">Registration Validation Gate</span>
+            <h1 style="font-size: 22px; font-weight: 800; color: var(--primary-navy); margin-top: 8px;">Student Account Registration</h1>
+            <p style="font-size: 13px; color: var(--text-secondary);">Your Index Number is verified against the official Registrar Master List.</p>
+        </div>
+
+        <form id="register-form" onsubmit="RegisterModule.handleRegistration(event)">
+            
+            <!-- Step 1: Index Master Verification -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px;">
+                <label class="form-label" for="index-number">Student Index Number (Registrar Master List)</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="index-number" class="form-control" placeholder="e.g. SE/2022/045" required>
+                    <button type="button" class="btn btn-outline" onclick="RegisterModule.verifyMasterIndex()">
+                        Verify Master List ✓
+                    </button>
+                </div>
+                <span id="master-verify-status" style="font-size: 12px; font-weight: 600; display: block; margin-top: 6px;"></span>
+            </div>
+
+            <!-- Step 2: Auto-Prefilled & User Fields -->
+            <div class="form-group">
+                <label class="form-label" for="full-name">Full Name (Authoritative Master Record)</label>
+                <input type="text" id="full-name" class="form-control" placeholder="Pre-filled upon index verification" readonly style="background-color: #F1F5F9;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">University Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="student@kln.ac.lk" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="contact-details">Contact Details (Phone / Address)</label>
+                <input type="text" id="contact-details" class="form-control" placeholder="+94 77 123 4567" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="faculty-id">Faculty</label>
+                <select id="faculty-id" class="form-control">
+                    <option value="1">Faculty of Computing & Technology</option>
+                    <option value="2">Faculty of Science</option>
+                    <option value="3">Faculty of Commerce & Management</option>
+                    <option value="4">Faculty of Humanities</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Account Password</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" id="btn-register" class="btn btn-primary" style="width: 100%; padding: 12px;" disabled>
+                Create Student Account (POST /api/students/register)
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-secondary);">
+            Already have an account? <a href="./login.html" style="color: var(--primary-blue); font-weight: 600; text-decoration: none;">Sign In</a>
+        </div>
+    </div>
+
+    <!-- EMAIL VERIFICATION TOKEN MODAL -->
+    <div id="email-verify-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">📧 Email Verification Required</h3>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Your account was created with <code>EmailVerified = false</code>. Enter the single-use token sent to your email to activate login access.
+            </p>
+            <div class="form-group">
+                <label class="form-label">Single-Use Verification Token</label>
+                <input type="text" id="verify-token-input" class="form-control" placeholder="Paste verification token">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="RegisterModule.submitEmailVerification()">
+                Verify Account Token (POST /api/auth/verify-email)
+            </button>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="RegisterModule.resendVerification()">
+                Resend Token Email (POST /api/auth/resend-verification)
+            </button>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../../core/js/toast.service.js"></script>
+    <script src="../../core/js/api.service.js"></script>
+    <script src="../../core/js/auth.service.js"></script>
+    <script src="../../core/js/theme.service.js"></script>
+
+    <script>
+        const RegisterModule = (function() {
+            let isVerifiedMaster = false;
+
+            async function verifyMasterIndex() {
+                const indexNum = document.getElementById('index-number').value.trim();
+                const statusEl = document.getElementById('master-verify-status');
+                const btnReg = document.getElementById('btn-register');
+
+                if (!indexNum) {
+                    return ToastService.error('Please enter an Index Number to verify.');
+                }
+
+                statusEl.textContent = 'Verifying against Registrar Master List...';
+                statusEl.style.color = 'var(--text-secondary)';
+
+                try {
+                    // REST Endpoint: GET /api/student-master/{indexNumber}
+                    const response = await ApiService.get(`/student-master/${encodeURIComponent(indexNum)}`);
+                    const data = response.data || response;
+
+                    document.getElementById('full-name').value = data.fullName || 'Verified Student Record';
+                    if (data.facultyId) document.getElementById('faculty-id').value = data.facultyId;
+
+                    statusEl.textContent = '✓ Index Verified in Master List! Known name pre-filled.';
+                    statusEl.style.color = '#16A34A';
+                    isVerifiedMaster = true;
+                    btnReg.disabled = false;
+
+                    ToastService.success('Index Number validated in StudentMasterList!');
+                } catch (error) {
+                    statusEl.textContent = `✕ ${error.message}`;
+                    statusEl.style.color = '#DC2626';
+                    isVerifiedMaster = false;
+                    btnReg.disabled = true;
+                    ToastService.error(error.message);
+                }
+            }
+
+            async function handleRegistration(e) {
+                e.preventDefault();
+                if (!isVerifiedMaster) {
+                    return ToastService.error('Please verify your Index Number against the Master List first.');
+                }
+
+                const payload = {
+                    indexNumber: document.getElementById('index-number').value.trim(),
+                    fullName: document.getElementById('full-name').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    contactDetails: document.getElementById('contact-details').value.trim(),
+                    facultyId: parseInt(document.getElementById('faculty-id').value),
+                    password: document.getElementById('password').value
+                };
+
+                try {
+                    // REST Endpoint: POST /api/students/register
+                    const response = await ApiService.post('/students/register', payload);
+                    ToastService.success('Account created successfully! Please verify your email.');
+
+                    // Open Email Verification Modal
+                    document.getElementById('email-verify-modal').classList.add('active');
+                } catch (error) {
+                    ToastService.error(error.message);
+                }
+            }
+
+            async function submitEmailVerification() {
+                const token = document.getElementById('verify-token-input').value.trim();
+                if (!token) return ToastService.error('Please enter the verification token.');
+
+                try {
+                    // REST Endpoint: POST /api/auth/verify-email
+                    await ApiService.post('/auth/verify-email', { token });
+                    ToastService.success('Email Account Verified! You can now log in.');
+
+                    setTimeout(() => {
+                        window.location.href = './login.html';
+                    }, 1000);
+                } catch (error) {
+                    ToastService.error(error.message);
+                }
+            }
+
+            async function resendVerification() {
+                const email = document.getElementById('email').value.trim();
+                try {
+                    // REST Endpoint: POST /api/auth/resend-verification
+                    await ApiService.post('/auth/resend-verification', { email });
+                    ToastService.info('Verification token resent to your email.');
+                } catch (error) {
+                    ToastService.error(error.message);
+                }
+            }
+
+            return {
+                verifyMasterIndex,
+                handleRegistration,
+                submitEmailVerification,
+                resendVerification
+            };
+        })();
+    </script>
+</body>
+</html>

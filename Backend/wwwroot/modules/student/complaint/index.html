@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Helpdesk Complaints - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="complaint.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📝 Student Helpdesk Ticket Submission</h1>
+                    <p class="text-secondary">Submit campus service complaints and track administrator resolution notes.</p>
+                </div>
+            </div>
+
+            <!-- New Complaint Submission Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Submit New Complaint Ticket</h3>
+                <form id="form-complaint" onsubmit="StudentComplaintModule.submitComplaint(event)">
+                    <div class="form-group">
+                        <label class="form-label">Complaint Category</label>
+                        <select id="select-category" class="form-control" required>
+                            <option value="">-- Select Category --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Detailed Problem Description</label>
+                        <textarea id="input-description" class="form-control" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Ticket</button>
+                </form>
+            </div>
+
+            <!-- Complaint History Ledger Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 My Complaint History</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Admin Resolution Note</th>
+                                <th>Submitted Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-complaints-tbody">
+                            <tr><td colspan="5" class="text-secondary">Loading complaint tickets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="complaints.js"></script>
+</body>
+</html>

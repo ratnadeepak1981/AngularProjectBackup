@@ -1,0 +1,88 @@
+<header class="theme-header text-white px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-md sticky top-0 z-40 border-b-2 border-amber-500 transition-all duration-300">
+  <!-- Brand & Connection Status -->
+  <div class="flex items-center gap-4">
+    <a routerLink="/" class="flex items-center gap-2.5 text-white no-underline group">
+      <span class="flex items-center justify-center w-8 h-8 bg-blue-600 font-extrabold text-xs rounded-lg shadow group-hover:bg-blue-500 transition-colors">
+        UOK
+      </span>
+      <span class="text-sm sm:text-base font-bold tracking-tight">Campus Services Portal</span>
+    </a>
+
+    <!-- Live Connection Health Status Pill -->
+    <div
+      class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all"
+      [ngClass]="{
+        'bg-emerald-900/40 text-emerald-300 border-emerald-500/40': isConnected(),
+        'bg-rose-900/40 text-rose-300 border-rose-500/40': !isConnected()
+      }"
+    >
+      <span
+        class="w-2 h-2 rounded-full inline-block"
+        [ngClass]="{
+          'bg-emerald-400 animate-pulse': isConnected(),
+          'bg-rose-400': !isConnected()
+        }"
+      ></span>
+      <span>{{ isConnected() ? 'Backend Connected' : 'Backend Disconnected' }}</span>
+    </div>
+  </div>
+
+  <!-- Actions (Theme Switcher, Dark/Light Toggle, User Avatar, Logout) -->
+  <div class="flex items-center gap-2.5 sm:gap-3">
+    <!-- 🏛️ 5 University Theme Selector -->
+    <div class="relative">
+      <select
+        [ngModel]="themeService.currentTheme()"
+        (ngModelChange)="onThemeChange($event)"
+        class="px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer transition-colors backdrop-blur-sm"
+      >
+        @for (t of themes; track t.id) {
+          <option [value]="t.id" class="text-slate-900 bg-white">
+            {{ t.icon }} {{ t.name }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <!-- ☀️ / 🌙 Light & Dark Mode Toggle Switch Button -->
+    <button
+      type="button"
+      (click)="onToggleDarkMode()"
+      [title]="themeService.isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      class="px-2.5 py-1.5 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer backdrop-blur-sm shadow-sm"
+    >
+      @if (themeService.isDarkMode()) {
+        <span class="text-amber-300">🌙</span>
+        <span class="hidden md:inline text-[11px] text-amber-200">Dark</span>
+      } @else {
+        <span class="text-amber-400">☀️</span>
+        <span class="hidden md:inline text-[11px] text-amber-100">Light</span>
+      }
+    </button>
+
+    <!-- User Profile & Avatar -->
+    @if (authService.isAuthenticated()) {
+      <div class="flex items-center gap-2.5 pl-2 border-l border-white/20">
+        <div class="w-8 h-8 rounded-full bg-blue-500/30 border border-blue-400/50 flex items-center justify-center font-bold text-xs text-blue-200 shadow-sm">
+          {{ userInitials() }}
+        </div>
+
+        <div class="hidden md:flex flex-col text-left">
+          <span class="text-xs font-bold text-white leading-tight">
+            {{ authService.userProfile()?.name || (authService.isAdmin() ? 'Administrator Account' : 'Student Account') }}
+          </span>
+          <span class="text-[10px] text-slate-300 font-medium leading-tight">
+            {{ authService.isAdmin() ? 'Administrator' : 'Student' }}
+          </span>
+        </div>
+
+        <button
+          (click)="onLogout()"
+          class="ml-1 px-3 py-1.5 bg-white/10 hover:bg-rose-600/80 border border-white/20 hover:border-rose-400 text-xs font-semibold text-white rounded-lg transition-colors cursor-pointer"
+        >
+          Logout
+        </button>
+      </div>
+    }
+  </div>
+</header>

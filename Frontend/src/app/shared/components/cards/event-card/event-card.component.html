@@ -1,0 +1,101 @@
+<div
+  class="rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 backdrop-blur-xs h-full"
+  [ngClass]="{
+    'border-2 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-md shadow-emerald-500/10': isRegistered(),
+    'border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700': !isRegistered()
+  }"
+>
+  <div>
+    <!-- Top Metadata Row -->
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <!-- Venue / Registration Status Pill -->
+      @if (isRegistered()) {
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 animate-fade-in shrink-0">
+          <span>✓</span> Registered
+        </span>
+      } @else {
+        <span
+          [title]="event().venueName"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 min-w-0 max-w-[260px] truncate"
+        >
+          <span class="shrink-0">📍</span>
+          <span class="truncate">{{ event().venueName }}</span>
+        </span>
+      }
+
+      <!-- Capacity Tracker -->
+      <span class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1 whitespace-nowrap shrink-0">
+        <span>👥</span> Seats: {{ event().registeredCount }}/{{ event().capacity }}
+      </span>
+    </div>
+
+    <!-- Event Title -->
+    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1.5 line-clamp-2">
+      {{ event().title }}
+    </h3>
+
+    <!-- Event Description -->
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 min-h-[32px]">
+      {{ event().description || 'No additional event details provided.' }}
+    </p>
+
+    <!-- Schedule Box -->
+    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 space-y-1.5 text-xs text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800 mb-5">
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">🗓️</span>
+        <span class="font-medium text-slate-500 dark:text-slate-400">Start:</span>
+        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ formattedStart() }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">🏁</span>
+        <span class="font-medium text-slate-500 dark:text-slate-400">End:</span>
+        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ formattedEnd() }}</span>
+      </div>
+      @if (isRegistered()) {
+        <div class="flex items-center gap-2 text-2xs text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
+          <span>🏛️</span>
+          <span>Venue: <strong class="text-slate-700 dark:text-slate-300">{{ event().venueName }}</strong></span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Bottom Action Button Row -->
+  <div>
+    @if (isRegistered()) {
+      <button
+        type="button"
+        (click)="onCancelClick()"
+        [disabled]="isProcessing()"
+        class="w-full py-2.5 px-4 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-700 rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        @if (isProcessing()) {
+          <span class="animate-spin text-xs">⏳</span> Cancelling...
+        } @else {
+          <span>✕</span> Cancel Registration
+        }
+      </button>
+    } @else if (isFull()) {
+      <button
+        type="button"
+        disabled
+        class="w-full py-2.5 px-4 text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 select-none"
+      >
+        <span>🚫</span> Fully Booked
+      </button>
+    } @else {
+      <button
+        type="button"
+        (click)="onRegisterClick()"
+        [disabled]="isProcessing()"
+        class="w-full py-2.5 px-4 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        @if (isProcessing()) {
+          <span class="animate-spin text-xs">⏳</span> Registering...
+        } @else {
+          <span>📅</span> Register for Event
+        }
+      </button>
+    }
+  </div>
+</div>

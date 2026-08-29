@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oxford-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Requests - Campus Services Portal</title>
+    <link rel="stylesheet" href="../../../assets/styles/theme.css">
+    <link rel="stylesheet" href="../../../assets/styles/main.css">
+    <link rel="stylesheet" href="certificate.css">
+</head>
+<body>
+    <header></header>
+
+    <div class="app-container">
+        <aside></aside>
+
+        <main class="app-content">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">📜 Official Certificate & Transcript Requests</h1>
+                    <p class="text-secondary">Request official academic transcripts, degree verification letters, and certificates.</p>
+                </div>
+            </div>
+
+            <!-- New Certificate Request Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">Submit Certificate Request</h3>
+                <form id="form-certificate" onsubmit="StudentCertificateModule.submitRequest(event)">
+                    <div class="form-group">
+                        <label class="form-label">Certificate Type</label>
+                        <select id="select-certificate-type" class="form-control" required>
+                            <option value="">-- Select Certificate Type --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason for Request (Embassy, Employment, Higher Studies)</label>
+                        <textarea id="input-reason" class="form-control" rows="3" placeholder="Enter request justification..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </form>
+            </div>
+
+            <!-- Certificate Request History Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 16px;">📋 My Certificate Request History</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Certificate Type</th>
+                                <th>Justification Reason</th>
+                                <th>Status</th>
+                                <th>Requested Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-certificates-tbody">
+                            <tr><td colspan="4" class="text-secondary">Loading certificate request records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer></footer>
+
+    <script src="../../../core/js/api.service.js"></script>
+    <script src="../../../core/js/auth.service.js"></script>
+    <script src="../../../core/js/toast.service.js"></script>
+    <script src="../../../core/js/theme.service.js"></script>
+    <script src="../../../core/js/app.js"></script>
+    <script src="certificates.js"></script>
+</body>
+</html>

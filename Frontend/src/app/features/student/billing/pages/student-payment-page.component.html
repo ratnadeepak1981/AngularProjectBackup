@@ -1,0 +1,111 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header with Back Button -->
+  <app-page-header
+    [icon]="'💳'"
+    [title]="'Secure University Payment Checkout'"
+    [description]="'Official University Bursar Office Online Payment Gateway & Fee Clearance Portal'"
+  >
+    <button
+      (click)="backToLedger()"
+      class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+    >
+      <span>←</span> Back to Fee Ledger
+    </button>
+  </app-page-header>
+
+  @if (isLoading()) {
+    <div class="p-12 text-center text-slate-400 font-medium animate-pulse">
+      Loading secure checkout details...
+    </div>
+  } @else if (invoiceItem()) {
+    <!-- 2-Column Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- LEFT COLUMN: FEE SUMMARY & INVOICE DETAILS (5 COLS) -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <span>📜</span> Fee Summary & Invoice Details
+          </h3>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+              <span class="text-slate-500 font-medium">Student Account:</span>
+              <span class="font-bold text-slate-900 dark:text-white">{{ authService.userProfile()?.name || 'Student Account' }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+              <span class="text-slate-500 font-medium">Index Number:</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-white">{{ authService.userProfile()?.indexNumber || 'STU/2026/001' }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+              <span class="text-slate-500 font-medium">Fee Category:</span>
+              <span class="font-bold text-slate-900 dark:text-white">{{ invoiceItem()?.feeTypeName || invoiceItem()?.description || 'Tuition Fee' }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+              <span class="text-slate-500 font-medium">Due Date:</span>
+              <span class="font-semibold text-amber-600 dark:text-amber-400">{{ invoiceItem()?.dueDate ? (invoiceItem()?.dueDate | date) : 'Immediate' }}</span>
+            </div>
+
+            <div class="pt-2 space-y-1.5">
+              <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Subtotal Amount:</span>
+                <span class="font-mono font-semibold">${{ (invoiceItem()?.amount || 0).toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Gateway Processing Fee:</span>
+                <span class="text-emerald-600 font-semibold">$0.00 (Waived)</span>
+              </div>
+              <div class="flex justify-between text-sm font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span>Total Amount Due:</span>
+                <span class="font-mono text-lg text-blue-600 dark:text-blue-400">${{ (invoiceItem()?.amount || 0).toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clearance Guarantee Info Box -->
+          <div class="p-3.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-2xs text-blue-900 dark:text-blue-200 flex gap-2.5 items-start">
+            <span class="text-base">🔒</span>
+            <div>
+              <div class="font-bold">Official Bursar Clearance Guarantee</div>
+              <div class="text-blue-700 dark:text-blue-300 mt-0.5">
+                Payment instantly clears your student ledger statement and issues an official downloadable university bursar receipt.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: SRI LANKAN BANK CHECKOUT (7 COLS) -->
+      <div class="lg:col-span-7">
+        <app-payment-checkout
+          [item]="invoiceItem()"
+          [isSubmitting]="isSubmitting()"
+          (submitPayment)="onPaySubmit($event)"
+          (cancelCheckout)="backToLedger()"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- REUSABLE CONFIRM & ALERT MODALS -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [confirmVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    (confirm)="onConfirmPayment()"
+    (cancel)="onCancelConfirm()"
+  />
+
+  <app-alert-modal
+    [isOpen]="isAlertOpen()"
+    [title]="alertTitle()"
+    [message]="alertMessage()"
+    [icon]="alertIcon()"
+    [iconVariant]="alertVariant()"
+    [buttonText]="'View Ledger Receipts'"
+    (close)="onCloseAlert()"
+  />
+</div>

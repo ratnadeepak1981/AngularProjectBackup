@@ -1,0 +1,33 @@
+<div class="app-header">
+    <a href="../../index.html" class="app-brand">
+        <span class="brand-logo">UOK</span>
+        <span>Campus Services Portal</span>
+    </a>
+
+    <div class="header-actions">
+        <!-- Live Connection Health Status Indicator -->
+        <div id="connection-status" class="connection-badge online">
+            <span class="connection-dot"></span>
+            <span id="connection-text">Backend Connected</span>
+        </div>
+
+        <!-- 🏛️ 5 International University Theme Switcher -->
+        <select id="select-university-theme" class="form-control" style="width: auto; padding: 4px 10px; font-size: 12px; height: 32px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);" onchange="ThemeService.setTheme(this.value)">
+            <option value="oxford-navy" style="color: #1e293b;">🏛️ Oxford Royal Navy</option>
+            <option value="cambridge-emerald" style="color: #1e293b;">🌲 Cambridge Emerald</option>
+            <option value="harvard-crimson" style="color: #1e293b;">📜 Harvard Crimson</option>
+            <option value="mit-cyber-dark" style="color: #1e293b;">⚡ MIT Tech Dark</option>
+            <option value="stanford-cardinal" style="color: #1e293b;">☀️ Stanford Cardinal</option>
+        </select>
+
+        <!-- User Profile Dropdown -->
+        <div class="user-menu" id="user-menu-dropdown">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-info">
+                <span class="user-name" id="user-display-name">User Account</span>
+                <span class="user-role" id="user-display-role">Role</span>
+            </div>
+            <button onclick="AuthService.logout()" class="btn btn-sm btn-outline" style="color: white; border-color: rgba(255,255,255,0.4); margin-left: 8px;">Logout</button>
+        </div>
+    </div>
+</div>
