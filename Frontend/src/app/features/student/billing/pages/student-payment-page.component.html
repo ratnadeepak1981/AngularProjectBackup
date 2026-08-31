@@ -2,8 +2,8 @@
   <!-- Page Header with Back Button -->
   <app-page-header
     [icon]="'💳'"
-    [title]="'Secure University Payment Checkout'"
-    [description]="'Official University Bursar Office Online Payment Gateway & Fee Clearance Portal'"
+    [title]="'Secure ' + institutionName() + ' Payment Checkout'"
+    [description]="'Official ' + institutionName() + ' Bursar Office Online Payment Gateway & Fee Clearance Portal'"
   >
     <button
       (click)="backToLedger()"

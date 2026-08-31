@@ -15,14 +15,13 @@
       [title]="'Student Master Intake Directory'"
       [description]="'Pre-approved university registrar intake list used to validate self-service student registration eligibility.'"
     >
-      <button
-        type="button"
-        (click)="openImportModal()"
-        class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
-      >
-        <span>📥</span>
-        <span>+ Import CSV Master File</span>
-      </button>
+      <app-action-button
+        label="Import CSV Master File"
+        icon="download"
+        variant="primary"
+        tooltip="Bulk import student master list from CSV file"
+        (btnClick)="openImportModal()"
+      ></app-action-button>
     </app-page-header>
 
   <!-- Search Filter Bar -->
@@ -303,27 +302,23 @@
 
       <!-- Footer Actions -->
       <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-        <button
-          type="button"
-          (click)="closeImportModal()"
-          class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-        >
-          Cancel
-        </button>
+        <app-action-button
+          label="Cancel"
+          variant="outline"
+          tooltip="Close CSV import dialog"
+          (btnClick)="closeImportModal()"
+        ></app-action-button>
 
-        <button
-          type="button"
-          (click)="submitImportCSV()"
+        <app-action-button
+          label="Upload & Import Master Records"
+          icon="arrow-right"
+          iconPosition="right"
+          variant="primary"
+          [loading]="isUploading()"
           [disabled]="isUploading() || !selectedFile() || errorRowCount() > 0 || validRowCount() === 0"
-          class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
-        >
-          @if (isUploading()) {
-            <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full"></span>
-            <span>Uploading...</span>
-          } @else {
-            <span>Upload & Import Master Records</span>
-          }
-        </button>
+          tooltip="Commit valid student rows from CSV"
+          (btnClick)="submitImportCSV()"
+        ></app-action-button>
       </div>
     </div>
   </div>

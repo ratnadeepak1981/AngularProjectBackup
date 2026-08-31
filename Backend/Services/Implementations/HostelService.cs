@@ -94,56 +94,65 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<HostelApplicationResponseDto>> AssignRoomAsync(int applicationId, AssignRoomDto request)
         {
-            var application = await _hostelRepository.GetApplicationByIdAsync(applicationId);
-            if (application == null)
+            using var transaction = await _hostelRepository.BeginTransactionAsync();
+            try
             {
-                return ServiceResult<HostelApplicationResponseDto>.Failure("Hostel application profile record not found.", 404);
+                var application = await _hostelRepository.GetApplicationByIdAsync(applicationId);
+                if (application == null)
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Hostel application profile record not found.", 404);
+                }
+
+                // Rule #3: Allow Pending, Approved, or RoomAssigned applications to be approved and assigned atomically
+                if (application.Status != "Pending" && application.Status != "Approved" && application.Status != "RoomAssigned")
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. Room assignment is only permitted for active or pending applications.", 400);
+                }
+
+                var room = await _hostelRepository.GetRoomByIdAsync(request.RoomId);
+                if (room == null || !room.IsActive)
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Target allocation room coordinate record does not exist or is inactive.", 404);
+                }
+
+                // Verify the room actually resides within the student's targeted hostel choice block
+                if (room.HostelId != application.PreferredHostelId)
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Location Mismatch. The selected room does not reside within the preferred hostel facility.", 400);
+                }
+
+                // Room Capacity Guard: Compute current load against architectural ceilings
+                int activeOccupants = await _hostelRepository.GetRoomCurrentOccupancyAsync(request.RoomId);
+                if (activeOccupants >= room.MaxCapacity)
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure($"Allocation Denied. Room {room.RoomNumber} has reached its maximum physical capacity limit of {room.MaxCapacity}.", 409);
+                }
+
+                // 1. Stage status updates to RoomAssigned state row properties in shared memory pool
+                application.AssignedRoomId = request.RoomId;
+                application.Status = "RoomAssigned";
+
+                // 2. AUTOMATED TRIGGER: Stage distinct alert details tracking physical room codes
+                await _notificationService.SendInternalNotificationAsync(new CreateNotificationDto
+                {
+                    StudentId = application.StudentId,
+                    Type = "HostelRoomAssigned",
+                    Message = $"Your dynamic accommodation keys have been verified. You are assigned to Room Number: {room.RoomNumber}."
+                });
+
+                // 3. ACID ATOMIC TRANSACTION COMMIT: Commits room assignment AND notification atomically
+                await _hostelRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // Fetch updated state graph to load fresh room details
+                var completeRecord = await _hostelRepository.GetApplicationByIdAsync(applicationId);
+                return ServiceResult<HostelApplicationResponseDto>.Success(MapToResponseDto(completeRecord!), 200);
             }
-
-            // Rule #3: Reject assignment instantly if an admin has not moved the workflow to 'Approved'
-            if (application.Status != "Approved" && application.Status != "RoomAssigned")
+            catch (Exception ex)
             {
-                return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. A room cannot be assigned to an application until it is 'Approved'.", 400);
+                await transaction.RollbackAsync();
+                return ServiceResult<HostelApplicationResponseDto>.Failure($"ACID Transaction Aborted: {ex.Message}", 500);
             }
-
-            var room = await _hostelRepository.GetRoomByIdAsync(request.RoomId);
-            if (room == null || !room.IsActive)
-            {
-                return ServiceResult<HostelApplicationResponseDto>.Failure("Target allocation room coordinate record does not exist or is inactive.", 404);
-            }
-
-            // Verify the room actually resides within the student's targeted hostel choice block
-            if (room.HostelId != application.PreferredHostelId)
-            {
-                return ServiceResult<HostelApplicationResponseDto>.Failure("Location Mismatch. The selected room does not reside within the preferred hostel facility.", 400);
-            }
-
-            // Room Capacity Guard: Compute current load against architectural ceilings
-            int activeOccupants = await _hostelRepository.GetRoomCurrentOccupancyAsync(request.RoomId);
-            if (activeOccupants >= room.MaxCapacity)
-            {
-                return ServiceResult<HostelApplicationResponseDto>.Failure($"Allocation Denied. Room {room.RoomNumber} has reached its maximum physical capacity limit of {room.MaxCapacity}.", 409);
-            }
-
-            // 1. Stage status updates to RoomAssigned state row properties in shared memory pool
-            application.AssignedRoomId = request.RoomId;
-            application.Status = "RoomAssigned";
-
-            // 2. AUTOMATED TRIGGER: Stage distinct alert details tracking physical room codes [INDEX]
-            await _notificationService.SendInternalNotificationAsync(new CreateNotificationDto
-            {
-                StudentId = application.StudentId,
-                Type = "HostelRoomAssigned",
-                Message = $"Your dynamic accommodation keys have been verified. You are assigned to Room Number: {room.RoomNumber}."
-            });
-
-            // 3. ACID ATOMIC SCOPE RECONCILIATION FLUSH [INDEX]
-            // Persists both physical layout alterations and system bulletins concurrently to database context [INDEX]
-            await _hostelRepository.SaveChangesAsync();
-
-            // Fetch updated state graph to load fresh room details
-            var completeRecord = await _hostelRepository.GetApplicationByIdAsync(applicationId);
-            return ServiceResult<HostelApplicationResponseDto>.Success(MapToResponseDto(completeRecord!), 200);
         }
 
         public async Task<ServiceResult<IEnumerable<HostelApplicationResponseDto>>> GetStudentApplicationsAsync(int studentId)
@@ -171,17 +180,28 @@ namespace CampusServicesPortal.Services.Implementations
         {
             var masterList = await _hostelRepository.GetAllHostelsAsync();
 
-            var lookupDtos = masterList.Select(h => new HostelLookupResponseDto
+            var lookupDtos = new List<HostelLookupResponseDto>();
+            foreach (var h in masterList)
             {
-                Id = h.Id,
-                Name = h.Name,
-                Rooms = (h.Rooms ?? new List<Room>()).Select(r => new RoomLookupResponseDto
+                var roomDtos = new List<RoomLookupResponseDto>();
+                foreach (var r in h.Rooms ?? new List<Room>())
                 {
-                    Id = r.Id,
-                    RoomNumber = r.RoomNumber,
-                    MaxCapacity = r.MaxCapacity
-                }).ToList()
-            });
+                    int occupancy = await _hostelRepository.GetRoomCurrentOccupancyAsync(r.Id);
+                    roomDtos.Add(new RoomLookupResponseDto
+                    {
+                        Id = r.Id,
+                        RoomNumber = r.RoomNumber,
+                        MaxCapacity = r.MaxCapacity,
+                        CurrentOccupancy = occupancy
+                    });
+                }
+                lookupDtos.Add(new HostelLookupResponseDto
+                {
+                    Id = h.Id,
+                    Name = h.Name,
+                    Rooms = roomDtos
+                });
+            }
 
             return ServiceResult<IEnumerable<HostelLookupResponseDto>>.Success(lookupDtos, 200);
         }

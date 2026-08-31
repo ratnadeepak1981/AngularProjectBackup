@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Responses.Labs;
+using CampusServicesPortal.DTOs.Responses.Labs;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
@@ -15,20 +15,46 @@ public class LabService : ILabService
         _labRepo = labRepo;
     }
 
-    public async Task<bool> CreateLabAsync(string name, string labType, int capacity)
+    public async Task<bool> CreateLabAsync(string name, string labType, int capacity, int? totalRows = 4, int? totalColumns = 3)
     {
-        var newLab = new Lab { Name = name, LabType = labType, Capacity = capacity };
+        int finalCapacity = capacity;
+        if (labType.Equals("Computer", StringComparison.OrdinalIgnoreCase) && totalRows.HasValue && totalColumns.HasValue)
+        {
+            finalCapacity = totalRows.Value * totalColumns.Value;
+        }
+
+        var newLab = new Lab 
+        { 
+            Name = name, 
+            LabType = labType, 
+            Capacity = finalCapacity,
+            TotalRows = totalRows ?? 4,
+            TotalColumns = totalColumns ?? 3,
+        };
         await _labRepo.AddLabAsync(newLab);
         return await _labRepo.SaveChangesAsync();
     }
 
-    public async Task<bool> AddSeatToLabAsync(int labId, string seatNumber)
+    public async Task<bool> AddSeatToLabAsync(int labId, string seatNumber, int rowIndex = 1, int columnIndex = 1, string? equipmentDetails = null)
     {
         var lab = await _labRepo.GetByIdAsync(labId);
-        if (lab == null || !lab.LabType.Equals("Computer", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Seats can only be added to a valid Computer Lab.");
+        if (lab == null)
+            throw new KeyNotFoundException("Laboratory not found.");
 
-        await _labRepo.AddSeatAsync(new LabSeat { LabId = labId, SeatNumber = seatNumber });
+        // Format seat number with LAB{labId}- prefix if not present
+        string formattedSeatNumber = seatNumber;
+        if (!seatNumber.StartsWith($"LAB{labId}-", StringComparison.OrdinalIgnoreCase))
+        {
+            formattedSeatNumber = $"LAB{labId}-{seatNumber}";
+        }
+
+        await _labRepo.AddSeatAsync(new LabSeat 
+        { 
+            LabId = labId, 
+            SeatNumber = formattedSeatNumber,
+            RowIndex = rowIndex,
+            ColumnIndex = columnIndex,
+        });
         return await _labRepo.SaveChangesAsync();
     }
 

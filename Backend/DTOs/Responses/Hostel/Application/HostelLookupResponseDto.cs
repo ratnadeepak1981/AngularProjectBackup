@@ -14,5 +14,6 @@ namespace CampusServicesPortal.DTOs.Responses.Hostel.Application
         public int Id { get; set; }
         public string RoomNumber { get; set; } = string.Empty;
         public int MaxCapacity { get; set; }
+        public int CurrentOccupancy { get; set; }
     }
 }

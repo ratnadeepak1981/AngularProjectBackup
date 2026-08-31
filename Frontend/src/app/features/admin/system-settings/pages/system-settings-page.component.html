@@ -1,0 +1,343 @@
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="Admin System Settings Control Panel"
+    subtitle="Windows Control Panel style system configuration hub. Click any category card to customize global parameters, hold timeouts, policies, and themes."
+    icon="⚙️"
+    badgeText="System Admin Mode"
+  ></app-page-header>
+
+  <!-- Reusable Live Search & Filter Bar (Shared Utilities Rule #13) -->
+  <div class="relative z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <div class="w-full md:w-80">
+        <app-search
+          placeholder="Search control panel cards..."
+          [value]="searchQuery()"
+          (searchChange)="searchQuery.set($event)"
+          (clear)="searchQuery.set('')"
+        ></app-search>
+      </div>
+
+      <app-filter
+        label="Category"
+        [options]="categoryFilterOptions"
+        [selectedValues]="[selectedCategoryFilter()]"
+        (filterChange)="onCategoryFilterChange($event)"
+      ></app-filter>
+    </div>
+
+    <div class="flex items-center gap-2 text-2xs font-bold text-slate-500 dark:text-slate-400">
+      <span class="px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+        9 Control Panel Cards
+      </span>
+      <span class="px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        Backend Connected (Live Persistence)
+      </span>
+    </div>
+  </div>
+
+  <!-- Windows Control Panel Cards Grid (3 Columns on Desktop, Responsive Breakpoint) -->
+  <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    @for (card of filteredCards(); track card.id) {
+      <app-control-panel-card
+        [card]="card"
+        (cardClick)="openCategoryModal($event)"
+      ></app-control-panel-card>
+    } @empty {
+      <div class="col-span-full bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-slate-200 dark:border-slate-800">
+        <span class="text-3xl block mb-2">🔍</span>
+        <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Matching Settings Category Found</h4>
+        <p class="text-xs text-slate-500 mt-1">Try adjusting your search query keyword.</p>
+      </div>
+    }
+  </div>
+
+  <!-- Category Detail Management Modal Overlay -->
+  @if (isModalOpen() && activeCategory()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 relative max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">{{ activeCategory()?.icon }}</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                {{ activeCategory()?.title }}
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Configure parameters and status rules for this settings category.
+              </p>
+            </div>
+          </div>
+          <button
+            (click)="closeModal()"
+            class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Deactivation / Reactivation Toggle Bar -->
+        <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3"
+          [ngClass]="{
+            'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60': activeStatusMap()[activeCategory()?.title || ''],
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60': !activeStatusMap()[activeCategory()?.title || '']
+          }">
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span>{{ activeStatusMap()[activeCategory()?.title || ''] ? '🟢' : '⚙️' }}</span>
+            <span class="text-slate-800 dark:text-slate-100">
+              Module Status: {{ activeStatusMap()[activeCategory()?.title || ''] ? 'Active (Operational)' : 'Deactivated (In Maintenance)' }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            (click)="toggleCategoryDeactivation(activeCategory()?.title || '')"
+            class="px-3 py-1.5 text-xs font-bold rounded-lg border cursor-pointer transition-colors flex items-center gap-1 shadow-2xs"
+            [ngClass]="{
+              'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300': activeStatusMap()[activeCategory()?.title || ''],
+              'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-emerald-300': !activeStatusMap()[activeCategory()?.title || '']
+            }"
+          >
+            @if (activeStatusMap()[activeCategory()?.title || '']) {
+              <span>⚙️</span> Deactivate Category
+            } @else {
+              <span>⚡</span> Reactivate Category
+            }
+          </button>
+        </div>
+
+        <!-- Category Content Forms -->
+        @if (activeCategory()?.id === 'laboratory') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">⏱️ System Hold Timeout Duration (Minutes)</label>
+              <input
+                type="number"
+                [ngModel]="holdMinutes()"
+                (ngModelChange)="holdMinutes.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">BRD Page 12 rule: default reservation hold protection duration.</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📊 Max Daily Reservation Slots per Student</label>
+              <input
+                type="number"
+                [ngModel]="maxDailySlots()"
+                (ngModelChange)="maxDailySlots.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">BRD Page 12 rule: max 2 slots (4 hours total) per student per day.</p>
+            </div>
+
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <label class="block text-slate-800 dark:text-slate-200 font-bold">🧪 Lab Type Seat Selection Rules (requiresSeatSelection)</label>
+              
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">💻</span>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Computer / Software Engineering Labs</span>
+                  </div>
+                  <label class="flex items-center gap-2 text-2xs font-bold text-blue-700 dark:text-blue-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [ngModel]="computerLabSeatSelection()"
+                      (ngModelChange)="computerLabSeatSelection.set($event)"
+                      class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>requiresSeatSelection = {{ computerLabSeatSelection() }}</span>
+                  </label>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  {{ computerLabSeatSelection() ? '🟢 Mandatory 2D Workstation Seat Selection Matrix & 15-Minute Hold Protection Active.' : '⚪ Direct Capacity Reservation (No 2D Grid).' }}
+                </p>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">🔬</span>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Science / Physics / Chemistry / Biology Labs</span>
+                  </div>
+                  <label class="flex items-center gap-2 text-2xs font-bold text-emerald-700 dark:text-emerald-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [ngModel]="scienceLabSeatSelection()"
+                      (ngModelChange)="scienceLabSeatSelection.set($event)"
+                      class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>requiresSeatSelection = {{ scienceLabSeatSelection() }}</span>
+                  </label>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  {{ scienceLabSeatSelection() ? '🟢 Mandatory 2D Seat Matrix Active.' : '⚡ Direct Capacity Reservation Bypassing 2D Matrix Grid & 15-Min Hold Timer (Rule #6).' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'organization') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🏛️ Official University / Institution Name</label>
+              <input
+                type="text"
+                [ngModel]="institutionName()"
+                (ngModelChange)="institutionName.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">Displayed dynamically on student fee clearance receipts and bursar payment invoices.</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📅 Active Academic Year</label>
+              <div class="flex gap-2 mb-2">
+                <select
+                  [ngModel]="academicYear()"
+                  (ngModelChange)="academicYear.set($event)"
+                  class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+                >
+                  @for (year of academicYearsList(); track year) {
+                    <option [value]="year">{{ year }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Add New Academic Year Inline Control -->
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [ngModel]="newAcademicYearInput()"
+                  (ngModelChange)="newAcademicYearInput.set($event)"
+                  placeholder="Create New Year (e.g. 2027/2028)"
+                  class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  (click)="addAcademicYear()"
+                  class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-2xs transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <span>➕ Add Year</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🏛️ Active Semester Term</label>
+              <div class="flex gap-2 mb-2">
+                <select
+                  [ngModel]="semester()"
+                  (ngModelChange)="semester.set($event)"
+                  class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+                >
+                  @for (sem of semestersList(); track sem) {
+                    <option [value]="sem">{{ sem }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Add New Semester Inline Control -->
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [ngModel]="newSemesterInput()"
+                  (ngModelChange)="newSemesterInput.set($event)"
+                  placeholder="Create New Semester (e.g. Special Term)"
+                  class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  (click)="addSemester()"
+                  class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-2xs transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <span>➕ Add Semester</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'security') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🔑 Minimum Password Length</label>
+              <input
+                type="number"
+                [ngModel]="minPasswordLength()"
+                (ngModelChange)="minPasswordLength.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🚫 Max Failed Login Attempts Lockout Limit</label>
+              <input
+                type="number"
+                [ngModel]="maxFailedLogins()"
+                (ngModelChange)="maxFailedLogins.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'application') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🎨 Primary Portal Theme Color</label>
+              <select
+                [ngModel]="themeColor()"
+                (ngModelChange)="themeColor.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+              >
+                @for (theme of themeOptions; track theme.id) {
+                  <option [value]="theme.id">{{ theme.icon }} {{ theme.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📄 Default Pagination Page Size</label>
+              <input
+                type="number"
+                [ngModel]="defaultPageSize()"
+                (ngModelChange)="defaultPageSize.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+        } @else {
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+            <p class="font-bold text-slate-800 dark:text-white">Active Parameters & Rules Configured:</p>
+            <ul class="list-disc pl-4 space-y-1">
+              @for (item of activeCategory()?.summaryItems; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        <!-- Modal Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="saveCategorySettings()"
+            [disabled]="isLoading()"
+            class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <span>💾</span> Save Settings Parameters
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification Container -->
+  <app-toast-container></app-toast-container>
+</div>

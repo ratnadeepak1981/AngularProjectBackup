@@ -10,6 +10,7 @@ namespace CampusServicesPortal.Services.Interfaces
         Task<ServiceResult<IEnumerable<FeeType>>> GetFeeTypesAsync();
         Task<ServiceResult<FeeType>> CreateFeeTypeAsync(string name);
         Task<ServiceResult<FeeType>> UpdateFeeTypeAsync(int id, string name, bool isActive);
+        Task<ServiceResult<FeeType>> ToggleFeeTypeStatusAsync(int id);
         Task<ServiceResult<object>> DeleteFeeTypeAsync(int id);
     }
 }

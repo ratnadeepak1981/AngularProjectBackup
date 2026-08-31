@@ -1,1 +1,15 @@
-<p>status-badge works!</p>
+<span [class]="badgeClasses">
+  <!-- Live Pulsing Indicator Dot for Pending/Warning States -->
+  @if (showPulseDot) {
+    <span class="relative flex h-2 w-2 shrink-0">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [ngClass]="dotClasses"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2" [ngClass]="dotClasses"></span>
+    </span>
+  } @else {
+    <!-- Solid Status Indicator Dot -->
+    <span class="inline-block h-2 w-2 rounded-full shrink-0" [ngClass]="dotClasses"></span>
+  }
+
+  <!-- Status Label Text -->
+  <span>{{ status }}</span>
+</span>

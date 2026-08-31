@@ -8,11 +8,12 @@ import { PageHeaderComponent } from '../../../../../shared/components/page-heade
 import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
 import { ConfirmModalComponent } from '../../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-faculty-management-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, DataTableComponent, ConfirmModalComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, DataTableComponent, ConfirmModalComponent, ActionButtonComponent],
   templateUrl: './faculty-management.page.component.html',
   styleUrl: './faculty-management.page.component.css',
 })

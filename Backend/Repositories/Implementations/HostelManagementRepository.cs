@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Data;
+using CampusServicesPortal.Data;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -35,15 +35,15 @@ namespace CampusServicesPortal.Repositories
                 .ToListAsync();
 
             return await _context.HostelApplications
-                .AnyAsync(a => a.AssignedRoomId.HasValue && roomIds.Contains(a.AssignedRoomId.Value) && a.Status == "Room Assigned");
+                .AnyAsync(a => a.AssignedRoomId.HasValue && roomIds.Contains(a.AssignedRoomId.Value) && (a.Status == "RoomAssigned" || a.Status == "Room Assigned"));
         }
 
 
         public async Task<int> GetRoomCurrentOccupancyAsync(int roomId)
         {
-            // FIX: Match against AssignedRoomId instead of RoomId
+            // FIX: Match against AssignedRoomId instead of RoomId; handle both RoomAssigned and Room Assigned
             return await _context.HostelApplications
-                .CountAsync(a => a.AssignedRoomId == roomId && a.Status == "Room Assigned");
+                .CountAsync(a => a.AssignedRoomId == roomId && (a.Status == "RoomAssigned" || a.Status == "Room Assigned"));
         }
 
 

@@ -1,1 +1,161 @@
-<p>lab-management-page works!</p>
+<div class="space-y-6">
+  <!-- Page Header Component -->
+  <app-page-header
+    [icon]="'💻'"
+    [title]="'Campus Laboratories & Interactive 2D Seat Matrix Builder'"
+    [description]="'Configure computer laboratory workstation layouts, science lab capacity slots, and monitor student seat hold reservations.'"
+    [badgeText]="'Lab Matrix Builder'"
+  ></app-page-header>
+
+  <!-- Chrome 3D Tab Navigation Component -->
+  <app-tab-component
+    [tabs]="tabs"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- TAB 1: Campus Labs Directory -->
+  @if (activeTabId() === 'labs-list') {
+    <div class="space-y-6 animate-fade-in">
+      <!-- Hidden Create Lab Trigger Component Ref -->
+      <app-lab-details
+        #labDetailsRef
+        class="hidden"
+        [lab]="null"
+        (createLabSubmitted)="onCreateLabSubmitted($event)"
+      ></app-lab-details>
+
+      <!-- Campus Labs Directory Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🏛️</span> Configured Campus Laboratories
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Select a lab row to inspect layout properties or instantiate a new lab profile.
+            </p>
+          </div>
+          <app-action-button
+            label="+ Create New Laboratory"
+            icon="plus"
+            variant="primary"
+            size="sm"
+            (btnClick)="labDetailsRef.openCreateModal()"
+          ></app-action-button>
+        </div>
+
+        <app-data-table
+          [data]="labs()"
+          [columns]="directoryColumns"
+          [pageSize]="10"
+          [showSearch]="true"
+          searchPlaceholder="Search laboratories by name, type, or capacity..."
+        >
+          <!-- Custom Actions Cell Template -->
+          <ng-template #cellActions let-row>
+            <div class="flex items-center gap-2">
+              <app-action-button
+                label="View Specs"
+                icon="search"
+                variant="outline"
+                size="sm"
+                (btnClick)="openSpecsModal(row)"
+              ></app-action-button>
+
+              @if (row.requiresSeatSelection) {
+                <app-action-button
+                  label="Inspect 2D Grid ➔"
+                  icon="grid"
+                  variant="primary"
+                  size="sm"
+                  (btnClick)="openGridModal(row)"
+                ></app-action-button>
+              }
+            </div>
+          </ng-template>
+        </app-data-table>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Interactive 2D Seat Map Builder -->
+  @if (activeTabId() === 'seat-builder') {
+    <div class="space-y-6 animate-fade-in">
+      @if (selectedLab()) {
+        <!-- Selected Lab Card Header -->
+        <app-lab-details
+          [lab]="selectedLab()"
+          (inspectLayout)="inspectLabLayout($event)"
+          (createLabSubmitted)="onCreateLabSubmitted($event)"
+        ></app-lab-details>
+
+        @if (selectedLab()?.requiresSeatSelection) {
+          <!-- 1-Indexed 2D Grid Matrix Component -->
+          <app-lab-grid-matrix
+            [labId]="selectedLab()!.id"
+            [labName]="selectedLab()!.name"
+            [totalRows]="selectedLab()!.totalRows || 4"
+            [totalCols]="selectedLab()!.totalColumns || 3"
+            [seats]="seats()"
+            (seatAdded)="onAddSeat($event)"
+            (seatRemoved)="onRemoveSeat($event)"
+          ></app-lab-grid-matrix>
+        } @else {
+          <!-- Science Lab Batch Allocation Notice -->
+          <div class="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-8 text-center">
+            <span class="text-4xl mb-3 block">🧪</span>
+            <h3 class="text-lg font-bold text-amber-900 dark:text-amber-200">
+              Science Laboratory Batch Capacity Allocation
+            </h3>
+            <p class="text-xs text-amber-700 dark:text-amber-300 max-w-lg mx-auto mt-2">
+              Science labs operate on batch room capacity reservations (Max {{ selectedLab()?.capacity }} students) without individual workstation seat maps.
+            </p>
+          </div>
+        }
+      } @else {
+        <div class="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p class="text-sm text-slate-500">Please select a laboratory from the directory to inspect 2D layout.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- POPUP MODAL OVERLAYS -->
+
+  <!-- 1. Equipment Specs Popup Modal -->
+  @if (isSpecsModalOpen() && selectedLab()) {
+    <app-lab-details
+      [lab]="selectedLab()"
+      [isModal]="true"
+      (closeModal)="closeSpecsModal()"
+      (inspectLayout)="closeSpecsModal(); openGridModal($event)"
+      (createLabSubmitted)="onCreateLabSubmitted($event)"
+    ></app-lab-details>
+  }
+
+  <!-- 2. Interactive 2D Grid Matrix Popup Modal -->
+  @if (isGridModalOpen() && selectedLab()?.requiresSeatSelection) {
+    <app-lab-grid-matrix
+      [labId]="selectedLab()!.id"
+      [labName]="selectedLab()!.name"
+      [totalRows]="selectedLab()!.totalRows || 4"
+      [totalCols]="selectedLab()!.totalColumns || 3"
+      [seats]="seats()"
+      [isModal]="true"
+      (closeModal)="closeGridModal()"
+      (seatAdded)="onAddSeat($event)"
+      (seatRemoved)="onRemoveSeat($event)"
+    ></app-lab-grid-matrix>
+  }
+
+  <!-- TAB 3: Seat Reservations Audit -->
+  @if (activeTabId() === 'bookings-audit') {
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm animate-fade-in">
+      <app-lab-bookings-history
+        [bookings]="bookingsHistory()"
+        [loading]="isLoading()"
+      ></app-lab-bookings-history>
+    </div>
+  }
+</div>

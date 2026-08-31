@@ -1,1 +1,217 @@
-<p>lab-grid-matrix works!</p>
+<div [ngClass]="isModal ? 'fixed inset-0 z-50 flex items-center justify-center p-1 sm:p-2.5 bg-slate-900/60 backdrop-blur-sm' : ''">
+  <div [ngClass]="isModal ? 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-[98vw] max-w-[98vw] max-h-[95vh] flex flex-col overflow-hidden animate-fade-in' : 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xl w-full'">
+    
+    <!-- Matrix Header & Metadata Toolbar (Sticky Top Bar in Modal) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 bg-blue-50 dark:bg-blue-950/50 rounded-lg text-blue-600 dark:text-blue-400">
+            <svg class="w-4 h-4 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0h-18" />
+            </svg>
+          </span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+              1-Indexed 2D Grid Matrix: {{ labName }}
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Grid Resolution: {{ totalRows }} Rows &times; {{ totalCols }} Columns | 1-Indexed Row & Column Headers
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
+          Workstations Configured: {{ seats.length }}
+        </span>
+        @if (isModal) {
+          <button
+            type="button"
+            (click)="closeModal.emit()"
+            class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center gap-1 transition-colors"
+          >
+            <span>✕</span> Close
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Dual Overflow Scroll Body Wrapper -->
+    <div class="flex-1 overflow-auto p-3">
+      <table class="w-full border-collapse min-w-[700px]">
+        <!-- Column Address Headers (1..totalCols) -->
+        <thead>
+          <tr>
+            <th class="w-8 h-7 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider rounded-tl-lg">
+              #
+            </th>
+            @for (col of colsArray; track col) {
+              <th class="h-7 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                COL {{ col }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rowsArray; track row) {
+            <tr>
+              <!-- Row Address Header (1..totalRows) -->
+              <td class="w-8 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                ROW {{ row }}
+              </td>
+
+              @for (col of colsArray; track col) {
+                @let seat = getSeatAt(row, col);
+
+                <td class="p-1 border border-slate-200 dark:border-slate-800 align-middle text-center">
+                  @if (seat) {
+                    <!-- Built Workstation Cell (Full-Box Color Filling: Green, Yellow, Red, Gray) -->
+                    <div
+                      (click)="onStudentSeatClick(seat)"
+                      [class.cursor-pointer]="isStudent && seat.status === 'Available' && !seat.isBroken"
+                      [class.hover:shadow-md]="isStudent && seat.status === 'Available' && !seat.isBroken"
+                      [ngClass]="{
+                        'bg-emerald-50/90 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 hover:border-emerald-500': (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
+                        'bg-amber-50/90 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700/80': seat.status === 'Held' && !seat.isBroken,
+                        'bg-rose-50/90 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700/80': seat.status === 'Occupied' && !seat.isBroken,
+                        'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700': seat.isBroken || seat.status === 'Broken'
+                      }"
+                      class="relative group mx-auto max-w-[145px] w-full min-h-[76px] rounded-xl p-2 border transition-all flex flex-col items-center justify-between shadow-2xs"
+                    >
+                      <!-- Cell Address Tag -->
+                      <span class="absolute top-1 left-1.5 text-[8px] font-semibold text-slate-400 dark:text-slate-500">
+                        ({{ row }},{{ col }})
+                      </span>
+
+                      <!-- Deactivate/Remove Seat Button (Admin Mode Only) -->
+                      @if (!isStudent) {
+                        <button
+                          type="button"
+                          (click)="promptRemoveSeat(seat, $event)"
+                          title="Deactivate Workstation"
+                          class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 text-[9px] text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded transition-all cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      }
+
+                      <!-- Workstation Icon & Label -->
+                      <div class="mt-1.5 flex flex-col items-center gap-1 text-center w-full">
+                        <span
+                          [ngClass]="{
+                            'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200': (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
+                            'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200': seat.status === 'Held' && !seat.isBroken,
+                            'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-200': seat.status === 'Occupied' && !seat.isBroken,
+                            'bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200': seat.isBroken || seat.status === 'Broken'
+                          }"
+                          class="w-7 h-7 rounded-lg border flex items-center justify-center text-sm shadow-xs font-bold transition-all"
+                        >
+                          💻
+                        </span>
+
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[125px] leading-tight">
+                          {{ seat.seatNumber }}
+                        </span>
+
+                        <!-- Status Badge (Student Mode) or Indicator (Admin Mode) -->
+                        <div class="mt-0.5">
+                          @if (isStudent) {
+                            <app-status-badge [status]="seat.isBroken ? 'Broken' : seat.status" size="sm"></app-status-badge>
+                          } @else {
+                            @if (seat.isBroken) {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Broken</span>
+                            } @else {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Active</span>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                    <!-- Blank Cell -->
+                    @if (!isStudent) {
+                      <div
+                        (click)="onCellClick(row, col)"
+                        class="group relative mx-auto max-w-[145px] w-full min-h-[76px] border border-dashed border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 rounded-xl flex flex-col items-center justify-center p-1.5 cursor-pointer transition-all duration-200"
+                      >
+                        <span class="absolute top-1 left-1.5 text-[8px] font-medium text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                          ({{ row }},{{ col }})
+                        </span>
+                        <span class="w-4 h-4 rounded-full bg-slate-200/60 dark:bg-slate-800 group-hover:bg-blue-600 group-hover:text-white text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors mb-0.5 text-[10px] font-bold">
+                          +
+                        </span>
+                        <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                          Add Workstation
+                        </span>
+                      </div>
+                    } @else {
+                      <div class="mx-auto max-w-[145px] w-full min-h-[76px] border border-dashed border-slate-200/50 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/20 rounded-xl flex flex-col items-center justify-center p-1.5 opacity-40">
+                        <span class="text-[8px] font-medium text-slate-400">({{ row }},{{ col }})</span>
+                        <span class="text-[8px] text-slate-400 italic">Empty Space</span>
+                      </div>
+                    }
+                  }
+                </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- Add Workstation Confirm Dialog Modal -->
+@if (isAddConfirmOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>💻</span> Add Workstation at Cell Address ({{ selectedCell()?.row }}, {{ selectedCell()?.col }})
+        </h3>
+        <button (click)="closeAddModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">
+          &times;
+        </button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <p class="text-xs text-slate-600 dark:text-slate-300">
+          Are you sure you want to register a physical workstation seat at 
+          <strong class="text-blue-600 dark:text-blue-400">Cell Address (Row {{ selectedCell()?.row }}, Column {{ selectedCell()?.col }})</strong>?
+        </p>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+            Workstation Identifier (Auto-Prefixed with Lab ID):
+          </label>
+          <input
+            type="text"
+            [ngModel]="pendingSeatNumber()"
+            (ngModelChange)="pendingSeatNumber.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <app-action-button label="Cancel" variant="ghost" size="sm" (btnClick)="closeAddModal()"></app-action-button>
+        <app-action-button label="Confirm & Add Workstation" icon="plus" variant="primary" size="sm" (btnClick)="confirmAddSeat()"></app-action-button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Remove Workstation Confirm Modal -->
+@if (isRemoveConfirmOpen()) {
+  <app-confirm-modal
+    [isOpen]="isRemoveConfirmOpen()"
+    title="Deactivate Workstation"
+    [message]="'Are you sure you want to deactivate workstation seat ' + selectedSeatToRemove()?.seatNumber + '?'"
+    confirmText="Deactivate Seat"
+    cancelText="Cancel"
+    type="danger"
+    (confirm)="confirmRemoveSeat()"
+    (cancel)="closeRemoveModal()"
+  ></app-confirm-modal>
+}

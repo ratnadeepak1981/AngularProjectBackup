@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminBillingService } from '../../services/admin-billing';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-create-fee-type-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ActionButtonComponent],
   templateUrl: './create-fee-type-modal.component.html',
   styleUrl: './create-fee-type-modal.component.css',
 })

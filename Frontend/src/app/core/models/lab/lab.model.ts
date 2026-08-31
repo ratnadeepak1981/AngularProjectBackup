@@ -1,7 +1,12 @@
 export interface Lab {
   id: number;
   name: string;
-  building: string;
-  totalSeats: number;
-  availableSeats: number;
+  labType: 'Computer' | 'Science' | string;
+  capacity: number;
+  isActive?: boolean;
+  totalRows?: number;
+  totalColumns?: number;
+  requiresSeatSelection?: boolean;
+  seatsCount?: number;
+  seatsBuilt?: number;
 }

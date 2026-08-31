@@ -15,11 +15,12 @@ import { FormsModule } from '@angular/forms';
 import { TableColumn } from './models/table-column.model';
 import { TableSortState } from './models/table-sort.model';
 import { PaginationComponent } from '../tables-utilities/pagination/pagination.component';
+import { StatusBadgeComponent } from '../status-badge/status-badge.component';
 
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, StatusBadgeComponent],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.css',
 })
@@ -35,6 +36,8 @@ export class DataTableComponent implements OnChanges {
   @Input() sortIconStyle: 'svg-arrows' | 'unicode-arrows' | 'minimal' = 'svg-arrows';
   @Input() emptyMessage: string = 'No records found matching criteria.';
   @Input() serverSide: boolean = false;
+  @Input() showSearch: boolean = false;
+  @Input() searchPlaceholder: string = 'Search records...';
 
   @ContentChild('cellActions') cellActionsTemplate?: TemplateRef<any>;
   @ContentChild('cellCustom') cellCustomTemplate?: TemplateRef<any>;
@@ -43,6 +46,9 @@ export class DataTableComponent implements OnChanges {
   @Output() filterChange = new EventEmitter<Record<string, string[]>>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>();
+
+  // Global Search Signal
+  public readonly globalSearchTerm = signal<string>('');
 
   // Filter Popover & Sorting Internal Signals
   public readonly activeFilterMenu = signal<string | null>(null);
@@ -89,7 +95,20 @@ export class DataTableComponent implements OnChanges {
 
     let list = [...raw];
 
-    // 1. Column Funnel Filters
+    // 1. Global Multi-Column Search Filter
+    const search = this.globalSearchTerm().toLowerCase().trim();
+    if (search) {
+      list = list.filter((row) => {
+        return this.columns.some((col) => {
+          if (col.type === 'actions' || col.type === 'custom') return false;
+          const val = row[col.key];
+          if (val === undefined || val === null) return false;
+          return String(val).toLowerCase().includes(search);
+        });
+      });
+    }
+
+    // 2. Column Funnel Filters
     const colFilters = this.activeFilters();
     Object.entries(colFilters).forEach(([colKey, allowedVals]) => {
       if (allowedVals && allowedVals.length > 0) {
@@ -176,6 +195,11 @@ export class DataTableComponent implements OnChanges {
   onPageChange(newPage: number): void {
     this.clientCurrentPage.set(newPage);
     this.pageChange.emit(newPage);
+  }
+
+  onGlobalSearchChange(term: string): void {
+    this.globalSearchTerm.set(term);
+    this.clientCurrentPage.set(1);
   }
 
   onPageSizeChange(newSize: number): void {
@@ -325,5 +349,16 @@ export class DataTableComponent implements OnChanges {
 
   getCellValue(row: any, col: TableColumn<any>): any {
     return row[col.key];
+  }
+
+  getBadgeConfig(row: any, col: TableColumn<any>): { label: string; class: string } | null {
+    if (!col.badgeMap) return null;
+    const raw = this.getCellValue(row, col);
+    const key = raw !== undefined && raw !== null ? String(raw) : '';
+    return col.badgeMap[key] || null;
+  }
+
+  getStringValue(val: any): string {
+    return val !== undefined && val !== null ? String(val) : '';
   }
 }

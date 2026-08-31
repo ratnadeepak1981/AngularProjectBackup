@@ -5,12 +5,13 @@
     [title]="'Hostel & Room Allocation Management'"
     [description]="'Manage campus hostel buildings, room capacities, application approvals, and student room assignments.'"
   >
-    <button
-      (click)="openCreateRoomModal()"
-      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
-    >
-      <span>+</span> Add Room
-    </button>
+    <app-action-button
+      label="Add Room"
+      icon="plus"
+      variant="primary"
+      tooltip="Add new hostel room"
+      (btnClick)="openCreateRoomModal()"
+    ></app-action-button>
   </app-page-header>
 
   <!-- Chrome 3D Reusable Tab Component -->
@@ -44,19 +45,23 @@
       >
         <ng-template #cellActions let-row>
           <div class="flex items-center justify-end gap-2">
-            <button
-              (click)="openAssignRoomModal(row)"
-              class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1"
-            >
-              <span>Approve & Assign Room</span>
-              <span>&rarr;</span>
-            </button>
-            <button
-              (click)="promptRejectApplication(row)"
-              class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-            >
-              Reject
-            </button>
+            <app-action-button
+              label="Approve & Assign Room"
+              icon="arrow-right"
+              iconPosition="right"
+              variant="primary"
+              size="sm"
+              tooltip="Approve application and assign room"
+              (btnClick)="openAssignRoomModal(row)"
+            ></app-action-button>
+            <app-action-button
+              label="Reject"
+              icon="x"
+              variant="danger"
+              size="sm"
+              tooltip="Reject housing application"
+              (btnClick)="promptRejectApplication(row)"
+            ></app-action-button>
           </div>
         </ng-template>
       </app-data-table>
@@ -108,6 +113,7 @@
       (createRoom)="openCreateRoomModal($event)"
       (editRoom)="openEditRoomModal($event)"
       (refreshed)="loadData()"
+      (triggerConfirm)="onTriggerConfirm($event)"
     />
   }
 
@@ -128,5 +134,18 @@
     [roomToEdit]="roomToEdit()"
     (close)="isCreateRoomModalOpen.set(false)"
     (saved)="loadData()"
+  />
+
+  <!-- REUSABLE CONFIRM DIALOG MODAL -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    [confirmVariant]="confirmVariant()"
+    (cancel)="isConfirmOpen.set(false)"
+    (confirm)="pendingConfirmAction?.(); isConfirmOpen.set(false)"
   />
 </div>

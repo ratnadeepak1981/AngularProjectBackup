@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HostelManagementService, HostelBuilding, HostelRoom } from '../../services/hostel-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-create-room-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ActionButtonComponent],
   templateUrl: './create-room-modal.component.html',
   styleUrl: './create-room-modal.component.css',
 })

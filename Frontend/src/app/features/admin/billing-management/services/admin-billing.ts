@@ -53,6 +53,10 @@ export class AdminBillingService {
     return this.apiService.delete<any>(`/fee-types/${id}`);
   }
 
+  toggleFeeTypeStatus(id: number): Observable<any> {
+    return this.apiService.put<any>(`/fee-types/${id}/toggle-status`, {});
+  }
+
   cancelUnpaidFee(id: number): Observable<any> {
     return this.apiService.delete<any>(`/billing/fee-payments/${id}`);
   }

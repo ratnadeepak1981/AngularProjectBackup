@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, ContentChild, TemplateRef, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination/pagination.component';
@@ -36,6 +36,54 @@ export class DataTableComponent {
   public readonly showPagination = input<boolean>(true);
   public readonly striped = input<boolean>(true);
   public readonly hoverable = input<boolean>(true);
+
+  // Template Slots Projection
+  @ContentChild('cellStatus', { read: TemplateRef }) cellStatusTemplate?: TemplateRef<any>;
+  @ContentChild('cellActions', { read: TemplateRef }) cellActionsTemplate?: TemplateRef<any>;
+
+  // Computed Filtered Data
+  public readonly filteredData = computed(() => {
+    let result = [...this.data()];
+
+    const filters = this.activeFilters();
+    Object.keys(filters).forEach((colKey) => {
+      const allowed = filters[colKey];
+      if (Array.isArray(allowed) && allowed.length > 0) {
+        result = result.filter((row) => allowed.includes(row[colKey]));
+      }
+    });
+
+    const sortCol = this.currentSortColumn();
+    const sortDir = this.currentSortDirection();
+    if (sortCol && sortDir) {
+      result.sort((a, b) => {
+        const valA = a[sortCol];
+        const valB = b[sortCol];
+        let cmp = 0;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          cmp = valA - valB;
+        } else {
+          cmp = String(valA || '').localeCompare(String(valB || ''));
+        }
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return result;
+  });
+
+  public readonly paginatedData = computed(() => {
+    if (this.totalRecords() > 0) {
+      // Server-side pagination
+      return this.data();
+    }
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredData().slice(start, start + this.pageSize());
+  });
+
+  public readonly effectiveTotalRecords = computed(() => {
+    return this.totalRecords() > 0 ? this.totalRecords() : this.filteredData().length;
+  });
 
   // Sorting State
   public readonly currentSortColumn = signal<string | null>(null);

@@ -221,6 +221,14 @@ namespace CampusServicesPortal.Data
                 new Faculty { Id = 3, Name = "Faculty of Business Management", IsActive = true }
             );
 
+            modelBuilder.Entity<FeeType>().HasData(
+                new FeeType { Id = 1, Name = "Tuition Fee", IsActive = true },
+                new FeeType { Id = 2, Name = "Lab Fine / Equipment Fee", IsActive = true },
+                new FeeType { Id = 3, Name = "Hostel Accommodation Fee", IsActive = true },
+                new FeeType { Id = 4, Name = "Library Fine & Late Return", IsActive = true },
+                new FeeType { Id = 5, Name = "Student Identity Card Renewal Fee", IsActive = true }
+            );
+
             modelBuilder.Entity<ComplaintCategory>().HasData(
                 new ComplaintCategory { Id = 1, Name = "Hostel Room Maintenance", IsActive = true },
                 new ComplaintCategory { Id = 2, Name = "Network WiFi Interruption", IsActive = true }

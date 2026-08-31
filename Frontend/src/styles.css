@@ -19,9 +19,15 @@
   --bg-sidebar: #0F2C59;
   --bg-card: #FFFFFF;
   --border-color: #E2E8F0;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
   --glow-color: rgba(37, 99, 235, 0.15);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 :root[data-theme="oxford-navy"].dark, :root[data-theme="oxford-navy"][data-mode="dark"], :root.dark, :root[data-mode="dark"] {

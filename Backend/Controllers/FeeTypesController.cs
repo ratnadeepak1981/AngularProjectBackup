@@ -45,6 +45,15 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "Fee type updated successfully.");
         }
 
+        // PUT /api/fee-types/{id}/toggle-status - Admin toggle active/deactive status
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id:int}/toggle-status")]
+        public async Task<IActionResult> ToggleFeeTypeStatus(int id)
+        {
+            var result = await _feeTypeService.ToggleFeeTypeStatusAsync(id);
+            return ProcessServiceResult(result, "Fee type status toggled successfully.");
+        }
+
         // DELETE /api/fee-types/{id} - Admin soft-deactivate fee type (BRD Page 15)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id:int}")]

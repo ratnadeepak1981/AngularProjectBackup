@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Services.Interfaces;
+using CampusServicesPortal.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +28,7 @@ public class LabsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateLab([FromBody] CreateLabRequest request)
     {
-        var success = await _labService.CreateLabAsync(request.Name, request.LabType, request.Capacity);
+        var success = await _labService.CreateLabAsync(request.Name, request.LabType, request.Capacity, request.TotalRows, request.TotalColumns);
         if (!success) return BadRequest("Unable to instantiate laboratory profile.");
         return StatusCode(201); // 201 Created
     }
@@ -40,7 +40,7 @@ public class LabsController : ControllerBase
     {
         try
         {
-            var success = await _labService.AddSeatToLabAsync(id, request.SeatNumber);
+            var success = await _labService.AddSeatToLabAsync(id, request.SeatNumber, request.RowIndex, request.ColumnIndex, request.EquipmentDetails);
             return success ? Ok() : BadRequest("Failed to register physical workstation seat.");
         }
         catch (InvalidOperationException ex)
@@ -65,5 +65,5 @@ public class LabsController : ControllerBase
 }
 
 // Request contracts scoped locally to clean up the controller signature 
-public record CreateLabRequest(string Name, string LabType, int Capacity);
-public record AddSeatRequest(string SeatNumber);
+public record CreateLabRequest(string Name, string LabType, int Capacity, int? TotalRows, int? TotalColumns);
+public record AddSeatRequest(string SeatNumber, int RowIndex = 1, int ColumnIndex = 1, string? EquipmentDetails = null);

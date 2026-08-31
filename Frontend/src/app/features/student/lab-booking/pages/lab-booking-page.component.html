@@ -1,1 +1,218 @@
-<p>lab-booking-page works!</p>
+<div class="p-6 space-y-6">
+  <!-- Toast Notification Overlay Container -->
+  <app-toast-container></app-toast-container>
+
+  <!-- 1. Page Header -->
+  <app-page-header
+    title="Workstation Lab Seat Reservation"
+    subtitle="Book computer lab workstation seats with dynamic hold protection or reserve science lab slots."
+    icon="💻"
+  ></app-page-header>
+
+  <!-- 2. Section Navigation Tabs -->
+  <app-tab-component
+    [tabs]="sectionTabs"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- TAB 1: WORKSTATION SEAT RESERVATION -->
+  @if (activeTabId() === 'booking') {
+    <div class="space-y-6">
+      <!-- 1. Reactive Selector Controls (Lab, Date, Time Slot) -->
+      <app-booking-selectors
+        [labs]="labs()"
+        [selectedLabId]="selectedLabId()"
+        [selectedDate]="selectedDate()"
+        [selectedTimeSlot]="selectedTimeSlot()"
+        [isLoading]="isLoadingLayout()"
+        (labChange)="onLabChange($event)"
+        (dateChange)="onDateChange($event)"
+        (timeSlotChange)="onTimeSlotChange($event)"
+        (refresh)="loadLayout()"
+      ></app-booking-selectors>
+
+      <!-- Active Hold Countdown Timer (if student has an active held booking) -->
+      @if (activeHoldBooking()) {
+        <app-active-hold-timer
+          [activeBooking]="activeHoldBooking()"
+          [holdMinutes]="systemHoldMinutes()"
+          [isSubmitting]="isSubmitting()"
+          (confirm)="promptConfirmBookingModal()"
+          (cancelHold)="promptCancelHoldModal()"
+        ></app-active-hold-timer>
+      }
+
+      <!-- 2. Workstation Seat Grid Matrix Canvas / Modal Trigger -->
+      <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="flex flex-wrap justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🪑</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                2. Workstation Seat Grid Layout Matrix
+              </h3>
+              <p class="text-2xs text-slate-500 dark:text-slate-400">
+                View the 1-indexed 2D seat matrix modal to select available workstation seats with {{ systemHoldMinutes() }}-minute reservation hold protection.
+              </p>
+            </div>
+          </div>
+
+          <!-- Live Status Legend -->
+          <div class="flex items-center gap-3 text-2xs font-semibold">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Available</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Held ({{ systemHoldMinutes() }}-min)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Occupied</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Broken / Maintenance</span>
+          </div>
+        </div>
+
+        <!-- Shared Reusable Dashboard Stat Cards (Unified UI for ALL Labs - Rule #13 Compliance) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <app-dashboard-card
+            title="Available Slots"
+            [value]="effectiveAvailableCount()"
+            icon="🟢"
+            iconVariant="emerald"
+            valueVariant="emerald"
+          ></app-dashboard-card>
+
+          <app-dashboard-card
+            title="Pending Hold"
+            [value]="heldSeatsCount()"
+            icon="⏳"
+            iconVariant="amber"
+            valueVariant="amber"
+          ></app-dashboard-card>
+
+          <app-dashboard-card
+            title="Booked / Occupied"
+            [value]="effectiveOccupiedCount()"
+            icon="👤"
+            iconVariant="rose"
+            valueVariant="rose"
+          ></app-dashboard-card>
+
+          <app-dashboard-card
+            title="Maintenance"
+            [value]="brokenSeatsCount()"
+            icon="⚙️"
+            iconVariant="slate"
+            valueVariant="slate"
+          ></app-dashboard-card>
+
+          <app-dashboard-card
+            title="Total Capacity"
+            [value]="effectiveTotalCapacity()"
+            icon="📊"
+            iconVariant="blue"
+            valueVariant="blue"
+          ></app-dashboard-card>
+        </div>
+
+        <!-- Computer Lab Mode: Popup Modal Overlay Trigger -->
+        @if (isComputerLab()) {
+          @if (isLoadingLayout()) {
+            <div class="py-12 text-center text-xs text-slate-500 dark:text-slate-400 animate-pulse">
+              <span>🔄 Loading workstation seat matrix for {{ selectedDate() }} ({{ selectedTimeSlot() }})...</span>
+            </div>
+          } @else if (layoutSeats().length === 0) {
+            <div class="py-12 text-center text-xs text-slate-400 dark:text-slate-500 italic">
+              No workstation seats configured for this laboratory yet.
+            </div>
+          } @else {
+            <!-- Matrix Modal Trigger Panel -->
+            <div class="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-bold text-slate-900 dark:text-white">
+                    💻 {{ selectedLab()?.name }} Workstation Seat Map Matrix
+                  </span>
+                  <app-status-badge status="Available"></app-status-badge>
+                </div>
+                <p class="text-2xs text-slate-500 dark:text-slate-400">
+                  Grid Resolution: {{ layoutTotalRows() }} Rows × {{ layoutTotalColumns() }} Columns | 1-Indexed Row & Column Headers
+                </p>
+              </div>
+
+              <button
+                type="button"
+                (click)="openMatrixModal()"
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <span>🪑 View & Select Workstation Seat Matrix</span>
+                <span>➔</span>
+              </button>
+            </div>
+          }
+        } @else {
+          <!-- Science Lab Mode (requiresSeatSelection = false): General Session Slot Booking -->
+          <div class="p-6 bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-bold text-slate-900 dark:text-white">
+                  🧪 {{ selectedLab()?.name }} Session Slot
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-3xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300/50">
+                  Total Capacity: {{ effectiveTotalCapacity() }} Slots
+                </span>
+              </div>
+              <p class="text-2xs text-slate-500 dark:text-slate-400">
+                General lab session reservation for {{ selectedDate() }} ({{ selectedTimeSlot() }}). 2D seat matrix selection is not required for Science labs.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              (click)="onScienceSlotSelect(1)"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <span>⚡</span>
+              <span>Reserve Science Lab Slot</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: MY BOOKING HISTORY -->
+  @if (activeTabId() === 'history') {
+    <app-student-history-list
+      [bookings]="myBookingsHistory()"
+      [isLoading]="isLoadingHistory()"
+      (cancelBooking)="promptCancelHistoryBookingModal($event)"
+      (refresh)="loadMyBookings()"
+    ></app-student-history-list>
+  }
+
+  <!-- Reusable 2D Grid Matrix Popup Modal Overlay (Identical to Admin Layout) -->
+  @if (isMatrixModalOpen()) {
+    <app-lab-grid-matrix
+      [isModal]="true"
+      [isStudent]="true"
+      [labId]="selectedLabId()"
+      [labName]="selectedLab()?.name || 'Computer Laboratory'"
+      [totalRows]="layoutTotalRows()"
+      [totalCols]="layoutTotalColumns()"
+      [seats]="layoutSeats()"
+      (closeModal)="closeMatrixModal()"
+      (seatSelected)="onSeatSelectedFromMatrix($event)"
+    ></app-lab-grid-matrix>
+  }
+
+  <!-- Reusable Confirmation Dialog Modal -->
+  <app-confirm-modal
+    [isOpen]="isConfirmModalOpen()"
+    [title]="modalTitle()"
+    [message]="modalMessage()"
+    [icon]="modalIcon()"
+    [iconVariant]="modalIconVariant()"
+    [confirmText]="modalConfirmText()"
+    [confirmIcon]="modalConfirmIcon()"
+    [confirmVariant]="modalConfirmVariant()"
+    [isLoading]="isSubmitting()"
+    (confirm)="onModalConfirm()"
+    (cancel)="onModalCancel()"
+  ></app-confirm-modal>
+</div>

@@ -1,1 +1,45 @@
-<p>student-history-list works!</p>
+<div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+  <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">📋</span>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">My Workstation Booking History</h3>
+        <p class="text-2xs text-slate-500 dark:text-slate-400">View and manage your upcoming and past workstation reservations.</p>
+      </div>
+    </div>
+
+    <button
+      (click)="onRefreshClick()"
+      [disabled]="isLoading()"
+      class="px-3.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
+    >
+      <span>🔄</span> Refresh History
+    </button>
+  </div>
+
+  <app-data-table
+    [columns]="bookingColumns"
+    [data]="bookings()"
+    [pageSize]="5"
+    [isLoading]="isLoading()"
+    [emptyMessage]="'No lab workstation bookings found in your account history.'"
+  >
+    <ng-template #cellStatus let-row>
+      <app-status-badge [status]="row.status"></app-status-badge>
+    </ng-template>
+
+    <ng-template #cellActions let-row>
+      @if (row.status === 'Confirmed' || row.status === 'Held') {
+        <app-action-button
+          variant="danger"
+          size="sm"
+          icon="🗑️"
+          label="Cancel Booking"
+          (click)="onCancelClick(row)"
+        ></app-action-button>
+      } @else {
+        <span class="text-2xs text-slate-400 dark:text-slate-500 italic">No Actions</span>
+      }
+    </ng-template>
+  </app-data-table>
+</div>

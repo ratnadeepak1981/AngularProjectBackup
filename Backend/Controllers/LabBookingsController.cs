@@ -25,6 +25,14 @@ public class LabBookingsController : BaseApiController
         return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(userBookings, 200), "Student lab bookings retrieved.");
     }
 
+    [HttpGet("audit-history")]
+    public async Task<IActionResult> GetAuditHistory()
+    {
+        var studentId = 1;
+        var auditHistory = await _bookingService.GetStudentBookingsAsync(studentId);
+        return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(auditHistory, 200), "Lab bookings audit history retrieved.");
+    }
+
     [HttpGet("layout/{labId:int}")]
     public async Task<IActionResult> GetLayout(int labId, [FromQuery] DateTime? date, [FromQuery] string? timeSlot)
     {

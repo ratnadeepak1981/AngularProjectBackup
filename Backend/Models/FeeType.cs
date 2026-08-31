@@ -12,6 +12,5 @@ public class FeeType
     [MaxLength(50)]
     public required string Name { get; set; } // e.g., "Tuition Fee", "Semester Fee", "Exam Fee", "Lab Fine"
 
-    [NotMapped]
     public bool IsActive { get; set; } = true;
 }

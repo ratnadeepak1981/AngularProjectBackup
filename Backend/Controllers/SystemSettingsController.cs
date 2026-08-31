@@ -21,6 +21,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/admin/system-settings/reservation-hold-minutes - BRD Page 12
+        [Authorize(Roles = "Admin,Student")]
         [HttpGet("reservation-hold-minutes")]
         public async Task<IActionResult> GetHoldMinutes()
         {
@@ -63,7 +64,7 @@ namespace CampusServicesPortal.Controllers
             var setting = await _context.SystemSettings
                 .FirstOrDefaultAsync(s => s.SettingKey == "DefaultPageSize");
 
-            int pageSize = setting != null && int.TryParse(setting.SettingValue, out var val) ? val : 10;
+            int pageSize = setting != null && int.TryParse(setting.SettingValue, out var val) ? val : 5;
             return ProcessServiceResult(ServiceResult<object>.Success(new { PageSize = pageSize }, 200), "Default pagination page size setting retrieved.");
         }
 
@@ -90,6 +91,101 @@ namespace CampusServicesPortal.Controllers
 
             await _context.SaveChangesAsync();
             return ProcessServiceResult(ServiceResult<object>.Success(new { Message = "System default page size updated successfully.", PageSize = request.PageSize }, 200), "Default pagination page size setting updated.");
+        }
+
+        // GET /api/admin/system-settings/all
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllSettings()
+        {
+            try
+            {
+                var list = await _context.SystemSettings.ToListAsync();
+                var dict = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+
+                foreach (var item in list)
+                {
+                    if (!string.IsNullOrWhiteSpace(item.SettingKey))
+                    {
+                        dict[item.SettingKey] = item.SettingValue ?? string.Empty;
+                    }
+                }
+
+                // Standard Default Fallbacks & Auto-DB Seed if table entries are missing
+                var defaultSeedMap = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    ["InstitutionName"] = "University of Knowledge (UOK)",
+                    ["LabBookingHoldMinutes"] = dict.ContainsKey("reservation-hold-minutes") ? dict["reservation-hold-minutes"] : "15",
+                    ["MaxDailySlots"] = "2",
+                    ["RequireSeatSelection"] = "true",
+                    ["AcademicYear"] = "2025/2026",
+                    ["AcademicYearsList"] = "2024/2025,2025/2026,2026/2027",
+                    ["Semester"] = "Semester 1",
+                    ["SemestersList"] = "Semester 1,Semester 2,Summer Trimester",
+                    ["DefaultPageSize"] = "5"
+                };
+
+                bool addedNewSeed = false;
+                foreach (var kvp in defaultSeedMap)
+                {
+                    if (!dict.ContainsKey(kvp.Key))
+                    {
+                        dict[kvp.Key] = kvp.Value;
+                        await _context.SystemSettings.AddAsync(new SystemSetting { SettingKey = kvp.Key, SettingValue = kvp.Value });
+                        addedNewSeed = true;
+                    }
+                }
+
+                if (addedNewSeed)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
+                return ProcessServiceResult(ServiceResult<object>.Success(dict, 200), "All system settings retrieved successfully.");
+            }
+            catch (System.Exception ex)
+            {
+                var fallback = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    ["InstitutionName"] = "University of Knowledge (UOK)",
+                    ["LabBookingHoldMinutes"] = "15",
+                    ["reservation-hold-minutes"] = "15",
+                    ["MaxDailySlots"] = "2",
+                    ["RequireSeatSelection"] = "true",
+                    ["AcademicYear"] = "2025/2026",
+                    ["AcademicYearsList"] = "2024/2025,2025/2026,2026/2027",
+                    ["Semester"] = "Semester 1",
+                    ["SemestersList"] = "Semester 1,Semester 2,Summer Trimester",
+                    ["DefaultPageSize"] = "5"
+                };
+                return ProcessServiceResult(ServiceResult<object>.Success(fallback, 200), "Default system settings fallback loaded.");
+            }
+        }
+
+        // PUT /api/admin/system-settings/batch
+        [HttpPut("batch")]
+        public async Task<IActionResult> UpdateSettingsBatch([FromBody] System.Collections.Generic.Dictionary<string, string> settingsPayload)
+        {
+            if (settingsPayload == null || settingsPayload.Count == 0)
+                return BadRequest("Settings payload cannot be empty.");
+
+            foreach (var kvp in settingsPayload)
+            {
+                if (string.IsNullOrWhiteSpace(kvp.Key)) continue;
+
+                var setting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == kvp.Key);
+                if (setting == null)
+                {
+                    await _context.SystemSettings.AddAsync(new SystemSetting { SettingKey = kvp.Key, SettingValue = kvp.Value ?? string.Empty });
+                }
+                else
+                {
+                    setting.SettingValue = kvp.Value ?? string.Empty;
+                    _context.SystemSettings.Update(setting);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return await GetAllSettings();
         }
     }
 

@@ -30,75 +30,77 @@
     }
   </div>
 
-  <!-- Right Side: Navigational Buttons & Page Pills -->
-  <div class="flex items-center justify-center gap-1 sm:gap-1.5 overflow-x-auto py-1">
-    <!-- First Page Button -->
-    <button
-      type="button"
-      [disabled]="isFirstPage()"
-      (click)="goToFirst()"
-      title="Go to first page"
-      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-    >
-      <span>⏮</span>
-      <span class="hidden md:inline">First</span>
-    </button>
+  <!-- Right Side: Navigational Buttons & Page Pills (Only shown when multiple pages exist) -->
+  @if (totalPages() > 1) {
+    <div class="flex items-center justify-center gap-1 sm:gap-1.5 overflow-x-auto py-1">
+      <!-- First Page Button -->
+      <button
+        type="button"
+        [disabled]="isFirstPage()"
+        (click)="goToFirst()"
+        title="Go to first page"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+      >
+        <span>⏮</span>
+        <span class="hidden md:inline">First</span>
+      </button>
 
-    <!-- Previous Page Button -->
-    <button
-      type="button"
-      [disabled]="isFirstPage()"
-      (click)="goToPrevious()"
-      title="Go to previous page"
-      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-    >
-      <span>◀</span>
-      <span class="hidden sm:inline">Prev</span>
-    </button>
+      <!-- Previous Page Button -->
+      <button
+        type="button"
+        [disabled]="isFirstPage()"
+        (click)="goToPrevious()"
+        title="Go to previous page"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+      >
+        <span>◀</span>
+        <span class="hidden sm:inline">Prev</span>
+      </button>
 
-    <!-- Numeric Page Number Pills -->
-    <div class="flex items-center gap-1 px-1">
-      @for (page of displayedPages(); track $index) {
-        @if (page === '...') {
-          <span class="px-1.5 py-1 text-slate-400 dark:text-slate-500 font-bold select-none">…</span>
-        } @else {
-          <button
-            type="button"
-            (click)="goToPage(page)"
-            [class]="
-              page === currentPage()
-                ? 'px-3 py-1.5 bg-blue-600 dark:bg-blue-600 text-white font-bold rounded-lg shadow-xs transition-colors cursor-default'
-                : 'px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer shadow-2xs'
-            "
-          >
-            {{ page }}
-          </button>
+      <!-- Numeric Page Number Pills -->
+      <div class="flex items-center gap-1 px-1">
+        @for (page of displayedPages(); track $index) {
+          @if (page === '...') {
+            <span class="px-1.5 py-1 text-slate-400 dark:text-slate-500 font-bold select-none">…</span>
+          } @else {
+            <button
+              type="button"
+              (click)="goToPage(page)"
+              [class]="
+                page === currentPage()
+                  ? 'px-3 py-1.5 bg-blue-600 dark:bg-blue-600 text-white font-bold rounded-lg shadow-xs transition-colors cursor-default'
+                  : 'px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer shadow-2xs'
+              "
+            >
+              {{ page }}
+            </button>
+          }
         }
-      }
+      </div>
+
+      <!-- Next Page Button -->
+      <button
+        type="button"
+        [disabled]="isLastPage()"
+        (click)="goToNext()"
+        title="Go to next page"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+      >
+        <span class="hidden sm:inline">Next</span>
+        <span>▶</span>
+      </button>
+
+      <!-- Last Page Button -->
+      <button
+        type="button"
+        [disabled]="isLastPage()"
+        (click)="goToLast()"
+        title="Go to last page"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+      >
+        <span class="hidden md:inline">Last</span>
+        <span>⏭</span>
+      </button>
     </div>
-
-    <!-- Next Page Button -->
-    <button
-      type="button"
-      [disabled]="isLastPage()"
-      (click)="goToNext()"
-      title="Go to next page"
-      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-    >
-      <span class="hidden sm:inline">Next</span>
-      <span>▶</span>
-    </button>
-
-    <!-- Last Page Button -->
-    <button
-      type="button"
-      [disabled]="isLastPage()"
-      (click)="goToLast()"
-      title="Go to last page"
-      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-    >
-      <span class="hidden md:inline">Last</span>
-      <span>⏭</span>
-    </button>
-  </div>
+  }
 </div>

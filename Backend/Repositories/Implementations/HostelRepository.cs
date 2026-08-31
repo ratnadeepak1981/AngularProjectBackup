@@ -67,12 +67,17 @@ namespace CampusServicesPortal.Repositories.Implementations
         {
             // Capacity constraint check: Tally active allocation counts matching this room anchor row [PDF: 0.1.7]
             return await _context.HostelApplications
-                .CountAsync(a => a.AssignedRoomId == roomId && a.Status == "RoomAssigned");
+                .CountAsync(a => a.AssignedRoomId == roomId && (a.Status == "RoomAssigned" || a.Status == "Room Assigned"));
         }
 
         public async Task AddApplicationAsync(HostelApplication application)
         {
             await _context.HostelApplications.AddAsync(application);
+        }
+
+        public async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
 
         public async Task SaveChangesAsync()

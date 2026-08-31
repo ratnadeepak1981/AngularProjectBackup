@@ -48,13 +48,14 @@
         <label for="password" class="text-xs font-bold text-slate-700 uppercase tracking-wider">
           Password
         </label>
-        <button
-          type="button"
-          (click)="openForgotPassword()"
-          class="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline"
-        >
-          Forgot password?
-        </button>
+        <app-action-button
+          label="Forgot password?"
+          icon="key"
+          variant="ghost"
+          size="sm"
+          tooltip="Reset your password"
+          (btnClick)="openForgotPassword()"
+        ></app-action-button>
       </div>
       <input
         type="password"
@@ -72,26 +73,31 @@
       }
     </div>
 
-    <button
+    <app-action-button
+      label="Sign In to Portal Account"
+      icon="lock"
+      iconPosition="left"
+      variant="primary"
       type="submit"
+      [fullWidth]="true"
+      size="lg"
+      [loading]="isLoading()"
       [disabled]="isLoading()"
-      class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold text-sm rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-    >
-      @if (isLoading()) {
-        <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"></span>
-        <span>Authenticating...</span>
-      } @else {
-        <span>Sign In to Portal Account →</span>
-      }
-    </button>
+      tooltip="Sign in to your campus account"
+    ></app-action-button>
   </form>
 
   <!-- Register Redirection -->
-  <div class="mt-8 text-center text-xs text-slate-500 border-t border-slate-200 pt-5">
-    Don't have an account?
-    <a routerLink="/auth/register" class="text-blue-600 hover:text-blue-800 font-bold hover:underline ml-1">
-      Register with Student Master List
-    </a>
+  <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-slate-500 border-t border-slate-200 pt-5">
+    <span>Don't have an account?</span>
+    <app-action-button
+      label="Register with Student Master List"
+      icon="academic-cap"
+      variant="outline"
+      size="sm"
+      tooltip="Register using your student intake index number"
+      (btnClick)="navigateToRegister()"
+    ></app-action-button>
   </div>
 </div>
 

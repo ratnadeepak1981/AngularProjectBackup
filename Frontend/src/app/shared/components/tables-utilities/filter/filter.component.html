@@ -1,4 +1,4 @@
-<div class="relative inline-block text-left">
+<div class="relative z-40 inline-block text-left">
   <!-- Trigger Button -->
   <button
     type="button"
@@ -24,7 +24,7 @@
   @if (isOpen()) {
     <div
       (click)="$event.stopPropagation()"
-      class="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs text-slate-800 dark:text-slate-100 animate-fade-in"
+      class="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-[100] text-xs text-slate-800 dark:text-slate-100 animate-fade-in"
     >
       @if (showSearch()) {
         <div class="mb-2">

@@ -5,18 +5,20 @@
     [title]="'Event Scheduling & Venue Management'"
     [description]="'Schedule campus events, assign venues with schedule overlap protection, and monitor student participation.'"
   >
-    <button
-      (click)="openScheduleEventModal()"
-      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
-    >
-      <span>+ 📅</span> Schedule Event
-    </button>
-    <button
-      (click)="openCreateVenueModal()"
-      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-sm transition-all cursor-pointer"
-    >
-      <span>+ 🏛️</span> Create Venue
-    </button>
+    <app-action-button
+      label="Schedule Event"
+      icon="plus"
+      variant="primary"
+      tooltip="Schedule new campus event"
+      (btnClick)="openScheduleEventModal()"
+    ></app-action-button>
+    <app-action-button
+      label="Create Venue"
+      icon="building"
+      variant="secondary"
+      tooltip="Add new campus venue facility"
+      (btnClick)="openCreateVenueModal()"
+    ></app-action-button>
   </app-page-header>
 
   <!-- Chrome 3D Reusable Tab Component -->
@@ -101,11 +103,14 @@
       <app-data-table
         [columns]="venueColumns"
         [data]="displayVenues()"
+        [pageSize]="5"
+        [showSearch]="true"
+        searchPlaceholder="Search venues by name, type, or capacity..."
         [isLoading]="isLoadingVenues()"
         [sortIconStyle]="'svg-arrows'"
         [emptyMessage]="'No university venues found. Click &quot;+ Create Venue&quot; to register a new venue.'"
       >
-        <ng-template #cellType let-row>
+        <ng-template #cellCustom let-row>
           <span
             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider"
             [ngClass]="{

@@ -11,6 +11,8 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
 import { AssignRoomModalComponent } from '../components/assign-room-modal/assign-room-modal.component';
 import { CreateRoomModalComponent } from '../components/create-room-modal/create-room-modal.component';
 import { HostelsRoomsDirectoryComponent } from '../components/hostels-rooms-directory/hostels-rooms-directory.component';
+import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
+import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-hostel-management-page',
@@ -25,6 +27,8 @@ import { HostelsRoomsDirectoryComponent } from '../components/hostels-rooms-dire
     AssignRoomModalComponent,
     CreateRoomModalComponent,
     HostelsRoomsDirectoryComponent,
+    ActionButtonComponent,
+    ConfirmModalComponent,
   ],
   templateUrl: './hostel-management-page.component.html',
   styleUrl: './hostel-management-page.component.css',
@@ -44,6 +48,16 @@ export class HostelManagementPageComponent implements OnInit {
   public readonly roomToEdit = signal<HostelRoom | null>(null);
 
   public readonly selectedHostelId = signal<number>(0);
+
+  // Shared Confirm Modal Signals
+  public readonly isConfirmOpen = signal<boolean>(false);
+  public readonly confirmTitle = signal<string>('Confirm Action');
+  public readonly confirmMessage = signal<string>('Are you sure you want to proceed?');
+  public readonly confirmIcon = signal<string>('⚠️');
+  public readonly confirmVariant = signal<'primary' | 'danger' | 'warning'>('danger');
+  public readonly confirmButtonText = signal<string>('Confirm');
+  public readonly confirmButtonIcon = signal<string>('✓');
+  public pendingConfirmAction: (() => void) | null = null;
 
   // Table Column Configurations
   public readonly pendingAppColumns: TableColumn<any>[] = [
@@ -188,14 +202,32 @@ export class HostelManagementPageComponent implements OnInit {
     this.isCreateRoomModalOpen.set(true);
   }
 
+  onTriggerConfirm(event: { title: string; message: string; icon: string; variant: 'primary' | 'danger' | 'warning'; action: () => void }): void {
+    this.confirmTitle.set(event.title);
+    this.confirmMessage.set(event.message);
+    this.confirmIcon.set(event.icon);
+    this.confirmVariant.set(event.variant);
+    this.confirmButtonText.set('Confirm');
+    this.confirmButtonIcon.set('✓');
+    this.pendingConfirmAction = event.action;
+    this.isConfirmOpen.set(true);
+  }
+
   promptRejectApplication(app: HousingApplication): void {
-    if (!confirm(`Are you sure you want to reject housing application for ${app.studentName}?`)) return;
-    this.hostelService.updateApplicationStatus(app.id, 'Rejected').subscribe({
-      next: () => {
-        this.toast.info('Housing application rejected.');
-        this.loadData();
+    this.onTriggerConfirm({
+      title: 'Reject Housing Application',
+      message: `Are you sure you want to reject housing application for ${app.studentName}?`,
+      icon: '🏠',
+      variant: 'danger',
+      action: () => {
+        this.hostelService.updateApplicationStatus(app.id, 'Rejected').subscribe({
+          next: () => {
+            this.toast.info('Housing application rejected.');
+            this.loadData();
+          },
+          error: (err) => this.toast.error(err?.error?.message || 'Failed to reject application.'),
+        });
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Failed to reject application.'),
     });
   }
 }

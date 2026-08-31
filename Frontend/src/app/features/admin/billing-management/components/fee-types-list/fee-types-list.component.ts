@@ -17,6 +17,7 @@ export class FeeTypesListComponent {
   @Input() isLoading = false;
 
   @Output() deactivate = new EventEmitter<FeeTypeItem>();
+  @Output() toggleStatus = new EventEmitter<FeeTypeItem>();
   @Output() refresh = new EventEmitter<void>();
 
   public readonly columns: TableColumn<any>[] = [

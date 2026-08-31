@@ -6,11 +6,12 @@ import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-admin-dashboard-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DashboardCardComponent, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, DashboardCardComponent, PageHeaderComponent, ActionButtonComponent],
   templateUrl: './admin-dashboard-page.component.html',
   styleUrl: './admin-dashboard-page.component.css',
 })

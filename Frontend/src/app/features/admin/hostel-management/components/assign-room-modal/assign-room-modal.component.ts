@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { HostelBuilding, HostelManagementService, HousingApplication } from '../../services/hostel-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { HostelRoom } from '../../../../../core/models/hostel/room.model';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 export type VacantRoomOption = HostelRoom & { hostelName?: string; isCurrent?: boolean };
 
 @Component({
   selector: 'app-assign-room-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ActionButtonComponent],
   templateUrl: './assign-room-modal.component.html',
   styleUrl: './assign-room-modal.component.css',
 })

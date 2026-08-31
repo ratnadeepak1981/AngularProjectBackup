@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { StudentBillingService, FeePaymentItem } from '../services/student-billing.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaymentCheckoutComponent } from '../components/payment-checkout/payment-checkout.component';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
@@ -29,9 +30,11 @@ export class StudentPaymentPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly billingService = inject(StudentBillingService);
+  private readonly settingsService = inject(SystemSettingsService);
   public readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
 
+  public readonly institutionName = signal<string>('University of Knowledge (UOK)');
   public readonly invoiceId = signal<number>(0);
   public readonly invoiceItem = signal<FeePaymentItem | null>(null);
   public readonly isLoading = signal<boolean>(false);
@@ -54,6 +57,14 @@ export class StudentPaymentPageComponent implements OnInit {
   public readonly alertVariant = signal<'danger' | 'warning' | 'info' | 'success'>('success');
 
   ngOnInit(): void {
+    this.settingsService.getAllSettings().subscribe({
+      next: (res) => {
+        if (res?.data && res.data['InstitutionName']) {
+          this.institutionName.set(res.data['InstitutionName']);
+        }
+      },
+    });
+
     this.route.params.subscribe((p) => {
       const id = Number(p['id']);
       if (id && id > 0) {

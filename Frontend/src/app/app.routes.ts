@@ -123,11 +123,49 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'admin/system-settings',
+        loadComponent: () =>
+          import('./features/admin/system-settings/pages/system-settings-page.component').then(
+            (m) => m.SystemSettingsPageComponent
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/settings',
+        redirectTo: 'admin/system-settings',
+        pathMatch: 'full',
+      },
+      {
+        path: 'admin/lab-management',
+        loadChildren: () =>
+          import('./features/admin/lab-management/admin-lab.routes').then(
+            (m) => m.ADMIN_LAB_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/labs',
+        redirectTo: 'admin/lab-management',
+        pathMatch: 'full',
+      },
+      {
         path: 'student/dashboard',
         loadChildren: () =>
           import('./features/student/dashboard/student-dashboard.routes').then(
             (m) => m.STUDENT_DASHBOARD_ROUTES
           ),
+      },
+      {
+        path: 'student/settings',
+        loadComponent: () =>
+          import('./features/student/settings/pages/student-settings-page.component').then(
+            (m) => m.StudentSettingsPageComponent
+          ),
+      },
+      {
+        path: 'student/preferences',
+        redirectTo: 'student/settings',
+        pathMatch: 'full',
       },
       {
         path: 'student/hostel',
@@ -177,6 +215,18 @@ export const routes: Routes = [
       {
         path: 'student/notifications',
         redirectTo: 'student/notification',
+        pathMatch: 'full',
+      },
+      {
+        path: 'student/lab-booking',
+        loadChildren: () =>
+          import('./features/student/lab-booking/student-booking.routes').then(
+            (m) => m.STUDENT_BOOKING_ROUTES
+          ),
+      },
+      {
+        path: 'student/labbooking',
+        redirectTo: 'student/lab-booking',
         pathMatch: 'full',
       },
     ],

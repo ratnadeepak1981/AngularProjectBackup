@@ -5,18 +5,20 @@
     [title]="'Tuition Fees & Fine Management'"
     [description]="'Create fee types, assign single/bulk fees to students, issue lab fines, and manage unpaid assignments.'"
   >
-    <button
-      (click)="isAssignModalOpen.set(true)"
-      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
-    >
-      <span>+ 💳</span> Assign Fee / Fine
-    </button>
-    <button
-      (click)="isCreateFeeTypeModalOpen.set(true)"
-      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-sm transition-all cursor-pointer"
-    >
-      <span>+ 🏷️</span> Create Fee Type
-    </button>
+    <app-action-button
+      label="Assign Fee / Fine"
+      icon="card"
+      variant="primary"
+      tooltip="Assign fee or fine to student"
+      (btnClick)="isAssignModalOpen.set(true)"
+    ></app-action-button>
+    <app-action-button
+      label="Create Fee Type"
+      icon="plus"
+      variant="secondary"
+      tooltip="Create new fee type structure"
+      (btnClick)="isCreateFeeTypeModalOpen.set(true)"
+    ></app-action-button>
   </app-page-header>
 
   <!-- Chrome 3D Reusable Tab Component -->
@@ -50,6 +52,7 @@
         [feeTypes]="feeTypes()"
         [isLoading]="isLoadingFeeTypes()"
         (deactivate)="onDeactivateFeeType($event)"
+        (toggleStatus)="onToggleFeeTypeStatus($event)"
         (refresh)="loadFeeTypes()"
       />
     </div>

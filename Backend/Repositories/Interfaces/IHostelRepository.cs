@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Models;
+using CampusServicesPortal.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,6 +16,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task<Room?> GetRoomByIdAsync(int roomId);
         Task<int> GetRoomCurrentOccupancyAsync(int roomId);
         Task AddApplicationAsync(HostelApplication application);
+        Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
         Task SaveChangesAsync();
     }
 }

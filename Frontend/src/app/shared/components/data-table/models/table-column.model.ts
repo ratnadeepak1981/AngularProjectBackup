@@ -4,7 +4,7 @@ export interface TableColumn<T = any> {
   label?: string;
   sortable?: boolean;
   filterable?: boolean;
-  type?: 'text' | 'badge' | 'date' | 'custom' | 'actions';
+  type?: 'text' | 'badge' | 'status' | 'date' | 'custom' | 'actions';
   align?: 'left' | 'center' | 'right';
   width?: string;
   badgeMap?: Record<string, { label: string; class: string }>;

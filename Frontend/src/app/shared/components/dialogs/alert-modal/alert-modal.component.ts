@@ -1,10 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActionButtonComponent } from '../../action-button/action-button.component';
 
 @Component({
   selector: 'app-alert-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ActionButtonComponent],
   templateUrl: './alert-modal.component.html',
   styleUrl: './alert-modal.component.css',
 })

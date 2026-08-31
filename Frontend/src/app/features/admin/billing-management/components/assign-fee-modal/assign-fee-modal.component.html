@@ -107,21 +107,16 @@
         <!-- MODE B: FACULTY BULK RUN COHORT SELECTOR -->
         @if (scopeMode() === 'faculty') {
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Target Faculty Cohort <span class="text-rose-500">*</span>
-            </label>
-            <select
-              [ngModel]="selectedFacultyId()"
-              (ngModelChange)="selectedFacultyId.set(+$event)"
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
-            >
-              <option [value]="0">-- Select Faculty Cohort --</option>
-              @for (f of faculties; track f.id || f.Id) {
-                <option [value]="f.id || f.Id">
-                  {{ f.name || f.Name }}
-                </option>
-              }
-            </select>
+            <app-select-dropdown
+              label="Target Faculty Cohort"
+              icon="🏛️"
+              [options]="facultyDropdownOptions()"
+              [selectedValue]="selectedFacultyId()"
+              placeholder="-- Select Faculty Cohort --"
+              [required]="true"
+              (selectionChange)="selectedFacultyId.set(+$event)"
+            ></app-select-dropdown>
+
             <p class="text-2xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
               ⚠️ Warning: Bulk run will issue this fee to ALL students enrolled in the selected faculty.
             </p>
@@ -130,21 +125,15 @@
 
         <!-- Fee Type -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Fee Type <span class="text-rose-500">*</span>
-          </label>
-          <select
-            [ngModel]="selectedFeeTypeId()"
-            (ngModelChange)="selectedFeeTypeId.set(+$event)"
-            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white cursor-pointer"
-          >
-            <option [value]="0">-- Select Fee Type --</option>
-            @for (ft of feeTypes; track ft.id) {
-              <option [value]="ft.id" [disabled]="!ft.isActive">
-                {{ ft.name }} {{ !ft.isActive ? '[DEACTIVATED]' : '' }}
-              </option>
-            }
-          </select>
+          <app-select-dropdown
+            label="Fee Type"
+            icon="💳"
+            [options]="feeTypeDropdownOptions()"
+            [selectedValue]="selectedFeeTypeId()"
+            placeholder="-- Select Fee Type --"
+            [required]="true"
+            (selectionChange)="onFeeTypeSelected(+$event)"
+          ></app-select-dropdown>
         </div>
 
         <!-- Amount -->
@@ -193,27 +182,21 @@
 
       <!-- Footer -->
       <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-2.5 bg-slate-50/50 dark:bg-slate-800/50">
-        <button
-          type="button"
-          (click)="onClose()"
-          class="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl transition-colors cursor-pointer"
-        >
-          <span>✕</span> Cancel
-        </button>
-        <button
-          type="button"
-          (click)="onSubmit()"
+        <app-action-button
+          label="Cancel"
+          variant="outline"
+          tooltip="Cancel fee assignment"
+          (btnClick)="onClose()"
+        ></app-action-button>
+        <app-action-button
+          [label]="scopeMode() === 'faculty' ? 'Execute Faculty Bulk Run' : 'Assign Fee to Student'"
+          icon="card"
+          variant="primary"
+          [loading]="isSubmitting()"
           [disabled]="isSubmitting() || (scopeMode() === 'single' && selectedStudentId() === 0) || (scopeMode() === 'faculty' && selectedFacultyId() === 0) || selectedFeeTypeId() === 0 || amount() <= 0 || !dueDate()"
-          class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          @if (isSubmitting()) {
-            <span class="animate-spin text-xs">⏳</span> Assigning...
-          } @else if (scopeMode() === 'faculty') {
-            <span>🏛️</span> Execute Faculty Bulk Run
-          } @else {
-            <span>💳</span> Assign Fee to Student
-          }
-        </button>
+          tooltip="Assign fee/fine to student or faculty group"
+          (btnClick)="onSubmit()"
+        ></app-action-button>
       </div>
     </div>
   </div>

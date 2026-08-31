@@ -1,1 +1,18 @@
-<p>lab-bookings-history works!</p>
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>📋</span> Lab Seat Holds & Reservations Audit History
+      </h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Audit log tracking active 10-minute hold reservations and confirmed laboratory bookings.
+      </p>
+    </div>
+  </div>
+
+  <app-data-table
+    [data]="bookings"
+    [columns]="columns"
+    [pageSize]="10"
+  ></app-data-table>
+</div>

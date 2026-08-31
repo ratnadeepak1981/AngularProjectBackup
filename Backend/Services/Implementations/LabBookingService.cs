@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Labs;
+using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Labs;
 using CampusServicesPortal.Models;
@@ -88,9 +88,9 @@ public class LabBookingService : ILabBookingService
 
         return new LabMatrixLayoutDto
         {
-            // Dynamically evaluate your bounding grid size for frontend canvas render setups
-            TotalRows = mappedSeatsList.Any() ? mappedSeatsList.Max(s => s.RowIndex) : 0,
-            TotalColumns = mappedSeatsList.Any() ? mappedSeatsList.Max(s => s.ColumnIndex) : 0,
+            // Dynamically evaluate bounding grid size for frontend canvas render setups
+            TotalRows = lab.TotalRows ?? (mappedSeatsList.Any() ? mappedSeatsList.Max(s => s.RowIndex) : 4),
+            TotalColumns = lab.TotalColumns ?? (mappedSeatsList.Any() ? mappedSeatsList.Max(s => s.ColumnIndex) : 3),
             Seats = mappedSeatsList
         };
     }

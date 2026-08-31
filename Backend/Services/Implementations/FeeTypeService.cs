@@ -54,6 +54,19 @@ namespace CampusServicesPortal.Services.Implementations
             return ServiceResult<FeeType>.Success(feeType, 200);
         }
 
+        public async Task<ServiceResult<FeeType>> ToggleFeeTypeStatusAsync(int id)
+        {
+            var feeType = await _feeTypeRepository.GetFeeTypeByIdAsync(id);
+            if (feeType == null)
+                return ServiceResult<FeeType>.Failure("Target fee type record not found.", 404);
+
+            feeType.IsActive = !feeType.IsActive;
+            _feeTypeRepository.UpdateFeeType(feeType);
+            await _feeTypeRepository.SaveChangesAsync();
+
+            return ServiceResult<FeeType>.Success(feeType, 200);
+        }
+
         public async Task<ServiceResult<object>> DeleteFeeTypeAsync(int id)
         {
             var feeType = await _feeTypeRepository.GetFeeTypeByIdAsync(id);

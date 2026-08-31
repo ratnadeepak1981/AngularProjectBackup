@@ -1,13 +1,16 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminBillingService, FeeTypeItem } from '../../services/admin-billing';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
+import { SelectDropdownComponent } from '../../../../../shared/components/select-dropdown/select-dropdown.component';
+import { DropdownOption } from '../../../../../core/models/common/dropdown-option.model';
 
 @Component({
   selector: 'app-assign-fee-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ActionButtonComponent, SelectDropdownComponent],
   templateUrl: './assign-fee-modal.component.html',
   styleUrl: './assign-fee-modal.component.css',
 })
@@ -46,6 +49,30 @@ export class AssignFeeModalComponent implements OnChanges {
   public readonly dueDate = signal<string>('');
   public readonly description = signal<string>('');
   public readonly isSubmitting = signal<boolean>(false);
+
+  public readonly facultyDropdownOptions = computed<DropdownOption[]>(() => {
+    return (this.faculties || []).map((f: any) => ({
+      value: f.id || f.Id,
+      label: f.name || f.Name,
+      icon: '🏛️',
+      description: `Faculty Cohort ID #${f.id || f.Id}`,
+    }));
+  });
+
+  public readonly feeTypeDropdownOptions = computed<DropdownOption[]>(() => {
+    return (this.feeTypes || [])
+      .filter((t: any) => t.isActive !== false)
+      .map((t: any) => ({
+        value: t.id || t.Id,
+        label: t.name || t.Name,
+        icon: '💳',
+        description: 'Active System Fee Type',
+      }));
+  });
+
+  public onFeeTypeSelected(id: number): void {
+    this.selectedFeeTypeId.set(id);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {

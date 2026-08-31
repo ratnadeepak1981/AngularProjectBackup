@@ -21,7 +21,6 @@ namespace CampusServicesPortal.Repositories.Implementations
         public async Task<IEnumerable<Venue>> GetAllVenuesAsync()
         {
             return await _context.Venues
-                .Where(v => v.IsActive)
                 .ToListAsync();
         }
 

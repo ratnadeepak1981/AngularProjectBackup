@@ -17,6 +17,7 @@ import { ConfirmModalComponent } from '../../../../shared/components/dialogs/con
 import { AlertModalComponent } from '../../../../shared/components/dialogs/alert-modal/alert-modal.component';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableColumn } from '../../../../shared/components/data-table/models/table-column.model';
+import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-event-management-page',
@@ -30,6 +31,7 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
     ConfirmModalComponent,
     AlertModalComponent,
     DataTableComponent,
+    ActionButtonComponent,
   ],
   templateUrl: './event-management-page.component.html',
   styleUrl: './event-management-page.component.css',
@@ -68,25 +70,9 @@ export class EventManagementPageComponent implements OnInit {
 
   public readonly venueColumns: TableColumn<any>[] = [
     { key: 'name', header: 'Venue Name', sortable: true, filterable: true },
-    { key: 'type', header: 'Venue Type', sortable: true, filterable: true },
+    { key: 'type', header: 'Venue Type', sortable: true, filterable: true, type: 'custom' },
     { key: 'formattedCapacity', header: 'Max Capacity', sortable: true, filterable: true },
-    {
-      key: 'isActive',
-      header: 'Status',
-      sortable: true,
-      filterable: true,
-      type: 'badge',
-      badgeMap: {
-        true: {
-          label: 'ACTIVE',
-          class: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700',
-        },
-        false: {
-          label: 'DEACTIVATED',
-          class: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700',
-        },
-      },
-    },
+    { key: 'status', header: 'Status', sortable: true, filterable: true, type: 'badge' },
     { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
 
@@ -106,6 +92,7 @@ export class EventManagementPageComponent implements OnInit {
   public readonly displayVenues = computed(() => {
     return this.venuesList().map((v) => ({
       ...v,
+      status: v.isActive ? 'Active' : 'Deactivated',
       formattedCapacity: `${v.capacity || 0} People`,
     }));
   });

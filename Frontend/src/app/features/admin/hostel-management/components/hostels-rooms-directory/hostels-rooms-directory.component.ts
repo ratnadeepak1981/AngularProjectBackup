@@ -6,11 +6,12 @@ import { DataTableComponent } from '../../../../../shared/components/data-table/
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
 import { HostelManagementService, HostelBuilding, HostelRoom } from '../../services/hostel-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-hostels-rooms-directory',
   standalone: true,
-  imports: [CommonModule, FormsModule, TabComponent, DataTableComponent],
+  imports: [CommonModule, FormsModule, TabComponent, DataTableComponent, ActionButtonComponent],
   templateUrl: './hostels-rooms-directory.component.html',
   styleUrl: './hostels-rooms-directory.component.css',
 })
@@ -26,6 +27,7 @@ export class HostelsRoomsDirectoryComponent {
   @Output() createRoom = new EventEmitter<number>();
   @Output() editRoom = new EventEmitter<HostelRoom>();
   @Output() refreshed = new EventEmitter<void>();
+  @Output() triggerConfirm = new EventEmitter<{ title: string; message: string; icon: string; variant: 'primary' | 'danger' | 'warning'; action: () => void }>();
 
   // Create Hostel Modal Signals
   public readonly isCreateHostelModalOpen = signal<boolean>(false);
@@ -242,25 +244,39 @@ export class HostelsRoomsDirectoryComponent {
 
   // Deactivate Hostel Action
   deactivateHostel(hostel: HostelBuilding): void {
-    if (!confirm(`Are you sure you want to deactivate ${hostel.name}?`)) return;
-    this.hostelService.deleteHostel(hostel.id).subscribe({
-      next: () => {
-        this.toast.success(`Hostel "${hostel.name}" deactivated.`);
-        this.refreshed.emit();
+    this.triggerConfirm.emit({
+      title: 'Deactivate Hostel Building',
+      message: `Are you sure you want to deactivate ${hostel.name}? Associated rooms will be locked for allocations.`,
+      icon: '🏢',
+      variant: 'danger',
+      action: () => {
+        this.hostelService.deleteHostel(hostel.id).subscribe({
+          next: () => {
+            this.toast.success(`Hostel "${hostel.name}" deactivated.`);
+            this.refreshed.emit();
+          },
+          error: (err: any) => this.toast.error(err?.error?.message || 'Failed to deactivate hostel.'),
+        });
       },
-      error: (err: any) => this.toast.error(err?.error?.message || 'Failed to deactivate hostel.'),
     });
   }
 
   // Deactivate Room Action
   deactivateRoom(room: HostelRoom): void {
-    if (!confirm(`Are you sure you want to deactivate Room ${room.roomNumber}?`)) return;
-    this.hostelService.deleteRoom(room.id).subscribe({
-      next: () => {
-        this.toast.success(`Room ${room.roomNumber} deactivated.`);
-        this.refreshed.emit();
+    this.triggerConfirm.emit({
+      title: 'Deactivate Room',
+      message: `Are you sure you want to deactivate Room ${room.roomNumber}?`,
+      icon: '🚪',
+      variant: 'danger',
+      action: () => {
+        this.hostelService.deleteRoom(room.id).subscribe({
+          next: () => {
+            this.toast.success(`Room ${room.roomNumber} deactivated.`);
+            this.refreshed.emit();
+          },
+          error: (err: any) => this.toast.error(err?.error?.message || 'Failed to deactivate room.'),
+        });
       },
-      error: (err: any) => this.toast.error(err?.error?.message || 'Failed to deactivate room.'),
     });
   }
 }

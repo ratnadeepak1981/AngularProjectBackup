@@ -12,12 +12,13 @@
     <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-10 text-center text-slate-400">
       <span class="text-3xl">🏢</span>
       <p class="mt-2 font-semibold text-slate-500 dark:text-slate-400">No hostel buildings configured yet.</p>
-      <button
-        (click)="openCreateHostelModal()"
-        class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm"
-      >
-        + Create First Hostel Building
-      </button>
+      <app-action-button
+        label="Create First Hostel Building"
+        icon="plus"
+        variant="primary"
+        tooltip="Create new hostel building"
+        (btnClick)="openCreateHostelModal()"
+      ></app-action-button>
     </div>
   } @else {
     <!-- Selected Hostel Building Detail Card -->
@@ -48,24 +49,27 @@
         </div>
 
         <div class="flex items-center gap-2.5">
-          <button
-            (click)="openEditHostelModal(selectedHostel()!)"
-            class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <span>✏️</span> Edit Hostel
-          </button>
-          <button
-            (click)="createRoom.emit(selectedHostel()!.id)"
-            class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <span>+</span> Add Room
-          </button>
-          <button
-            (click)="deactivateHostel(selectedHostel()!)"
-            class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-          >
-            Deactivate Hostel
-          </button>
+          <app-action-button
+            label="Edit Hostel"
+            icon="edit"
+            variant="secondary"
+            tooltip="Edit hostel building details"
+            (btnClick)="openEditHostelModal(selectedHostel()!)"
+          ></app-action-button>
+          <app-action-button
+            label="Add Room"
+            icon="plus"
+            variant="primary"
+            tooltip="Add room to hostel"
+            (btnClick)="createRoom.emit(selectedHostel()!.id)"
+          ></app-action-button>
+          <app-action-button
+            label="Deactivate Hostel"
+            icon="x"
+            variant="danger"
+            tooltip="Deactivate hostel building"
+            (btnClick)="deactivateHostel(selectedHostel()!)"
+          ></app-action-button>
         </div>
       </div>
 

@@ -17,6 +17,7 @@ import { TabComponent, TabItem } from '../../../../shared/components/tab-compone
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableColumn } from '../../../../shared/components/data-table/models/table-column.model';
+import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-student-master-page',
@@ -30,6 +31,7 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
     TabComponent,
     PageHeaderComponent,
     DataTableComponent,
+    ActionButtonComponent,
   ],
   templateUrl: './student-master-page.component.html',
   styleUrl: './student-master-page.component.css',
