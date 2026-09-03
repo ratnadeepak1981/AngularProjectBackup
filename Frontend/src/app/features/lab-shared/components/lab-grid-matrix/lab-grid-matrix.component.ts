@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
@@ -9,11 +9,20 @@ import { ConfirmModalComponent } from '../../../../shared/components/dialogs/con
 @Component({
   selector: 'app-lab-grid-matrix',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatusBadgeComponent, ActionButtonComponent, ConfirmModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    StatusBadgeComponent,
+    ActionButtonComponent,
+    ConfirmModalComponent,
+  ],
   templateUrl: './lab-grid-matrix.component.html',
   styleUrl: './lab-grid-matrix.component.css',
 })
-export class LabGridMatrixComponent {
+export class LabGridMatrixComponent implements OnChanges {
+  private readonly fb = inject(FormBuilder);
+
   @Input() labId: number = 1;
   @Input() labName: string = 'Campus Laboratory';
   @Input() totalRows: number = 4;
@@ -27,6 +36,11 @@ export class LabGridMatrixComponent {
   @Output() closeModal = new EventEmitter<void>();
   @Output() seatSelected = new EventEmitter<LabSeat>();
 
+  // Reactive 2D Form Matrix Structure: Root FormGroup -> rows (FormArray) -> cells (FormArray)
+  public readonly matrixForm: FormGroup = this.fb.group({
+    rows: this.fb.array<AbstractControl>([]),
+  });
+
   // Confirmation Modal Signals
   public readonly isAddConfirmOpen = signal(false);
   public readonly selectedCell = signal<{ row: number; col: number } | null>(null);
@@ -34,6 +48,51 @@ export class LabGridMatrixComponent {
 
   public readonly isRemoveConfirmOpen = signal(false);
   public readonly selectedSeatToRemove = signal<LabSeat | null>(null);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['seats'] || changes['totalRows'] || changes['totalCols']) {
+      this.rebuildMatrixFormArray();
+    }
+  }
+
+  /**
+   * Rebuilds the 2D FormArray matrix structure from totalRows x totalCols inputs
+   */
+  private rebuildMatrixFormArray(): void {
+    const rowsArray = new FormArray<AbstractControl>([]);
+    const rows = Math.max(1, this.totalRows);
+    const cols = Math.max(1, this.totalCols);
+
+    for (let r = 1; r <= rows; r++) {
+      const colsArray = new FormArray<AbstractControl>([]);
+      for (let c = 1; c <= cols; c++) {
+        const existingSeat = this.seats.find((s) => s.rowIndex === r && s.columnIndex === c);
+        const cellGroup = this.fb.group({
+          rowIndex: [r],
+          columnIndex: [c],
+          seat: [existingSeat || null],
+        });
+        colsArray.push(cellGroup);
+      }
+      rowsArray.push(colsArray);
+    }
+
+    this.matrixForm.setControl('rows', rowsArray);
+  }
+
+  get matrixRows(): FormArray {
+    return this.matrixForm.get('rows') as FormArray;
+  }
+
+  getRowCells(rowIndex: number): FormArray {
+    return this.matrixRows.at(rowIndex - 1) as FormArray;
+  }
+
+  getCellGroup(row: number, col: number): FormGroup | null {
+    const rowArray = this.getRowCells(row);
+    if (!rowArray) return null;
+    return rowArray.at(col - 1) as FormGroup;
+  }
 
   /**
    * Helper array for 1-indexed row loop (1..totalRows)
@@ -50,10 +109,12 @@ export class LabGridMatrixComponent {
   }
 
   /**
-   * Get seat object located at 1-indexed (row, col)
+   * Get seat object located at 1-indexed (row, col) from the 2D FormArray matrix
    */
   getSeatAt(row: number, col: number): LabSeat | undefined {
-    return this.seats.find((s) => s.rowIndex === row && s.columnIndex === col);
+    const cellGroup = this.getCellGroup(row, col);
+    if (!cellGroup) return undefined;
+    return cellGroup.get('seat')?.value || undefined;
   }
 
   /**

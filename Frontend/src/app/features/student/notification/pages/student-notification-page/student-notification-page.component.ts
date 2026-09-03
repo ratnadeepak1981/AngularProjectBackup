@@ -80,10 +80,9 @@ export class StudentNotificationPageComponent implements OnInit {
     this.isLoading.set(true);
     const studentId = this.authService.userProfile()?.id || 0;
 
-    this.notificationService.getMyNotifications(studentId).subscribe({
-      next: (res) => {
+    this.notificationService.getFormattedNotifications(studentId).subscribe({
+      next: (items) => {
         this.isLoading.set(false);
-        const items = res.data || (Array.isArray(res) ? res : []);
         this.notifications.set(items);
         this.currentPage.set(1);
       },

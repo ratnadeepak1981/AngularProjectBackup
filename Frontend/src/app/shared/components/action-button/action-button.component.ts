@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, booleanAttribute } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, booleanAttribute } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppTooltipDirective } from '../../directives/tooltip.directive';
 import { AppButtonHoverDirective } from '../../directives/button-hover.directive';
@@ -29,6 +29,11 @@ export class ActionButtonComponent {
   @Input({ transform: booleanAttribute }) fullWidth: boolean = false;
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
+
+  @HostListener('click', ['$event'])
+  onHostClick(event: MouseEvent): void {
+    this.onClick(event);
+  }
 
   onClick(event: MouseEvent): void {
     if (this.disabled || this.loading) {
@@ -72,14 +77,14 @@ export class ActionButtonComponent {
     // Size variations
     switch (this.size) {
       case 'sm':
-        classes.push(this.label ? 'px-3 py-1.5 text-xs' : 'p-1.5 text-xs');
+        classes.push('px-3 py-1.5 text-xs');
         break;
       case 'lg':
-        classes.push(this.label ? 'px-5 py-2.5 text-sm sm:text-base' : 'p-3 text-base');
+        classes.push('px-5 py-2.5 text-sm sm:text-base');
         break;
       case 'md':
       default:
-        classes.push(this.label ? 'px-4 py-2 text-xs sm:text-sm' : 'p-2 text-xs sm:text-sm');
+        classes.push('px-4 py-2 text-xs sm:text-sm');
         break;
     }
 

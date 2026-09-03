@@ -149,6 +149,32 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'admin/certificate-management',
+        loadChildren: () =>
+          import('./features/admin/certificate-management/admin-certificate.routes').then(
+            (m) => m.ADMIN_CERTIFICATE_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/certificates',
+        redirectTo: 'admin/certificate-management',
+        pathMatch: 'full',
+      },
+      {
+        path: 'admin/complaint-management',
+        loadChildren: () =>
+          import('./features/admin/complaint-management/admin-complaint.routes').then(
+            (m) => m.ADMIN_COMPLAINT_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/complaints',
+        redirectTo: 'admin/complaint-management',
+        pathMatch: 'full',
+      },
+      {
         path: 'student/dashboard',
         loadChildren: () =>
           import('./features/student/dashboard/student-dashboard.routes').then(
@@ -165,6 +191,30 @@ export const routes: Routes = [
       {
         path: 'student/preferences',
         redirectTo: 'student/settings',
+        pathMatch: 'full',
+      },
+      {
+        path: 'student/certificate',
+        loadChildren: () =>
+          import('./features/student/certificate/student-certificate.routes').then(
+            (m) => m.STUDENT_CERTIFICATE_ROUTES
+          ),
+      },
+      {
+        path: 'student/certificates',
+        redirectTo: 'student/certificate',
+        pathMatch: 'full',
+      },
+      {
+        path: 'student/complaint',
+        loadChildren: () =>
+          import('./features/student/complaint/student-complaint.routes').then(
+            (m) => m.STUDENT_COMPLAINT_ROUTES
+          ),
+      },
+      {
+        path: 'student/complaints',
+        redirectTo: 'student/complaint',
         pathMatch: 'full',
       },
       {

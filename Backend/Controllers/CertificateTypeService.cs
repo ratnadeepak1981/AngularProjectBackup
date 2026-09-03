@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CampusServicesPortal.Repositories;
@@ -70,10 +70,6 @@ namespace CampusServicesPortal.Services.Implementations
             var item = await _repository.GetByIdAsync(id);
             if (item == null)
                 return ServiceResult<object>.Failure("Target certificate type record not found.", 404);
-
-            // Business Rule: A Certificate Type cannot be deleted while requests reference it [PDF: 0.1.17]
-            if (await _repository.HasLinkedRequestsAsync(id))
-                return ServiceResult<object>.Failure("A Certificate Type cannot be deleted while certificate requests reference it — deactivate instead.", 400);
 
             item.IsActive = false; // Soft-delete rule execution [PDF: 0.1.17]
             await _repository.UpdateAsync(item);

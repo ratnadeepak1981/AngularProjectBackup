@@ -57,17 +57,27 @@
           (btnClick)="openForgotPassword()"
         ></app-action-button>
       </div>
-      <input
-        type="password"
-        id="password"
-        formControlName="password"
-        placeholder="••••••••"
-        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-400"
-        [ngClass]="{
-          'border-rose-400 focus:ring-rose-500 bg-rose-50/30':
-            loginForm.get('password')?.touched && loginForm.get('password')?.invalid
-        }"
-      />
+      <div class="relative">
+        <input
+          [type]="showPassword() ? 'text' : 'password'"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="w-full pl-4 pr-11 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-400"
+          [ngClass]="{
+            'border-rose-400 focus:ring-rose-500 bg-rose-50/30':
+              loginForm.get('password')?.touched && loginForm.get('password')?.invalid
+          }"
+        />
+        <button
+          type="button"
+          (click)="toggleShowPassword()"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer text-sm"
+          [title]="showPassword() ? 'Hide Password' : 'Show Password'"
+        >
+          <span>{{ showPassword() ? '🙈' : '👁️' }}</span>
+        </button>
+      </div>
       @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
         <p class="text-xs text-rose-600 mt-1 font-medium">Password is required.</p>
       }
@@ -111,7 +121,7 @@
         </h3>
         <button
           (click)="closeForgotPassword()"
-          class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none"
+          class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none cursor-pointer"
         >
           &times;
         </button>
@@ -136,7 +146,7 @@
             type="button"
             (click)="onRequestResetToken()"
             [disabled]="isResetLoading()"
-            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer disabled:opacity-60"
           >
             @if (isResetLoading()) {
               <span>Generating Code...</span>
@@ -150,6 +160,14 @@
           <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs font-medium mb-3">
             OTP Token dispatched via SMS! Please check your SMS and enter the code below.
           </div>
+
+          @if (resetErrorMessage()) {
+            <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-semibold flex items-start gap-2 mb-3">
+              <span>⚠️</span>
+              <span>{{ resetErrorMessage() }}</span>
+            </div>
+          }
+
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password Reset Token (OTP)</label>
             <input
@@ -161,18 +179,39 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Strong Password</label>
-            <input
-              type="password"
-              formControlName="newPassword"
-              placeholder="Enter new password"
-              class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
-            />
+            <div class="relative">
+              <input
+                [type]="showResetPassword() ? 'text' : 'password'"
+                formControlName="newPassword"
+                placeholder="Enter new password"
+                class="w-full pl-3.5 pr-10 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+              />
+              <button
+                type="button"
+                (click)="toggleShowResetPassword()"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer text-sm"
+                [title]="showResetPassword() ? 'Hide Password' : 'Show Password'"
+              >
+                <span>{{ showResetPassword() ? '🙈' : '👁️' }}</span>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Confirm New Password</label>
+            <div class="relative">
+              <input
+                [type]="showResetPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="Re-enter new password"
+                class="w-full pl-3.5 pr-10 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+              />
+            </div>
           </div>
           <button
             type="button"
             (click)="onSubmitPasswordReset()"
             [disabled]="isResetLoading()"
-            class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60"
+            class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer disabled:opacity-60"
           >
             @if (isResetLoading()) {
               <span>Updating Password...</span>

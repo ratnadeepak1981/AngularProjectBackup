@@ -46,13 +46,12 @@
         <ng-template #cellActions let-row>
           <div class="flex items-center justify-end gap-2">
             <app-action-button
-              label="Approve & Assign Room"
-              icon="arrow-right"
-              iconPosition="right"
-              variant="primary"
+              label="Approve Application"
+              icon="check"
+              variant="success"
               size="sm"
-              tooltip="Approve application and assign room"
-              (btnClick)="openAssignRoomModal(row)"
+              tooltip="Approve application to unlock room assignment"
+              (btnClick)="promptApproveApplication(row)"
             ></app-action-button>
             <app-action-button
               label="Reject"
@@ -77,7 +76,7 @@
             <span>✅</span> Approved Housing Allocations
           </h3>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            View allocated student rooms and reassign housing slots when necessary.
+            View allocated student rooms and assign/reassign housing slots for approved applicants.
           </p>
         </div>
       </div>
@@ -85,19 +84,37 @@
       <!-- Approved Allocations Data Table (Common Reusable Data Table Component) -->
       <app-data-table
         [columns]="approvedAppColumns"
-        [data]="allApplications()"
+        [data]="approvedApplications()"
         [isLoading]="isLoading()"
         [sortIconStyle]="'svg-arrows'"
         [emptyMessage]="'No approved student allocations found.'"
       >
         <ng-template #cellActions let-row>
-          <button
-            (click)="openAssignRoomModal(row)"
-            class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer inline-flex items-center gap-1"
-          >
-            <span>Reassign Room</span>
-            <span>&rarr;</span>
-          </button>
+          <div class="flex items-center justify-end">
+            @if (row.status === 'Approved') {
+              <app-action-button
+                label="Assign Room →"
+                icon="arrow-right"
+                variant="primary"
+                size="sm"
+                tooltip="Assign room for approved application"
+                (btnClick)="openAssignRoomModal(row)"
+              ></app-action-button>
+            } @else if (row.status === 'RoomAssigned') {
+              <app-action-button
+                label="Reassign Room →"
+                icon="refresh-cw"
+                variant="outline"
+                size="sm"
+                tooltip="Transfer student to another room"
+                (btnClick)="openAssignRoomModal(row)"
+              ></app-action-button>
+            } @else {
+              <span class="text-2xs italic text-slate-400 dark:text-slate-500 font-normal">
+                ⚠️ Room assignment unavailable (Application must be Approved)
+              </span>
+            }
+          </div>
         </ng-template>
       </app-data-table>
     </div>

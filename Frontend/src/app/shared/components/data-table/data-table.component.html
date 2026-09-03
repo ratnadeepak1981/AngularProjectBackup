@@ -181,9 +181,9 @@
                 >
                   <!-- Render Column by Type -->
                   @if (col.type === 'actions' && cellActionsTemplate) {
-                    <ng-container *ngTemplateOutlet="cellActionsTemplate; context: { $implicit: row }"></ng-container>
+                    <ng-container *ngTemplateOutlet="cellActionsTemplate; context: { $implicit: row, column: col, col: col }"></ng-container>
                   } @else if (col.type === 'custom' && cellCustomTemplate) {
-                    <ng-container *ngTemplateOutlet="cellCustomTemplate; context: { $implicit: row, column: col }"></ng-container>
+                    <ng-container *ngTemplateOutlet="cellCustomTemplate; context: { $implicit: row, column: col, col: col }"></ng-container>
                   } @else if (col.type === 'badge' || col.type === 'status') {
                     @if (getBadgeConfig(row, col); as bConfig) {
                       <span [class]="bConfig.class">

@@ -19,10 +19,14 @@
       <ng-container *ngTemplateOutlet="iconTemplate"></ng-container>
     }
 
-    <!-- Label Text -->
-    @if (label) {
-      <span class="tracking-wide leading-none font-semibold">{{ label }}</span>
-    }
+    <!-- Label Text or Projected Content -->
+    <span class="tracking-wide leading-none font-semibold">
+      @if (label) {
+        {{ label }}
+      } @else {
+        <ng-content></ng-content>
+      }
+    </span>
 
     <!-- Right Icon Slot -->
     @if (iconPosition === 'right') {

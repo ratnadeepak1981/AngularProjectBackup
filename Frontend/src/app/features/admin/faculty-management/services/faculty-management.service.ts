@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { Faculty } from '../../../../core/models/faculty/faculty.model';
 import { ApiResponse } from '../../../../core/models/common/api-response.model';
@@ -12,6 +12,14 @@ export class FacultyManagementService {
 
   getFaculties(): Observable<ApiResponse<Faculty[]>> {
     return this.apiService.get<ApiResponse<Faculty[]>>(this.apiService.routes.faculties.list);
+  }
+
+  getFormattedFaculties(): Observable<Faculty[]> {
+    return this.getFaculties().pipe(
+      map((res) => {
+        return res.data || (Array.isArray(res) ? res : []);
+      })
+    );
   }
 
   createFaculty(payload: { name: string; code?: string }): Observable<ApiResponse<any>> {

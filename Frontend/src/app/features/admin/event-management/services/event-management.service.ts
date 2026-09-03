@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 
@@ -23,6 +23,15 @@ export class EventManagementService {
     return this.api.get<any>(this.api.routes.events.list);
   }
 
+  getFormattedEvents(): Observable<AdminEventItem[]> {
+    return this.getEvents().pipe(
+      map((res) => {
+        const payload = res?.data || res || [];
+        return Array.isArray(payload) ? payload : (payload.items || []);
+      })
+    );
+  }
+
   createEvent(payload: CreateEventPayload): Observable<any> {
     return this.api.post<any>(
       this.api.routes.events.create,
@@ -35,9 +44,27 @@ export class EventManagementService {
     return this.api.get<any>(this.api.routes.events.registrations(eventId));
   }
 
+  getFormattedEventRegistrations(eventId: number): Observable<EventAttendeeItem[]> {
+    return this.getEventRegistrations(eventId).pipe(
+      map((res) => {
+        const payload = res?.data || res || [];
+        return Array.isArray(payload) ? payload : (payload.items || []);
+      })
+    );
+  }
+
   // Venues API
   getVenues(): Observable<any> {
     return this.api.get<any>(this.api.routes.venues.list);
+  }
+
+  getFormattedVenues(): Observable<AdminVenueItem[]> {
+    return this.getVenues().pipe(
+      map((res) => {
+        const payload = res?.data || res || [];
+        return Array.isArray(payload) ? payload : (payload.items || []);
+      })
+    );
   }
 
   createVenue(payload: CreateVenuePayload): Observable<any> {

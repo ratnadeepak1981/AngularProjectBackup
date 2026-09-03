@@ -77,7 +77,6 @@ namespace CampusServicesPortal.Controllers
         // GET /api/hostel-applications/all or GET /api/hostel-applications — Admin: Fetch all applications [PDF: 0.1.7]
         [Authorize(Roles = "Admin")]
         [HttpGet("all")]
-        [HttpGet]
         public async Task<IActionResult> GetAllApplications()
         {
             var result = await _hostelService.GetAllApplicationsAsync();

@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { StudentDashboardService } from '../services/student-dashboard.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { Notification } from '../../../../core/models/system/notification.model';
@@ -26,7 +26,7 @@ export type NotificationItem = Notification;
 })
 export class StudentDashboardPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly apiService = inject(ApiService);
+  private readonly dashboardService = inject(StudentDashboardService);
   public readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
 
@@ -35,6 +35,7 @@ export class StudentDashboardPageComponent implements OnInit {
   public readonly facultyName = signal<string>('Faculty of Applied Sciences');
   public readonly isSavingProfile = signal<boolean>(false);
   public readonly isLoadingMetrics = signal<boolean>(true);
+  public readonly isEditProfileModalOpen = signal<boolean>(false);
 
   // 6 Live Metric Signals
   public readonly hostelStatus = signal<string>('Checking...');
@@ -44,13 +45,84 @@ export class StudentDashboardPageComponent implements OnInit {
   public readonly certificateStatus = signal<string>('Checking...');
   public readonly complaintStatus = signal<string>('Checking...');
 
-  // Recent Notifications Signal
+  // Recent Notifications Signal & Filter State
   public readonly recentNotifications = signal<NotificationItem[]>([]);
+  public readonly feedFilter = signal<string>('ALL');
+
+  public readonly filteredNotifications = computed(() => {
+    const list = this.recentNotifications();
+    const filter = this.feedFilter();
+    if (filter === 'ALL') return list;
+    if (filter === 'LABS') return list.filter(n => n.type?.toLowerCase().includes('lab'));
+    if (filter === 'HOSTELS') return list.filter(n => n.type?.toLowerCase().includes('hostel'));
+    if (filter === 'PAYMENTS') return list.filter(n => n.type?.toLowerCase().includes('fee') || n.type?.toLowerCase().includes('pay'));
+    return list;
+  });
 
   public readonly profileForm: FormGroup = this.fb.group({
     fullName: ['', [Validators.required]],
     contactDetails: [''],
+    phoneNumbers: this.fb.array([
+      this.createPhoneControl('Primary Mobile')
+    ]),
   });
+
+  public readonly primaryPhoneNumber = computed(() => {
+    const list = this.phoneNumbersArray.value;
+    if (list && list.length > 0 && list[0]?.phoneNumber) {
+      return list[0].phoneNumber;
+    }
+    const profile = this.authService.userProfile();
+    return profile?.contactDetails || '+94 77 123 4567';
+  });
+
+  public readonly allPhoneNumbersList = computed(() => {
+    const controls = this.phoneNumbersArray.controls;
+    if (controls && controls.length > 0) {
+      const items = controls.map(c => c.value).filter((p: any) => p.phoneNumber && p.phoneNumber.trim() !== '');
+      if (items.length > 0) return items;
+    }
+    const profile = this.authService.userProfile();
+    if (profile?.contactDetails) {
+      return [{ phoneType: 'Primary Mobile', phoneNumber: profile.contactDetails }];
+    }
+    return [{ phoneType: 'Primary Mobile', phoneNumber: '+94 77 123 4567' }];
+  });
+
+  private createPhoneControl(defaultType: string = 'Primary Mobile', numberValue: string = ''): FormGroup {
+    const isMandatory = defaultType === 'Primary Mobile';
+    const validators = isMandatory
+      ? [Validators.required, Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]
+      : [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')];
+
+    return this.fb.group({
+      phoneType: [defaultType, [Validators.required]],
+      phoneNumber: [numberValue, validators],
+    });
+  }
+
+  get phoneNumbersArray(): FormArray {
+    return this.profileForm.get('phoneNumbers') as FormArray;
+  }
+
+  addPhoneNumber(): void {
+    const nextType = this.phoneNumbersArray.length === 1 ? 'Home Landline' : 'Emergency Contact';
+    this.phoneNumbersArray.push(this.createPhoneControl(nextType, ''));
+  }
+
+  removePhoneNumber(index: number): void {
+    if (this.phoneNumbersArray.length > 1) {
+      this.phoneNumbersArray.removeAt(index);
+    }
+  }
+
+  public openEditProfileModal(): void {
+    this.isEditProfileModalOpen.set(true);
+  }
+
+  public closeEditProfileModal(): void {
+    this.isEditProfileModalOpen.set(false);
+  }
 
   ngOnInit(): void {
     const profile = this.authService.userProfile();
@@ -64,7 +136,7 @@ export class StudentDashboardPageComponent implements OnInit {
   }
 
   loadProfile(id: number): void {
-    this.apiService.get<any>(this.apiService.routes.students.getProfile(id)).subscribe({
+    this.dashboardService.getStudentProfile(id).subscribe({
       next: (res) => {
         const student = res?.data || res;
         if (student) {
@@ -81,6 +153,25 @@ export class StudentDashboardPageComponent implements OnInit {
             contactDetails: contact,
           });
 
+          if (contact) {
+            this.phoneNumbersArray.clear();
+            const numbers = contact.split('|').map((s: string) => s.trim()).filter(Boolean);
+            if (numbers.length > 0) {
+              numbers.forEach((numStr: string) => {
+                let type = 'Primary Mobile';
+                let num = numStr;
+                if (numStr.includes(':')) {
+                  const parts = numStr.split(':');
+                  type = parts[0].trim();
+                  num = parts[1].trim();
+                }
+                this.phoneNumbersArray.push(this.createPhoneControl(type, num));
+              });
+            } else {
+              this.phoneNumbersArray.push(this.createPhoneControl('Primary Mobile', contact));
+            }
+          }
+
           this.authService.updateStoredProfile({
             id,
             name,
@@ -96,11 +187,17 @@ export class StudentDashboardPageComponent implements OnInit {
 
   saveProfile(): void {
     if (this.profileForm.invalid) {
-      this.toast.error('Student Name cannot be empty.');
+      this.profileForm.markAllAsTouched();
+      this.toast.error('Please fix validation errors in your profile details.');
       return;
     }
 
     const { fullName, contactDetails } = this.profileForm.value;
+    const phoneList = this.phoneNumbersArray.value;
+    const formattedContact = phoneList && phoneList.length > 0
+      ? phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | ')
+      : (contactDetails || '');
+
     const currentFaculty = this.facultyName();
 
     let facultyId = 1;
@@ -113,19 +210,20 @@ export class StudentDashboardPageComponent implements OnInit {
     }
 
     this.isSavingProfile.set(true);
-    this.apiService
-      .put(this.apiService.routes.students.updateProfile(this.studentId()), {
+    this.dashboardService
+      .updateStudentProfile(this.studentId(), {
         fullName: fullName.trim(),
-        contactDetails: contactDetails || '',
+        contactDetails: formattedContact,
         facultyId,
       })
       .subscribe({
         next: () => {
           this.isSavingProfile.set(false);
+          this.closeEditProfileModal();
           this.toast.success('Profile details updated successfully.');
           this.authService.updateStoredProfile({
             name: fullName.trim(),
-            contactDetails: contactDetails || '',
+            contactDetails: formattedContact,
           });
         },
         error: (err) => {
@@ -137,115 +235,32 @@ export class StudentDashboardPageComponent implements OnInit {
 
   loadMetrics(id: number): void {
     this.isLoadingMetrics.set(true);
-
-    // 1. Hostel Application Status
-    this.apiService.get<any>(this.apiService.routes.hostel.studentApps).subscribe({
-      next: (res) => {
-        const apps = res?.data || res;
-        const latest = Array.isArray(apps) && apps.length > 0 ? apps[0] : null;
-        if (latest) {
-          const st = latest.status || 'Pending';
-          if (st === 'RoomAssigned') {
-            this.hostelStatus.set(`Assigned (${latest.assignedRoom?.roomNumber || 'Room'})`);
-          } else {
-            this.hostelStatus.set(st);
-          }
-        } else {
-          this.hostelStatus.set('No Application');
-        }
-      },
-      error: () => this.hostelStatus.set('No Application'),
-    });
-
-    // 2. Lab Bookings Count
-    this.apiService.get<any>(this.apiService.routes.labs.studentBookings(id)).subscribe({
-      next: (res) => {
-        const list = res?.data || res;
-        const count = Array.isArray(list) ? list.length : (list?.items?.length || 0);
-        this.activeLabBookings.set(count);
-      },
-      error: () => this.activeLabBookings.set(0),
-    });
-
-    // 3. Billing Ledger Balance
-    this.apiService.get<any>(this.apiService.routes.billing.ledger).subscribe({
-      next: (res) => {
-        const ledger = res?.data || res || [];
-        let total = 0;
-        if (Array.isArray(ledger)) {
-          total = ledger
-            .filter((item: any) => {
-              const status = String(item.status || item.Status || '').toUpperCase().trim();
-              return status === 'OUTSTANDING' || status === 'UNPAID';
-            })
-            .reduce((sum: number, item: any) => sum + (item.amount || item.Amount || 0), 0);
-        }
-        this.outstandingFees.set(total);
-      },
-      error: () => this.outstandingFees.set(0),
-    });
-
-    // 4. Events Registrations
-    this.apiService.get<any>(this.apiService.routes.events.list).subscribe({
-      next: (res) => {
-        const list = res?.data || res || [];
-        let activeCount = 0;
-        if (Array.isArray(list)) {
-          activeCount = list.filter((e: any) => {
-            const studentIds = e.registeredStudentIds || e.RegisteredStudentIds || [];
-            return (
-              (Array.isArray(studentIds) && studentIds.length > 0) ||
-              e.isRegistered === true ||
-              e.IsRegistered === true
-            );
-          }).length;
-        }
-        this.registeredEvents.set(activeCount);
-      },
-      error: () => this.registeredEvents.set(0),
-    });
-
-    // 5. Certificate Requests Status
-    this.apiService.get<any>(this.apiService.routes.certificates.studentList).subscribe({
-      next: (res) => {
-        const certs = res?.data || res;
-        const latest = Array.isArray(certs) && certs.length > 0 ? certs[0] : null;
-        if (latest) {
-          this.certificateStatus.set(latest.status || 'Pending');
-        } else {
-          this.certificateStatus.set('No Requests');
-        }
-      },
-      error: () => this.certificateStatus.set('No Requests'),
-    });
-
-    // 6. Complaint Grievance Status
-    this.apiService.get<any>(this.apiService.routes.complaints.studentList).subscribe({
-      next: (res) => {
-        const complaints = res?.data || res;
-        const latest = Array.isArray(complaints) && complaints.length > 0 ? complaints[0] : null;
-        if (latest) {
-          this.complaintStatus.set(latest.status || 'In Review');
-        } else {
-          this.complaintStatus.set('No Complaints');
-        }
-      },
-      error: () => this.complaintStatus.set('No Complaints'),
-    });
-
-    // 7. Recent Activity Feed
-    this.apiService.get<any>(this.apiService.routes.notifications.studentFeed(id)).subscribe({
-      next: (res) => {
-        const notifs = res?.data || res || [];
-        if (Array.isArray(notifs)) {
-          this.recentNotifications.set(notifs.slice(0, 4));
-        }
+    this.dashboardService.getDashboardMetrics(id).subscribe({
+      next: (summary) => {
+        this.hostelStatus.set(summary.hostelStatus);
+        this.activeLabBookings.set(summary.activeLabBookings);
+        this.outstandingFees.set(summary.outstandingFees);
+        this.registeredEvents.set(summary.registeredEvents);
+        this.certificateStatus.set(summary.certificateStatus);
+        this.complaintStatus.set(summary.complaintStatus);
+        this.recentNotifications.set(summary.recentNotifications);
         this.isLoadingMetrics.set(false);
       },
       error: () => {
-        this.recentNotifications.set([]);
         this.isLoadingMetrics.set(false);
       },
     });
+  }
+
+  public setFeedFilter(filter: string): void {
+    this.feedFilter.set(filter);
+  }
+
+  public formatNoticeType(type?: string): string {
+    if (!type) return 'Notice Alert';
+    if (type === 'LabBookingConfirmed') return 'Lab Booking Confirmed';
+    if (type === 'HostelApplicationSubmitted') return 'Hostel Application Submitted';
+    if (type === 'FeePaymentCleared') return 'Fee Payment Cleared';
+    return type.replace(/([A-Z])/g, ' $1').trim();
   }
 }

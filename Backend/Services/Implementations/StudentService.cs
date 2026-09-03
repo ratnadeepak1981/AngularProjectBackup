@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Auth;
+using CampusServicesPortal.DTOs.Requests.Auth;
 using CampusServicesPortal.DTOs.Requests.Student;
 using CampusServicesPortal.DTOs.Responses.Student;
 using CampusServicesPortal.Models;
@@ -14,10 +14,12 @@ namespace CampusServicesPortal.Services.Implementations
     public class StudentService : IStudentService
     {
         private readonly IStudentRepository _studentRepository;
+        private readonly IPasswordRepository _passwordRepository;
 
-        public StudentService(IStudentRepository studentRepository)
+        public StudentService(IStudentRepository studentRepository, IPasswordRepository passwordRepository)
         {
             _studentRepository = studentRepository;
+            _passwordRepository = passwordRepository;
         }
 
         // POST /api/students/register [BRD Section 4 - Module 1]
@@ -42,6 +44,24 @@ namespace CampusServicesPortal.Services.Implementations
             if (isEmailTaken)
             {
                 return ServiceResult<StudentProfileResponseDto>.Failure("Registration rejected: Email address is already in use.", 409);
+            }
+
+            // 3.5 Password Policy Validation
+            var minLengthSetting = await _passwordRepository.GetSystemSettingAsync("MinPasswordLength");
+            int minLength = minLengthSetting != null && int.TryParse(minLengthSetting.SettingValue, out var ml) ? ml : 8;
+
+            var complexitySetting = await _passwordRepository.GetSystemSettingAsync("RequirePasswordComplexity");
+            string complexityTier = complexitySetting?.SettingValue ?? "strong";
+
+            var rawPassword = request.Password ?? string.Empty;
+            if (rawPassword.Length < minLength)
+            {
+                return ServiceResult<StudentProfileResponseDto>.Failure($"Password policy error: Password must be at least {minLength} characters long.", 400);
+            }
+
+            if (!ValidatePasswordComplexity(rawPassword, complexityTier, minLength, out var complexityErrorMessage))
+            {
+                return ServiceResult<StudentProfileResponseDto>.Failure($"Password complexity error: {complexityErrorMessage}", 400);
             }
 
             // 4. Secure Hashing: Generate cryptographically safe salted password hash [BRD Section 10]
@@ -105,7 +125,7 @@ namespace CampusServicesPortal.Services.Implementations
                 Email = student.User?.Email ?? string.Empty,
                 ContactDetails = student.ContactDetails,
                 EmailVerified = student.EmailVerified,
-                IsActive = student.User?.IsActive ?? false,
+                IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
                 FacultyName = student.Faculty?.Name ?? "Unassigned"
             };
 
@@ -147,7 +167,7 @@ namespace CampusServicesPortal.Services.Implementations
                     Email = student.User?.Email ?? string.Empty,
                     ContactDetails = student.ContactDetails,
                     EmailVerified = student.EmailVerified,
-                    IsActive = student.User?.IsActive ?? false,
+                    IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
                     FacultyName = student.Faculty?.Name ?? "Unassigned"
                 });
             }
@@ -216,10 +236,21 @@ namespace CampusServicesPortal.Services.Implementations
         }
 
         // GET /api/student-master?search= Admin Verification Module [BRD Page 4]
-        public async Task<ServiceResult<IEnumerable<StudentMasterList>>> SearchMasterRecordsAsync(string? search)
+        public async Task<ServiceResult<IEnumerable<object>>> SearchMasterRecordsAsync(string? search)
         {
             var records = await _studentRepository.SearchMasterListAsync(search);
-            return ServiceResult<IEnumerable<StudentMasterList>>.Success(records, 200);
+            var registeredIndices = await _studentRepository.GetRegisteredIndexNumbersAsync();
+
+            var result = records.Select(r => new
+            {
+                r.Id,
+                r.IndexNumber,
+                r.FullName,
+                r.FacultyId,
+                IsUsed = registeredIndices.Contains(r.IndexNumber.ToLower())
+            });
+
+            return ServiceResult<IEnumerable<object>>.Success(result, 200);
         }
 
         // POST /api/student-master/import Administrative Stream Parser [BRD Page 4]
@@ -266,5 +297,46 @@ namespace CampusServicesPortal.Services.Implementations
             }
         }
 
+        private static bool ValidatePasswordComplexity(string password, string tier, int minLength, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            if (tier.Equals("basic", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            bool hasUpper = password.Any(char.IsUpper);
+            bool hasLower = password.Any(char.IsLower);
+            bool hasDigit = password.Any(char.IsDigit);
+            bool hasSymbol = password.Any(c => !char.IsLetterOrDigit(c));
+
+            if (tier.Equals("medium", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!hasUpper || !hasLower || !hasDigit)
+                {
+                    errorMessage = "Password must contain a mixture of uppercase letters (A-Z), lowercase letters (a-z), and numeric digits (0-9).";
+                    return false;
+                }
+                return true;
+            }
+
+            if (tier.Equals("strict", StringComparison.OrdinalIgnoreCase))
+            {
+                if (password.Length < Math.Max(12, minLength) || !hasUpper || !hasLower || !hasDigit || !hasSymbol)
+                {
+                    errorMessage = "Strict Enterprise policy requires at least 12 characters including uppercase, lowercase, numbers, and special symbols (@$!%*?&).";
+                    return false;
+                }
+                return true;
+            }
+
+            // Default 'strong' tier
+            if (!hasUpper || !hasLower || !hasDigit || !hasSymbol)
+            {
+                errorMessage = "Password must contain uppercase letters, lowercase letters, numbers, and at least one special symbol (@$!%*?&).";
+                return false;
+            }
+            return true;
+        }
     }
 }

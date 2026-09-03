@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CampusServicesPortal.Models;
 
@@ -22,4 +22,5 @@ public class User
 
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastPasswordChangedAt { get; set; } = DateTime.UtcNow;
 }

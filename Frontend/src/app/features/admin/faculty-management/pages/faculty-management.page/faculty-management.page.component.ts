@@ -92,10 +92,9 @@ export class FacultyManagementPageComponent implements OnInit {
 
   loadFaculties(): void {
     this.isLoading.set(true);
-    this.facultyService.getFaculties().subscribe({
-      next: (res) => {
+    this.facultyService.getFormattedFaculties().subscribe({
+      next: (list) => {
         this.isLoading.set(false);
-        const list = res.data || (Array.isArray(res) ? res : []);
         this.faculties.set(list);
       },
       error: (err) => {

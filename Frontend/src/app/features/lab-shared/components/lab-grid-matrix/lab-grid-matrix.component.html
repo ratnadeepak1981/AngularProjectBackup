@@ -37,8 +37,8 @@
       </div>
     </div>
 
-    <!-- Dual Overflow Scroll Body Wrapper -->
-    <div class="flex-1 overflow-auto p-3">
+    <!-- Dual Overflow Scroll Body Wrapper bound to Reactive Form Matrix -->
+    <div [formGroup]="matrixForm" class="flex-1 overflow-auto p-3">
       <table class="w-full border-collapse min-w-[700px]">
         <!-- Column Address Headers (1..totalCols) -->
         <thead>

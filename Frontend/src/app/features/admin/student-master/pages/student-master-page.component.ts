@@ -2,14 +2,11 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { ApiService } from '../../../../core/services/api.service';
+import { StudentMasterService } from '../services/student-master.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { StudentMaster } from '../../../../core/models/student/student-master.model';
 import { StudentProfile } from '../../../../core/models/auth/student-profile.model';
 import { CsvMasterRow } from '../../../../core/models/student/csv-master-row.model';
-import { Faculty } from '../../../../core/models/faculty/faculty.model';
-import { ApiResponse } from '../../../../core/models/common/api-response.model';
-import { PagedResponse } from '../../../../core/models/common/paged-response.model';
 import { PaginationComponent } from '../../../../shared/components/tables-utilities/pagination/pagination.component';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { AlertModalComponent } from '../../../../shared/components/dialogs/alert-modal/alert-modal.component';
@@ -37,7 +34,7 @@ import { ActionButtonComponent } from '../../../../shared/components/action-butt
   styleUrl: './student-master-page.component.css',
 })
 export class StudentMasterPageComponent implements OnInit {
-  private readonly apiService = inject(ApiService);
+  private readonly studentMasterService = inject(StudentMasterService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -168,7 +165,6 @@ export class StudentMasterPageComponent implements OnInit {
     let list = [...this.studentAccounts()];
     const filters = this.accColumnFilters();
 
-    // 1. Column-specific filtering
     for (const col of Object.keys(filters)) {
       const allowed = filters[col];
       if (allowed && allowed.length > 0) {
@@ -184,7 +180,6 @@ export class StudentMasterPageComponent implements OnInit {
       }
     }
 
-    // 2. Sorting
     const sortCol = this.accSortColumn();
     const sortDir = this.accSortDirection();
     if (sortCol && sortDir) {
@@ -239,7 +234,6 @@ export class StudentMasterPageComponent implements OnInit {
     let list = [...this.masterRecords()];
     const filters = this.columnFilters();
 
-    // 1. Column-specific filtering
     for (const col of Object.keys(filters)) {
       const allowed = filters[col];
       if (allowed && allowed.length > 0) {
@@ -255,7 +249,6 @@ export class StudentMasterPageComponent implements OnInit {
       }
     }
 
-    // 2. Sorting
     const sortCol = this.sortColumn();
     const sortDir = this.sortDirection();
     if (sortCol && sortDir) {
@@ -346,17 +339,8 @@ export class StudentMasterPageComponent implements OnInit {
   loadStudentAccounts(): void {
     this.isAccountsLoading.set(true);
 
-    const params: Record<string, string | number> = {
-      pageNumber: this.accountsCurrentPage(),
-      pageSize: this.accountsPageSize(),
-    };
-
-    if (this.accountsSearchTerm().trim()) {
-      params['search'] = this.accountsSearchTerm().trim();
-    }
-
-    this.apiService
-      .get<ApiResponse<PagedResponse<StudentProfile>>>(this.apiService.routes.students.directory, params)
+    this.studentMasterService
+      .loadStudentAccounts(this.accountsCurrentPage(), this.accountsPageSize(), this.accountsSearchTerm())
       .subscribe({
         next: (res) => {
           this.isAccountsLoading.set(false);
@@ -562,30 +546,28 @@ export class StudentMasterPageComponent implements OnInit {
     this.isSafetyCheckLoading.set(true);
     this.safetyCheckReasons.set([]);
 
-    this.apiService
-      .get<ApiResponse<any>>(this.apiService.routes.account.deactivateCheck(student.id))
-      .subscribe({
-        next: (res) => {
-          this.isSafetyCheckLoading.set(false);
-          const data = res.data || (res as any);
-          const canDeactivate = data?.canDeactivate ?? data?.CanDeactivate ?? true;
-          const reasons = data?.reasons || data?.Reasons || [];
-          this.safetyCheckReasons.set(reasons);
+    this.studentMasterService.checkDeactivateSafety(student.id).subscribe({
+      next: (res) => {
+        this.isSafetyCheckLoading.set(false);
+        const data = res.data || (res as any);
+        const canDeactivate = data?.canDeactivate ?? data?.CanDeactivate ?? true;
+        const reasons = data?.reasons || data?.Reasons || [];
+        this.safetyCheckReasons.set(reasons);
 
-          if (canDeactivate) {
-            this.isConfirmModalOpen.set(true);
-          } else {
-            this.isAlertModalOpen.set(true);
-          }
-        },
-        error: () => {
-          this.isSafetyCheckLoading.set(false);
-          this.safetyCheckReasons.set([
-            'Failed to perform cross-module integrity check. Active records may exist.',
-          ]);
+        if (canDeactivate) {
+          this.isConfirmModalOpen.set(true);
+        } else {
           this.isAlertModalOpen.set(true);
-        },
-      });
+        }
+      },
+      error: () => {
+        this.isSafetyCheckLoading.set(false);
+        this.safetyCheckReasons.set([
+          'Failed to perform cross-module integrity check. Active records may exist.',
+        ]);
+        this.isAlertModalOpen.set(true);
+      },
+    });
   }
 
   closeConfirmModal(): void {
@@ -604,53 +586,35 @@ export class StudentMasterPageComponent implements OnInit {
     if (!student) return;
 
     this.isDeactivating.set(true);
-    this.apiService
-      .post<ApiResponse<any>>(this.apiService.routes.account.deactivate(student.id), {})
-      .subscribe({
-        next: () => {
-          this.isDeactivating.set(false);
-          this.toast.success(`Student account for "${student.name}" was soft-deactivated.`);
-          this.closeConfirmModal();
-          this.loadStudentAccounts();
-        },
-        error: (err) => {
-          this.isDeactivating.set(false);
-          this.toast.error(err.error?.message || 'Failed to deactivate student account.');
-        },
-      });
+    this.studentMasterService.deactivateAccount(student.id).subscribe({
+      next: () => {
+        this.isDeactivating.set(false);
+        this.toast.success(`Student account for "${student.name}" was soft-deactivated.`);
+        this.closeConfirmModal();
+        this.loadStudentAccounts();
+      },
+      error: (err) => {
+        this.isDeactivating.set(false);
+        this.toast.error(err.error?.message || 'Failed to deactivate student account.');
+      },
+    });
   }
 
   reactivateAccount(student: StudentProfile): void {
-    this.apiService
-      .post<ApiResponse<any>>(this.apiService.routes.account.reactivate(student.id), {})
-      .subscribe({
-        next: () => {
-          this.toast.success(`Student account for "${student.name}" was reactivated successfully.`);
-          this.loadStudentAccounts();
-        },
-        error: (err) => {
-          this.toast.error(err.error?.message || 'Failed to reactivate student account.');
-        },
-      });
+    this.studentMasterService.reactivateAccount(student.id).subscribe({
+      next: () => {
+        this.toast.success(`Student account for "${student.name}" was reactivated successfully.`);
+        this.loadStudentAccounts();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Failed to reactivate student account.');
+      },
+    });
   }
 
   loadFaculties(): void {
-    this.apiService.get<ApiResponse<Faculty[]>>(this.apiService.routes.faculties.list).subscribe({
-      next: (res) => {
-        const list = res.data || (Array.isArray(res) ? res : []);
-        const map = new Map<number, string>();
-        list.forEach((f: Faculty) => {
-          map.set(f.id, f.name);
-        });
-        this.facultyMap.set(map);
-      },
-      error: () => {
-        // Fallback default faculties
-        const map = new Map<number, string>();
-        map.set(1, 'Faculty of Computing & Technology');
-        map.set(2, 'Faculty of Science');
-        map.set(3, 'Faculty of Commerce & Management');
-        map.set(4, 'Faculty of Humanities');
+    this.studentMasterService.loadFaculties().subscribe({
+      next: (map) => {
         this.facultyMap.set(map);
       },
     });
@@ -663,17 +627,8 @@ export class StudentMasterPageComponent implements OnInit {
   loadMasterList(): void {
     this.isLoading.set(true);
 
-    const params: Record<string, string | number> = {
-      pageNumber: this.currentPage(),
-      pageSize: this.pageSize(),
-    };
-
-    if (this.searchTerm().trim()) {
-      params['search'] = this.searchTerm().trim();
-    }
-
-    this.apiService
-      .get<ApiResponse<PagedResponse<StudentMaster>>>(this.apiService.routes.students.masterList, params)
+    this.studentMasterService
+      .loadMasterList(this.currentPage(), this.pageSize(), this.searchTerm())
       .subscribe({
         next: (res) => {
           this.isLoading.set(false);
@@ -906,7 +861,11 @@ export class StudentMasterPageComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      this.validateCsvContent(text);
+      const result = this.studentMasterService.validateCsvContent(text);
+      this.parsedCsvRows.set(result.rows);
+      this.validRowCount.set(result.validCount);
+      this.errorRowCount.set(result.errorCount);
+      this.csvHeaderError.set(result.headerError);
       this.isParsingCsv.set(false);
     };
 
@@ -916,108 +875,6 @@ export class StudentMasterPageComponent implements OnInit {
     };
 
     reader.readAsText(file);
-  }
-
-  private validateCsvContent(csvText: string): void {
-    const lines = csvText.split(/\r\n|\n/).map((l) => l.trim()).filter((l) => l.length > 0);
-
-    if (lines.length < 2) {
-      this.csvHeaderError.set('CSV file is empty or missing data rows.');
-      return;
-    }
-
-    // Step 1: Validate Header
-    const headerCols = lines[0].split(',').map((c) => c.trim().toLowerCase().replace(/["']/g, ''));
-    const expectedHeaders = ['indexnumber', 'fullname', 'facultyid'];
-    const hasValidHeader = expectedHeaders.every((h) =>
-      headerCols.some((col) => col.replace(/\s+/g, '') === h)
-    );
-
-    if (!hasValidHeader && headerCols.length < 3) {
-      this.csvHeaderError.set(
-        'Invalid CSV Header. Expected 3 columns: IndexNumber, FullName, FacultyId'
-      );
-      return;
-    }
-
-    // Step 2: Validate Data Rows
-    const rows: CsvMasterRow[] = [];
-    const seenIndexNumbers = new Set<string>();
-    let validCount = 0;
-    let errorCount = 0;
-
-    const indexRegex = /^[A-Za-z0-9\/\-_]+$/;
-    const nameRegex = /^[A-Za-z\s.'\-]+$/;
-    const forbiddenSymbols = /[<>{}[\]!@#$%^&*=+~;`]/;
-
-    for (let i = 1; i < lines.length; i++) {
-      const lineNumber = i + 1;
-      const line = lines[i];
-      const parts = line.split(',').map((p) => p.trim().replace(/^["']|["']$/g, ''));
-
-      const indexNumber = parts[0] || '';
-      const fullName = parts[1] || '';
-      const facultyStr = parts[2] || '';
-      const facultyId = parseInt(facultyStr, 10);
-
-      const rowErrors: string[] = [];
-
-      // A. Check Column Count
-      if (parts.length < 3) {
-        rowErrors.push('Missing required column fields');
-      }
-
-      // B. Check Index Number (Length & Allowed Symbols)
-      if (!indexNumber) {
-        rowErrors.push('Index Number is missing');
-      } else if (indexNumber.length < 3 || indexNumber.length > 30) {
-        rowErrors.push(`Index Number length must be 3-30 chars (got ${indexNumber.length})`);
-      } else if (!indexRegex.test(indexNumber) || forbiddenSymbols.test(indexNumber)) {
-        rowErrors.push('Index contains unexpected special symbols');
-      }
-
-      // C. Check In-File Duplicate
-      const normalizedIndex = indexNumber.toUpperCase();
-      if (seenIndexNumbers.has(normalizedIndex)) {
-        rowErrors.push(`Duplicate Index '${indexNumber}' already present in file`);
-      } else if (indexNumber) {
-        seenIndexNumbers.add(normalizedIndex);
-      }
-
-      // D. Check Full Name
-      if (!fullName) {
-        rowErrors.push('Full Name is required');
-      } else if (fullName.length < 2 || fullName.length > 100) {
-        rowErrors.push(`Full Name length must be 2-100 chars (got ${fullName.length})`);
-      } else if (!nameRegex.test(fullName) || forbiddenSymbols.test(fullName)) {
-        rowErrors.push('Full Name contains numbers or unexpected symbols');
-      }
-
-      // E. Check Faculty ID
-      if (!facultyStr || isNaN(facultyId) || facultyId <= 0) {
-        rowErrors.push('Faculty ID must be a positive integer');
-      }
-
-      const isValid = rowErrors.length === 0;
-      if (isValid) {
-        validCount++;
-      } else {
-        errorCount++;
-      }
-
-      rows.push({
-        lineNumber,
-        indexNumber,
-        fullName,
-        facultyId: isNaN(facultyId) ? 0 : facultyId,
-        isValid,
-        errors: rowErrors,
-      });
-    }
-
-    this.parsedCsvRows.set(rows);
-    this.validRowCount.set(validCount);
-    this.errorRowCount.set(errorCount);
   }
 
   // Upload to Backend
@@ -1041,23 +898,19 @@ export class StudentMasterPageComponent implements OnInit {
     }
 
     this.isUploading.set(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
-    this.apiService
-      .upload<ApiResponse<number>>(this.apiService.routes.students.masterImport, formData)
-      .subscribe({
-        next: (res) => {
-          this.isUploading.set(false);
-          const count = res.data || this.validRowCount();
-          this.toast.success(`Successfully imported ${count} student master records!`);
-          this.closeImportModal();
-          this.loadMasterList();
-        },
-        error: (err) => {
-          this.isUploading.set(false);
-          this.toast.error(err.error?.message || 'Failed to upload and import CSV master file.');
-        },
-      });
+    this.studentMasterService.uploadMasterCsv(file).subscribe({
+      next: (res) => {
+        this.isUploading.set(false);
+        const count = res.data || this.validRowCount();
+        this.toast.success(`Successfully imported ${count} student master records!`);
+        this.closeImportModal();
+        this.loadMasterList();
+      },
+      error: (err) => {
+        this.isUploading.set(false);
+        this.toast.error(err.error?.message || 'Failed to upload and import CSV master file.');
+      },
+    });
   }
 }

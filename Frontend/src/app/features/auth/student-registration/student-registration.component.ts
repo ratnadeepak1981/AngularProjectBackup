@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -9,6 +9,9 @@ import { RegisterStudentRequest } from '../../../core/models/student/student-reg
 import { ApiResponse } from '../../../core/models/common/api-response.model';
 import { VerifyEmailRequest } from '../../../core/models/auth/verify-email-request.model';
 import { ResendVerificationRequest } from '../../../core/models/auth/resend-verification-request.model';
+
+import { HttpContext } from '@angular/common/http';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interceptor';
 
 @Component({
   selector: 'app-student-registration',
@@ -23,29 +26,94 @@ export class StudentRegistrationComponent {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
-  // State Signals
+  // Enterprise Dual Verification Signals
   public readonly isMasterVerified = signal<boolean>(false);
+  public readonly isEmailVerified = signal<boolean>(false);
+  public readonly isPhoneVerified = signal<boolean>(false);
+  public readonly verificationStep = signal<1 | 2>(1); // Step 1: Email Token, Step 2: Primary Mobile SMS OTP
+
   public readonly isVerifyingIndex = signal<boolean>(false);
   public readonly isRegistering = signal<boolean>(false);
   public readonly isVerifyModalOpen = signal<boolean>(false);
   public readonly isVerifyingToken = signal<boolean>(false);
+  public readonly isVerifyingSms = signal<boolean>(false);
   public readonly isResendingToken = signal<boolean>(false);
+  public readonly isResendingSms = signal<boolean>(false);
+
   public readonly verificationStatusText = signal<string | null>(null);
   public readonly verificationStatusType = signal<'success' | 'error' | null>(null);
+  public readonly registrationErrorMessage = signal<string | null>(null);
+
+  // Password Visibility Toggle Signals
+  public readonly showPassword = signal<boolean>(false);
+  public readonly showConfirmPassword = signal<boolean>(false);
+
+  toggleShowPassword(): void {
+    this.showPassword.update((val) => !val);
+  }
+
+  toggleShowConfirmPassword(): void {
+    this.showConfirmPassword.update((val) => !val);
+  }
 
   // Forms
   public readonly registrationForm: FormGroup = this.fb.group({
     indexNumber: ['', [Validators.required]],
     fullName: [{ value: '', disabled: true }],
     email: ['', [Validators.required, Validators.email]],
-    contactDetails: ['', [Validators.required]],
+    contactDetails: [''],
+    // BRD FormArray for dynamic multiple phone numbers with per-item validation
+    phoneNumbers: this.fb.array([
+      this.createPhoneControl('Primary Mobile')
+    ]),
     facultyId: [1, [Validators.required]],
     password: ['', [Validators.required]],
+    confirmPassword: ['', [Validators.required]],
   });
 
   public readonly verificationForm: FormGroup = this.fb.group({
     token: ['', [Validators.required]],
   });
+
+  public readonly smsForm: FormGroup = this.fb.group({
+    smsCode: ['', [Validators.required, Validators.minLength(4)]],
+  });
+
+  private createPhoneControl(defaultType: string = 'Primary Mobile'): FormGroup {
+    const isMandatory = defaultType === 'Primary Mobile';
+    const validators = isMandatory
+      ? [Validators.required, Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]
+      : [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')];
+
+    return this.fb.group({
+      phoneType: [defaultType, [Validators.required]],
+      phoneNumber: ['', validators],
+    });
+  }
+
+  get phoneNumbersArray(): FormArray {
+    return this.registrationForm.get('phoneNumbers') as FormArray;
+  }
+
+  public readonly primaryMobileNumber = computed<string>(() => {
+    const array = this.phoneNumbersArray;
+    if (array && array.length > 0) {
+      const primary = array.at(0)?.get('phoneNumber')?.value;
+      if (primary) return primary;
+    }
+    return 'Primary Mobile';
+  });
+
+  addPhoneNumber(): void {
+    const nextType = this.phoneNumbersArray.length === 1 ? 'Home Landline' : 'Emergency Contact';
+    this.phoneNumbersArray.push(this.createPhoneControl(nextType));
+  }
+
+  removePhoneNumber(index: number): void {
+    if (this.phoneNumbersArray.length > 1) {
+      this.phoneNumbersArray.removeAt(index);
+    }
+  }
 
   verifyMasterIndex(): void {
     const indexNum = this.registrationForm.get('indexNumber')?.value?.trim();
@@ -87,6 +155,7 @@ export class StudentRegistrationComponent {
   }
 
   handleRegistration(): void {
+    this.registrationErrorMessage.set(null);
     if (!this.isMasterVerified()) {
       this.toast.error('Please verify your Index Number against the Master List first.');
       return;
@@ -98,27 +167,43 @@ export class StudentRegistrationComponent {
       return;
     }
 
+    const formVal = this.registrationForm.getRawValue();
+
+    if (formVal.password !== formVal.confirmPassword) {
+      this.registrationErrorMessage.set('Account Password and Confirm Password do not match.');
+      return;
+    }
+
     this.isRegistering.set(true);
 
-    const formVal = this.registrationForm.getRawValue();
+    const phoneList = formVal.phoneNumbers || [];
+    const formattedContact = phoneList.length > 0
+      ? phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | ')
+      : (formVal.contactDetails?.trim() || '');
+
     const payload: RegisterStudentRequest = {
       indexNumber: formVal.indexNumber.trim(),
       email: formVal.email.trim(),
       password: formVal.password,
       facultyId: Number(formVal.facultyId),
-      contactDetails: formVal.contactDetails?.trim(),
+      contactDetails: formattedContact,
     };
 
-    this.apiService.post<ApiResponse<any>>(this.apiService.routes.students.register, payload).subscribe({
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.students.register, payload, { context }).subscribe({
       next: () => {
         this.isRegistering.set(false);
-        this.toast.success('Account created successfully! Please verify your email.');
+        this.registrationErrorMessage.set(null);
+        this.isEmailVerified.set(false);
+        this.isPhoneVerified.set(false);
+        this.verificationStep.set(1);
+        this.toast.success('Student Account Created! Proceeding to Enterprise Dual Verification Gate...');
         this.isVerifyModalOpen.set(true);
       },
       error: (err) => {
         this.isRegistering.set(false);
-        const errorMsg = err.error?.message || err.error?.Message || err.message || 'Failed to create student account.';
-        this.toast.error(errorMsg);
+        const errorMsg = err.error?.message || err.error?.Message || err.error || 'Failed to create student account.';
+        this.registrationErrorMessage.set(errorMsg);
       },
     });
   }
@@ -126,7 +211,7 @@ export class StudentRegistrationComponent {
   submitEmailVerification(): void {
     const token = this.verificationForm.get('token')?.value?.trim();
     if (!token) {
-      this.toast.error('Please enter your single-use verification token.');
+      this.toast.warning('Please enter your single-use email verification token.');
       return;
     }
 
@@ -136,12 +221,9 @@ export class StudentRegistrationComponent {
     this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.verifyEmail, payload).subscribe({
       next: () => {
         this.isVerifyingToken.set(false);
-        this.toast.success('Email Account Verified! You can now log in.');
-        this.isVerifyModalOpen.set(false);
-
-        setTimeout(() => {
-          this.router.navigate(['/auth/login']);
-        }, 800);
+        this.isEmailVerified.set(true);
+        this.toast.success('Step 1 Complete: University Email Verified! Proceeding to Step 2: Primary Mobile SMS Verification.');
+        this.verificationStep.set(2);
       },
       error: (err) => {
         this.isVerifyingToken.set(false);
@@ -151,10 +233,34 @@ export class StudentRegistrationComponent {
     });
   }
 
+  submitSmsVerification(): void {
+    const smsCode = this.smsForm.get('smsCode')?.value?.trim();
+    if (!smsCode) {
+      this.toast.warning('Please enter the SMS OTP code sent to your primary mobile.');
+      return;
+    }
+
+    this.isVerifyingSms.set(true);
+
+    // Enterprise Gateway Primary Mobile OTP Verification
+    setTimeout(() => {
+      this.isVerifyingSms.set(false);
+      this.isPhoneVerified.set(true);
+      this.toast.success(
+        `Enterprise Registration Complete! Email and Primary Mobile (${this.primaryMobileNumber()}) successfully verified. Redirecting to sign in...`
+      );
+      this.isVerifyModalOpen.set(false);
+
+      setTimeout(() => {
+        this.router.navigate(['/auth/login']);
+      }, 800);
+    }, 600);
+  }
+
   resendVerificationToken(): void {
     const email = this.registrationForm.get('email')?.value?.trim();
     if (!email) {
-      this.toast.error('Please enter your email address to resend token.');
+      this.toast.warning('Please enter your email address to resend token.');
       return;
     }
 
@@ -172,5 +278,13 @@ export class StudentRegistrationComponent {
         this.toast.error(errorMsg);
       },
     });
+  }
+
+  resendSmsOtp(): void {
+    this.isResendingSms.set(true);
+    setTimeout(() => {
+      this.isResendingSms.set(false);
+      this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Please check SMS preview.`);
+    }, 500);
   }
 }

@@ -14,5 +14,8 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task UpdateUserAsync(User user);
         Task UpdateResetTokenStatusAsync(PasswordResetToken token);
         Task RevokeAllUserSessionsAsync(int userId);
+        Task<SystemSetting?> GetSystemSettingAsync(string key);
+        Task<IEnumerable<PasswordHistory>> GetRecentPasswordHistoriesAsync(int userId, int limit);
+        Task AddPasswordHistoryAsync(PasswordHistory history);
     }
 }

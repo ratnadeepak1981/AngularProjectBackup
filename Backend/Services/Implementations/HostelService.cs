@@ -24,28 +24,38 @@ namespace CampusServicesPortal.Services.Implementations
             _notificationService = notificationService;
         }
 
+        private static readonly System.Threading.SemaphoreSlim _submitLock = new System.Threading.SemaphoreSlim(1, 1);
+
         public async Task<ServiceResult<HostelApplicationResponseDto>> SubmitApplicationAsync(int studentId, SubmitHostelApplicationDto request)
         {
-            var existingApplication = await _hostelRepository.GetActiveApplicationByStudentIdAsync(studentId);
-            if (existingApplication != null)
+            await _submitLock.WaitAsync();
+            try
             {
-                return ServiceResult<HostelApplicationResponseDto>.Failure("Operation Blocked. You already have an active or processed hostel application track record.", 400);
+                var existingApplication = await _hostelRepository.GetActiveApplicationByStudentIdAsync(studentId);
+                if (existingApplication != null)
+                {
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Operation Blocked. You already have an active or processed hostel application track record.", 400);
+                }
+
+                var application = new HostelApplication
+                {
+                    StudentId = studentId,
+                    PreferredHostelId = request.HostelId,
+                    TermSemester = request.TermSemester,
+                    SpecialRequirements = request.SpecialRequirements,
+                    Status = "Pending"
+                };
+
+                await _hostelRepository.AddApplicationAsync(application);
+                await _hostelRepository.SaveChangesAsync();
+
+                var freshRecord = await _hostelRepository.GetApplicationByIdAsync(application.Id);
+                return ServiceResult<HostelApplicationResponseDto>.Success(MapToResponseDto(freshRecord!), 201);
             }
-
-            var application = new HostelApplication
+            finally
             {
-                StudentId = studentId,
-                PreferredHostelId = request.HostelId,
-                TermSemester = request.TermSemester,
-                SpecialRequirements = request.SpecialRequirements,
-                Status = "Pending"
-            };
-
-            await _hostelRepository.AddApplicationAsync(application);
-            await _hostelRepository.SaveChangesAsync();
-
-            var freshRecord = await _hostelRepository.GetApplicationByIdAsync(application.Id);
-            return ServiceResult<HostelApplicationResponseDto>.Success(MapToResponseDto(freshRecord!), 201);
+                _submitLock.Release();
+            }
         }
 
         public async Task<ServiceResult<HostelApplicationResponseDto>> UpdateStatusAsync(int applicationId, UpdateHostelStatusDto request)
@@ -103,10 +113,10 @@ namespace CampusServicesPortal.Services.Implementations
                     return ServiceResult<HostelApplicationResponseDto>.Failure("Hostel application profile record not found.", 404);
                 }
 
-                // Rule #3: Allow Pending, Approved, or RoomAssigned applications to be approved and assigned atomically
-                if (application.Status != "Pending" && application.Status != "Approved" && application.Status != "RoomAssigned")
+                // Rule #3: Application must be Approved (or RoomAssigned for transfers) before room assignment
+                if (application.Status != "Approved" && application.Status != "RoomAssigned")
                 {
-                    return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. Room assignment is only permitted for active or pending applications.", 400);
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. Room assignment is only permitted for Approved applications.", 400);
                 }
 
                 var room = await _hostelRepository.GetRoomByIdAsync(request.RoomId);
@@ -123,7 +133,10 @@ namespace CampusServicesPortal.Services.Implementations
 
                 // Room Capacity Guard: Compute current load against architectural ceilings
                 int activeOccupants = await _hostelRepository.GetRoomCurrentOccupancyAsync(request.RoomId);
-                if (activeOccupants >= room.MaxCapacity)
+                bool isReassigningSameRoom = (application.AssignedRoomId == request.RoomId);
+                int effectiveOccupants = isReassigningSameRoom ? activeOccupants - 1 : activeOccupants;
+
+                if (effectiveOccupants >= room.MaxCapacity)
                 {
                     return ServiceResult<HostelApplicationResponseDto>.Failure($"Allocation Denied. Room {room.RoomNumber} has reached its maximum physical capacity limit of {room.MaxCapacity}.", 409);
                 }

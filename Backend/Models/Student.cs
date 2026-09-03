@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CampusServicesPortal.Models
 {
@@ -18,5 +18,8 @@ namespace CampusServicesPortal.Models
         public int UserId { get; set; }
         public virtual User User { get; set; } = null!;
         public virtual Faculty Faculty { get; set; } = null!;
+
+        // 1-to-Many Relationship to Phone Numbers Table
+        public virtual ICollection<StudentPhoneNumber> PhoneNumbers { get; set; } = new List<StudentPhoneNumber>();
     }
 }

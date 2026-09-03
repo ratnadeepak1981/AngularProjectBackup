@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HostelApplicationService } from '../services/hostel-application.service';
+import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
@@ -20,6 +21,7 @@ export type StudentHousingRecord = HostelApplication;
 })
 export class HostelApplicationPageComponent implements OnInit {
   private readonly hostelService = inject(HostelApplicationService);
+  private readonly systemSettingsService = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
   public readonly authService = inject(AuthService);
 
@@ -29,10 +31,20 @@ export class HostelApplicationPageComponent implements OnInit {
   public readonly isLoading = signal<boolean>(false);
   public readonly isSubmitting = signal<boolean>(false);
 
-  // Form State Signals
+  // Dynamic System Settings Form State Signals
   public readonly selectedHostelId = signal<number>(0);
-  public readonly termSemester = signal<string>('2026 / Semester 1');
+  public readonly termSemester = signal<string>('2025/2026 / Semester 1');
+  public readonly termStartDate = signal<string>('2025-09-01');
+  public readonly termEndDate = signal<string>('2026-01-31');
   public readonly specialRequirements = signal<string>('');
+
+  // BRD Cross-field Validator: Term End Date must follow Term Start Date
+  public readonly isTermDateRangeInvalid = computed<boolean>(() => {
+    const start = this.termStartDate();
+    const end = this.termEndDate();
+    if (!start || !end) return false;
+    return new Date(end) <= new Date(start);
+  });
 
   // Confirmation Modal Signals
   public readonly isConfirmOpen = signal<boolean>(false);
@@ -60,11 +72,32 @@ export class HostelApplicationPageComponent implements OnInit {
   loadData(): void {
     this.isLoading.set(true);
 
-    // 1. Load Hostels Lookup
-    this.hostelService.getHostelsLookup(1, 100).subscribe({
+    // Dynamic pre-fill from System Settings
+    this.systemSettingsService.getAllSettings().subscribe({
       next: (res) => {
-        const payload = res?.data || res || {};
-        const items = payload.items || payload.Items || (Array.isArray(payload) ? payload : []);
+        const dict = res.data;
+        if (dict) {
+          const year = dict['AcademicYear'] || '2025/2026';
+          const sem = dict['Semester'] || 'Semester 1';
+          this.termSemester.set(`${year} / ${sem}`);
+
+          if (dict['SemesterStartDate']) {
+            this.termStartDate.set(dict['SemesterStartDate']);
+          } else if (dict['AcademicYearStartDate']) {
+            this.termStartDate.set(dict['AcademicYearStartDate']);
+          }
+
+          if (dict['SemesterEndDate']) {
+            this.termEndDate.set(dict['SemesterEndDate']);
+          } else if (dict['AcademicYearEndDate']) {
+            this.termEndDate.set(dict['AcademicYearEndDate']);
+          }
+        }
+      },
+    });
+
+    this.hostelService.getFormattedHostelsLookup(1, 100).subscribe({
+      next: (items) => {
         this.hostelsList.set(items);
       },
       error: () => {
@@ -72,24 +105,8 @@ export class HostelApplicationPageComponent implements OnInit {
       },
     });
 
-    // 2. Load Student's Application History
-    this.hostelService.getMyApplications().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        const formatted: StudentHousingRecord[] = items.map((a: any) => ({
-          id: a.id || a.Id,
-          studentId: a.studentId || a.StudentId,
-          preferredHostelId: a.preferredHostelId || a.PreferredHostelId || a.preferredHostel?.id,
-          hostelName: a.hostelName || a.preferredHostel?.name || a.PreferredHostel?.Name || 'Hostel',
-          preferredHostelName: a.hostelName || a.preferredHostel?.name || a.PreferredHostel?.Name || 'Hostel',
-          termSemester: a.termSemester || a.TermSemester || '2026 / Semester 1',
-          specialRequirements: a.specialRequirements || a.SpecialRequirements || 'None',
-          status: a.status || a.Status || 'Pending',
-          assignedRoomId: a.assignedRoomId || a.AssignedRoomId || a.assignedRoom?.id || a.room?.id,
-          assignedRoomNumber: a.roomNumber || a.RoomNumber || a.assignedRoom?.roomNumber || a.AssignedRoom?.RoomNumber || a.room?.roomNumber,
-          createdAt: a.createdAt || a.CreatedAt,
-        }));
+    this.hostelService.getMyFormattedApplications().subscribe({
+      next: (formatted) => {
         this.myApplications.set(formatted);
         this.isLoading.set(false);
       },
@@ -106,7 +123,6 @@ export class HostelApplicationPageComponent implements OnInit {
     return found ? found.name : 'Selected Facility';
   }
 
-  // Trigger Confirmation Dialog
   promptSubmitApplication(): void {
     if (this.hasActiveApplication()) {
       this.toast.error('Operation Blocked. You already have an active housing application in progress.');
@@ -125,6 +141,11 @@ export class HostelApplicationPageComponent implements OnInit {
       return;
     }
 
+    if (this.isTermDateRangeInvalid()) {
+      this.toast.error('Validation Error: Housing Term End Date must be strictly after the Start Date.');
+      return;
+    }
+
     const hostelName = this.getSelectedHostelName();
     this.confirmTitle.set('Confirm Housing Application');
     this.confirmMessage.set(
@@ -138,7 +159,7 @@ export class HostelApplicationPageComponent implements OnInit {
   }
 
   onConfirmSubmit(): void {
-    this.isConfirmOpen.set(false);
+    if (this.isSubmitting()) return;
     this.isSubmitting.set(true);
 
     const hostelId = this.selectedHostelId();
@@ -151,6 +172,7 @@ export class HostelApplicationPageComponent implements OnInit {
 
     this.hostelService.submitApplication(payload).subscribe({
       next: () => {
+        this.isConfirmOpen.set(false);
         this.toast.success('Housing application submitted successfully! Your request has been queued for administrator review.');
         this.isSubmitting.set(false);
         this.selectedHostelId.set(0);
@@ -158,6 +180,7 @@ export class HostelApplicationPageComponent implements OnInit {
         this.loadData();
       },
       error: (err) => {
+        this.isConfirmOpen.set(false);
         this.toast.error(err?.error?.message || err?.message || 'Failed to submit housing application.');
         this.isSubmitting.set(false);
       },

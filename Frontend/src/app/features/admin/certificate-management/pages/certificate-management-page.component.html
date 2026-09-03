@@ -1,1 +1,188 @@
-<p>certificate-management-page works!</p>
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="Certificate Request Management"
+    description="Review student certificate applications, update workflow statuses, and manage document catalog options"
+    icon="📜"
+  ></app-page-header>
+
+  <!-- Space-Saving Tab Navigation -->
+  <app-tab-component
+    [tabs]="tabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- Tab 1: Certificate Requests Ledger -->
+  @if (activeTabId() === 'requests') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <app-data-table
+        [columns]="requestColumns"
+        [data]="requests()"
+        [isLoading]="isLoading()"
+        [showSearch]="true"
+        searchPlaceholder="Search by student name, index, certificate type..."
+        emptyMessage="No certificate requests found matching filter criteria."
+      >
+        <ng-template #cellActions let-row>
+          <div class="flex items-center justify-end gap-2">
+            @if (row.status === 'Pending') {
+              <app-action-button
+                variant="success"
+                size="sm"
+                label="Approve"
+                icon="check"
+                (btnClick)="promptApproveRequest(row)"
+              ></app-action-button>
+              <app-action-button
+                variant="danger"
+                size="sm"
+                label="Reject"
+                icon="x"
+                (btnClick)="promptRejectRequest(row)"
+              ></app-action-button>
+            }
+            @if (row.status === 'Approved') {
+              <app-action-button
+                variant="primary"
+                size="sm"
+                label="Mark Ready for Collection →"
+                icon="arrow-right"
+                (btnClick)="promptMarkReadyForCollection(row)"
+              ></app-action-button>
+            }
+          </div>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- Tab 2: Certificate Types Catalog -->
+  @if (activeTabId() === 'types') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Certificate Types Catalog
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Define available certificate options for student request selection.
+          </p>
+        </div>
+        <app-action-button
+          variant="primary"
+          size="sm"
+          label="Add Certificate Type"
+          icon="plus"
+          (btnClick)="openCreateTypeModal()"
+        ></app-action-button>
+      </div>
+
+      <app-data-table
+        [columns]="typeColumns"
+        [data]="types()"
+        [isLoading]="isLoading()"
+        [showSearch]="true"
+        searchPlaceholder="Search certificate type catalog..."
+        emptyMessage="No certificate types configured in catalog."
+      >
+        <ng-template #cellActions let-row>
+          <div class="flex items-center justify-end">
+            @if (row.isActive) {
+              <app-action-button
+                variant="danger"
+                size="sm"
+                label="Deactivate Type"
+                icon="trash"
+                (btnClick)="promptDeactivateType(row)"
+              ></app-action-button>
+            } @else {
+              <app-action-button
+                variant="success"
+                size="sm"
+                label="Reactivate Type"
+                icon="refresh"
+                (btnClick)="promptReactivateType(row)"
+              ></app-action-button>
+            }
+          </div>
+        </ng-template>
+      </app-data-table>
+    </div>
+  }
+
+  <!-- Create Type Modal -->
+  @if (isCreateTypeModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>➕</span> Add New Certificate Type
+          </h3>
+          <button
+            type="button"
+            (click)="closeCreateTypeModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form [formGroup]="typeForm" (ngSubmit)="submitCreateType()" class="space-y-4">
+          <div>
+            <label for="typeName" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              Certificate Type Name <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="typeName"
+              formControlName="name"
+              maxlength="100"
+              placeholder="e.g. Conduct Certificate, Academic Testimonial"
+              class="w-full px-4 py-2.5 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+            />
+            @if (typeForm.get('name')?.touched && typeForm.get('name')?.hasError('required')) {
+              <p class="text-xs text-rose-600 mt-1 font-medium">Certificate type name is required.</p>
+            }
+            @if (typeForm.get('name')?.touched && typeForm.get('name')?.hasError('minlength')) {
+              <p class="text-xs text-rose-600 mt-1 font-medium">Certificate type name must be at least 3 characters long.</p>
+            }
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <app-action-button
+              type="button"
+              variant="outline"
+              size="md"
+              label="Cancel"
+              (btnClick)="closeCreateTypeModal()"
+            ></app-action-button>
+            <app-action-button
+              type="submit"
+              variant="primary"
+              size="md"
+              label="Create Type"
+              icon="plus"
+              [disabled]="isSubmittingType()"
+              [loading]="isSubmittingType()"
+            ></app-action-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Confirm Action Modal -->
+  <app-confirm-modal
+    [isOpen]="isConfirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [icon]="confirmIcon()"
+    [iconVariant]="confirmVariant()"
+    [confirmText]="confirmButtonText()"
+    [confirmIcon]="confirmButtonIcon()"
+    [confirmVariant]="confirmVariant()"
+    (confirm)="onConfirmAction()"
+    (cancel)="onCancelConfirm()"
+  ></app-confirm-modal>
+</div>

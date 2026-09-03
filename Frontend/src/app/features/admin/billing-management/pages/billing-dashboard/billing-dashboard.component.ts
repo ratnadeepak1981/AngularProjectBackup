@@ -101,14 +101,10 @@ export class BillingDashboardComponent implements OnInit {
 
   loadLedger(page = this.ledgerCurrentPage(), size = this.ledgerPageSize()): void {
     this.isLoadingLedger.set(true);
-    this.billingService.getFeeLedger(page, size).subscribe({
+    this.billingService.getFormattedFeeLedger(page, size).subscribe({
       next: (res) => {
-        const payload = res?.data || res || {};
-        const items: FeePaymentItem[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        const total = payload.totalRecords || payload.totalCount || payload.totalItems || items.length;
-
-        this.ledgerItems.set(items);
-        this.ledgerTotalRecords.set(total);
+        this.ledgerItems.set(res.items);
+        this.ledgerTotalRecords.set(res.totalRecords);
         this.updateTabCounts();
         this.isLoadingLedger.set(false);
       },
@@ -132,23 +128,9 @@ export class BillingDashboardComponent implements OnInit {
 
   loadFeeTypes(): void {
     this.isLoadingFeeTypes.set(true);
-    this.billingService.getFeeTypes().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const incoming: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        
-        const list: FeeTypeItem[] = incoming.map((item: any) => ({
-          id: item.id || item.Id || 0,
-          name: item.name || item.Name || 'Fee Type',
-          isActive: item.isActive !== undefined ? item.isActive : (item.IsActive !== undefined ? item.IsActive : true)
-        }));
-
-        this.feeTypes.set(list.length > 0 ? list : [
-          { id: 1, name: 'Tuition Fee', isActive: true },
-          { id: 2, name: 'Semester Fee', isActive: true },
-          { id: 3, name: 'Exam Fee', isActive: true },
-          { id: 4, name: 'Lab Fine', isActive: true },
-        ]);
+    this.billingService.getFormattedFeeTypes().subscribe({
+      next: (list) => {
+        this.feeTypes.set(list);
         this.updateTabCounts();
         this.isLoadingFeeTypes.set(false);
       },

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Models;
+using CampusServicesPortal.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,6 +18,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task<IEnumerable<Student>> SearchStudentsAsync(string? search, string? faculty);
 
         Task<IEnumerable<StudentMasterList>> SearchMasterListAsync(string? search);
+        Task<HashSet<string>> GetRegisteredIndexNumbersAsync();
         Task BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords);
 
 

@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ApiService } from '../../../../core/services/api.service';
+import { AdminDashboardService } from '../services/admin-dashboard.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -16,7 +16,7 @@ import { ActionButtonComponent } from '../../../../shared/components/action-butt
   styleUrl: './admin-dashboard-page.component.css',
 })
 export class AdminDashboardPageComponent implements OnInit {
-  private readonly apiService = inject(ApiService);
+  private readonly dashboardService = inject(AdminDashboardService);
   private readonly toast = inject(ToastService);
 
   // Metrics Signals
@@ -39,67 +39,27 @@ export class AdminDashboardPageComponent implements OnInit {
 
   loadAnalytics(): void {
     this.isLoadingMetrics.set(true);
-
-    // 1. Pending Hostel Applications
-    this.apiService.get<any>(this.apiService.routes.hostel.pendingApps).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || {};
-        const count = payload.totalRecords ?? payload.totalCount ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
-        this.pendingHostels.set(count);
-      },
-      error: () => this.pendingHostels.set(0),
-    });
-
-    // 2. Pending Helpdesk Complaints
-    this.apiService.get<any>(this.apiService.routes.complaints.adminList, { status: 'Pending' }).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || {};
-        const count = payload.totalRecords ?? payload.totalCount ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
-        this.pendingComplaints.set(count);
-      },
-      error: () => this.pendingComplaints.set(0),
-    });
-
-    // 3. Pending Certificate Requests
-    this.apiService.get<any>(this.apiService.routes.certificates.adminList, { status: 'Pending' }).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || {};
-        const count = payload.totalRecords ?? payload.totalCount ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
-        this.pendingCertificates.set(count);
-      },
-      error: () => this.pendingCertificates.set(0),
-    });
-
-    // 4. Registered Students
-    this.apiService.get<any>(this.apiService.routes.students.directory).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || {};
-        const count = payload.totalRecords ?? payload.totalCount ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
-        this.totalStudents.set(count);
+    this.dashboardService.getAdminDashboardMetrics().subscribe({
+      next: (summary) => {
+        this.pendingHostels.set(summary.pendingHostels);
+        this.pendingComplaints.set(summary.pendingComplaints);
+        this.pendingCertificates.set(summary.pendingCertificates);
+        this.totalStudents.set(summary.totalStudents);
         this.isLoadingMetrics.set(false);
       },
       error: () => {
-        this.totalStudents.set(0);
         this.isLoadingMetrics.set(false);
       },
     });
   }
 
   loadSystemSettings(): void {
-    this.apiService.get<any>(this.apiService.routes.system.holdMinutes).subscribe({
-      next: (res) => {
-        const val = res?.data?.holdMinutes ?? res?.holdMinutes ?? 15;
-        this.holdMinutes.set(val);
-      },
-      error: () => {},
+    this.dashboardService.getHoldMinutes().subscribe({
+      next: (val) => this.holdMinutes.set(val),
     });
 
-    this.apiService.get<any>(this.apiService.routes.system.pageSize).subscribe({
-      next: (res) => {
-        const val = res?.data?.pageSize ?? res?.pageSize ?? 10;
-        this.defaultPageSize.set(val);
-      },
-      error: () => {},
+    this.dashboardService.getDefaultPageSize().subscribe({
+      next: (val) => this.defaultPageSize.set(val),
     });
   }
 
@@ -111,7 +71,7 @@ export class AdminDashboardPageComponent implements OnInit {
     }
 
     this.isSavingHold.set(true);
-    this.apiService.put(this.apiService.routes.system.holdMinutes, { holdMinutes: mins }).subscribe({
+    this.dashboardService.saveHoldMinutes(mins).subscribe({
       next: () => {
         this.isSavingHold.set(false);
         this.toast.success(`Reservation hold timeout successfully updated to ${mins} minutes.`);
@@ -126,7 +86,7 @@ export class AdminDashboardPageComponent implements OnInit {
   saveDefaultPageSize(): void {
     const size = Number(this.defaultPageSize());
     this.isSavingPageSize.set(true);
-    this.apiService.put(this.apiService.routes.system.pageSize, { pageSize: size }).subscribe({
+    this.dashboardService.saveDefaultPageSize(size).subscribe({
       next: () => {
         this.isSavingPageSize.set(false);
         this.toast.success(`System default page size updated to ${size} records per page.`);

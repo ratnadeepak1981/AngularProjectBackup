@@ -15,8 +15,13 @@
   <form [formGroup]="registrationForm" (ngSubmit)="handleRegistration()" class="space-y-4" novalidate>
     <!-- Step 1: Index Master Verification Box -->
     <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl">
-      <label for="indexNumber" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-        Student Index Number (Registrar Master List)
+      <label for="indexNumber" class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+        <span>Student Index Number (Registrar Master List)</span>
+        @if (isMasterVerified()) {
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-fade-in">
+            ✓ MASTER RECORD VERIFIED
+          </span>
+        }
       </label>
       <div class="flex gap-2">
         <input
@@ -69,8 +74,17 @@
     </div>
 
     <div>
-      <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-        University Email Address
+      <label for="email" class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        <span>University Email Address</span>
+        @if (isEmailVerified()) {
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-fade-in">
+            ✓ EMAIL VERIFIED
+          </span>
+        } @else if (registrationForm.get('email')?.valid && registrationForm.get('email')?.value) {
+          <span class="inline-flex items-center gap-1 text-2xs font-bold text-emerald-600 dark:text-emerald-400">
+            ✓ Valid Email Format
+          </span>
+        }
       </label>
       <input
         type="email"
@@ -91,24 +105,67 @@
       }
     </div>
 
-    <div>
-      <label for="contactDetails" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-        Contact Details (Phone / Address)
+    <!-- Step 2b: FormArray Dynamic Telephone Numbers with Per-Item Validation -->
+    <div formArrayName="phoneNumbers" class="space-y-3">
+      <label class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        <span>Contact Telephone Numbers (Primary Mobile / Emergency)</span>
+        @if (isPhoneVerified()) {
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-fade-in">
+            ✓ PRIMARY SMS VERIFIED
+          </span>
+        }
       </label>
-      <input
-        type="text"
-        id="contactDetails"
-        formControlName="contactDetails"
-        placeholder="+94 77 123 4567"
-        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
-        [ngClass]="{
-          'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
-            registrationForm.get('contactDetails')?.touched && registrationForm.get('contactDetails')?.invalid
-        }"
-      />
-      @if (registrationForm.get('contactDetails')?.touched && registrationForm.get('contactDetails')?.hasError('required')) {
-        <p class="text-xs text-rose-600 mt-1 font-medium">Contact details are required.</p>
+
+      @for (phoneGroup of phoneNumbersArray.controls; track $index) {
+        <div [formGroupName]="$index" class="space-y-1">
+          <div class="flex items-center gap-2">
+            <select
+              formControlName="phoneType"
+              class="w-1/3 px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold cursor-pointer"
+            >
+              <option value="Primary Mobile">📱 Primary Mobile</option>
+              <option value="Home Landline">☎️ Home Landline</option>
+              <option value="Emergency Contact">🚨 Emergency</option>
+            </select>
+
+            <input
+              type="text"
+              formControlName="phoneNumber"
+              placeholder="+94 77 123 4567"
+              class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+              [ngClass]="{
+                'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+                  phoneGroup.get('phoneNumber')?.touched && phoneGroup.get('phoneNumber')?.invalid,
+                'border-slate-300 dark:border-slate-700':
+                  !phoneGroup.get('phoneNumber')?.touched || !phoneGroup.get('phoneNumber')?.invalid
+              }"
+            />
+
+            @if (phoneNumbersArray.length > 1) {
+              <button
+                type="button"
+                (click)="removePhoneNumber($index)"
+                title="Remove Phone Number"
+                class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            }
+          </div>
+
+          @if (phoneGroup.get('phoneNumber')?.touched && phoneGroup.get('phoneNumber')?.invalid) {
+            <p class="text-xs text-rose-600 font-medium">Please enter a valid phone number (7 to 15 digits).</p>
+          }
+        </div>
       }
+
+      <button
+        type="button"
+        (click)="addPhoneNumber()"
+        class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1 mt-1"
+      >
+        <span>➕</span> Add Additional Phone Number
+      </button>
     </div>
 
     <div>
@@ -131,21 +188,68 @@
       <label for="password" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
         Account Password
       </label>
-      <input
-        type="password"
-        id="password"
-        formControlName="password"
-        placeholder="••••••••"
-        class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
-        [ngClass]="{
-          'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
-            registrationForm.get('password')?.touched && registrationForm.get('password')?.invalid
-        }"
-      />
+      <div class="relative">
+        <input
+          [type]="showPassword() ? 'text' : 'password'"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="w-full pl-3.5 pr-10 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+          [ngClass]="{
+            'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+              registrationForm.get('password')?.touched && registrationForm.get('password')?.invalid
+          }"
+        />
+        <button
+          type="button"
+          (click)="toggleShowPassword()"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1 cursor-pointer text-sm"
+          [title]="showPassword() ? 'Hide Password' : 'Show Password'"
+        >
+          <span>{{ showPassword() ? '🙈' : '👁️' }}</span>
+        </button>
+      </div>
       @if (registrationForm.get('password')?.touched && registrationForm.get('password')?.hasError('required')) {
         <p class="text-xs text-rose-600 mt-1 font-medium">Password is required.</p>
       }
     </div>
+
+    <div>
+      <label for="confirmPassword" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Confirm Account Password
+      </label>
+      <div class="relative">
+        <input
+          [type]="showConfirmPassword() ? 'text' : 'password'"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="Re-enter account password"
+          class="w-full pl-3.5 pr-10 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+          [ngClass]="{
+            'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+              registrationForm.get('confirmPassword')?.touched && registrationForm.get('confirmPassword')?.invalid
+          }"
+        />
+        <button
+          type="button"
+          (click)="toggleShowConfirmPassword()"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1 cursor-pointer text-sm"
+          [title]="showConfirmPassword() ? 'Hide Password' : 'Show Password'"
+        >
+          <span>{{ showConfirmPassword() ? '🙈' : '👁️' }}</span>
+        </button>
+      </div>
+      @if (registrationForm.get('confirmPassword')?.touched && registrationForm.get('confirmPassword')?.hasError('required')) {
+        <p class="text-xs text-rose-600 mt-1 font-medium">Please confirm your password.</p>
+      }
+    </div>
+
+    @if (registrationErrorMessage()) {
+      <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-2 text-xs font-semibold text-rose-700 dark:text-rose-300 animate-fade-in">
+        <span>⚠️</span>
+        <span>{{ registrationErrorMessage() }}</span>
+      </div>
+    }
 
     <button
       type="submit"
@@ -169,59 +273,160 @@
   </div>
 </div>
 
-<!-- EMAIL VERIFICATION TOKEN MODAL -->
+<!-- ENTERPRISE DUAL VERIFICATION GATE MODAL (EMAIL & PRIMARY MOBILE SMS) -->
 @if (isVerifyModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100">
-      <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-        <span class="text-xl">📧</span>
-        <h3 class="text-base font-bold text-slate-900 dark:text-white">
-          Email Verification Required
-        </h3>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100">
+      
+      <!-- Modal Enterprise Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🛡️</span>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">
+              Enterprise Identity Verification Gate
+            </h3>
+            <p class="text-2xs text-slate-500 dark:text-slate-400">
+              Verify both University Email and Primary Mobile SMS to activate student portal access.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <p class="text-xs text-slate-600 dark:text-slate-400 my-3 leading-relaxed">
-        Your account was created with <code class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 rounded font-mono text-[11px]">EmailVerified = false</code>. Enter the single-use token sent to your email to activate login access.
-      </p>
-
-      <form [formGroup]="verificationForm" (ngSubmit)="submitEmailVerification()" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
-            Single-Use Verification Token
-          </label>
-          <input
-            type="text"
-            formControlName="token"
-            placeholder="Paste verification token"
-            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-mono tracking-wider text-center"
-          />
+      <!-- Step Tracker Progress Pills -->
+      <div class="grid grid-cols-2 gap-2 my-4">
+        <!-- Step 1: Email Pill -->
+        <div
+          class="p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all"
+          [ngClass]="{
+            'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200': isEmailVerified(),
+            'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 ring-2 ring-blue-500/20': verificationStep() === 1 && !isEmailVerified(),
+            'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500': verificationStep() !== 1 && !isEmailVerified()
+          }"
+        >
+          <span class="flex items-center gap-1.5">
+            <span>📧 Step 1: Email Token</span>
+          </span>
+          @if (isEmailVerified()) {
+            <span class="font-extrabold text-emerald-600 dark:text-emerald-400">✓ Verified</span>
+          } @else {
+            <span class="text-[10px] opacity-75 font-mono">Pending</span>
+          }
         </div>
 
-        <button
-          type="submit"
-          [disabled]="isVerifyingToken()"
-          class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+        <!-- Step 2: Primary Mobile SMS Pill -->
+        <div
+          class="p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all"
+          [ngClass]="{
+            'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200': isPhoneVerified(),
+            'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 ring-2 ring-blue-500/20': verificationStep() === 2 && !isPhoneVerified(),
+            'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500': verificationStep() !== 2 && !isPhoneVerified()
+          }"
         >
-          @if (isVerifyingToken()) {
-            <span>Verifying Token...</span>
+          <span class="flex items-center gap-1.5">
+            <span>📱 Step 2: Mobile SMS</span>
+          </span>
+          @if (isPhoneVerified()) {
+            <span class="font-extrabold text-emerald-600 dark:text-emerald-400">✓ Verified</span>
           } @else {
-            <span>Verify Account Token (POST /api/account/verify-email)</span>
+            <span class="text-[10px] opacity-75 font-mono">Pending</span>
           }
-        </button>
+        </div>
+      </div>
 
-        <button
-          type="button"
-          (click)="resendVerificationToken()"
-          [disabled]="isResendingToken()"
-          class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg border border-slate-300 dark:border-slate-700 transition-colors disabled:opacity-60 cursor-pointer"
-        >
-          @if (isResendingToken()) {
-            <span>Resending...</span>
-          } @else {
-            <span>Resend Token Email (POST /api/account/resend-verification)</span>
-          }
-        </button>
-      </form>
+      <!-- STEP 1 FORM: EMAIL VERIFICATION -->
+      @if (verificationStep() === 1) {
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
+          Single-use security token dispatched to your university email address. Enter code below to confirm Email verification:
+        </p>
+
+        <form [formGroup]="verificationForm" (ngSubmit)="submitEmailVerification()" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+              Email Security Token
+            </label>
+            <input
+              type="text"
+              formControlName="token"
+              placeholder="Paste email verification token"
+              class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-mono tracking-wider text-center"
+            />
+          </div>
+
+          <button
+            type="submit"
+            [disabled]="isVerifyingToken()"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+          >
+            @if (isVerifyingToken()) {
+              <span>Verifying Email Token...</span>
+            } @else {
+              <span>Verify Email Token (Step 1) →</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="resendVerificationToken()"
+            [disabled]="isResendingToken()"
+            class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg border border-slate-300 dark:border-slate-700 transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            @if (isResendingToken()) {
+              <span>Resending...</span>
+            } @else {
+              <span>Resend Token Email (POST /api/account/resend-verification)</span>
+            }
+          </button>
+        </form>
+      }
+
+      <!-- STEP 2 FORM: PRIMARY MOBILE SMS OTP VERIFICATION -->
+      @if (verificationStep() === 2) {
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
+          Step 1 (Email) Verified ✓! Enter the 6-digit SMS OTP code sent to your primary mobile number
+          <strong class="text-slate-900 dark:text-white font-mono">({{ primaryMobileNumber() }})</strong>:
+        </p>
+
+        <form [formGroup]="smsForm" (ngSubmit)="submitSmsVerification()" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+              Primary Mobile SMS OTP Code
+            </label>
+            <input
+              type="text"
+              formControlName="smsCode"
+              placeholder="e.g. 748291"
+              class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-mono tracking-widest text-center"
+            />
+          </div>
+
+          <button
+            type="submit"
+            [disabled]="isVerifyingSms()"
+            class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-60 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+          >
+            @if (isVerifyingSms()) {
+              <span>Verifying SMS OTP...</span>
+            } @else {
+              <span>Confirm Primary Mobile & Complete Registration ✓</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="resendSmsOtp()"
+            [disabled]="isResendingSms()"
+            class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg border border-slate-300 dark:border-slate-700 transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            @if (isResendingSms()) {
+              <span>Resending SMS OTP...</span>
+            } @else {
+              <span>Resend SMS OTP to Primary Mobile</span>
+            }
+          </button>
+        </form>
+      }
+
     </div>
   </div>
 }

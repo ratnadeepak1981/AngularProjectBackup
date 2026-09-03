@@ -55,27 +55,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("CertificateRequests", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CertificateTypeId = 1,
-                            Reason = "Required for visa application submission requirements.",
-                            RequestedAt = new DateTime(2026, 7, 30, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4673),
-                            Status = "Pending",
-                            StudentId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CertificateTypeId = 2,
-                            Reason = "Applying for a software engineering internship program.",
-                            RequestedAt = new DateTime(2026, 7, 26, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4674),
-                            Status = "ReadyForCollection",
-                            StudentId = 3
-                        });
+                    b.ToTable("CertificateRequests");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateType", b =>
@@ -96,26 +76,20 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CertificateTypes", (string)null);
+                    b.ToTable("CertificateTypes");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
                             IsActive = true,
-                            Name = "Bonafide Certificate"
+                            Name = "Official Academic Transcript"
                         },
                         new
                         {
                             Id = 2,
                             IsActive = true,
-                            Name = "Official Transcript"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            IsActive = true,
-                            Name = "Completion Letter"
+                            Name = "Bonafide Student Status Letter"
                         });
                 });
 
@@ -156,28 +130,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Complaints", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CategoryId = 1,
-                            CreatedAt = new DateTime(2026, 7, 29, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4648),
-                            Description = "Room B-101 ceiling fan is vibrating aggressively and generating loud noises.",
-                            Status = "Pending",
-                            StudentId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CategoryId = 3,
-                            CreatedAt = new DateTime(2026, 7, 27, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4655),
-                            Description = "Wi-Fi connectivity is unavailable in the Engineering block common room area.",
-                            ResolutionNote = "IT department is assigning an engineer to inspect the access point router.",
-                            Status = "In Progress",
-                            StudentId = 2
-                        });
+                    b.ToTable("Complaints");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.ComplaintCategory", b =>
@@ -198,26 +151,20 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ComplaintCategories", (string)null);
+                    b.ToTable("ComplaintCategories");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
                             IsActive = true,
-                            Name = "Hostel Maintenance"
+                            Name = "Hostel Room Maintenance"
                         },
                         new
                         {
                             Id = 2,
                             IsActive = true,
-                            Name = "Academic Issues"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            IsActive = true,
-                            Name = "Network & Wi-Fi"
+                            Name = "Network WiFi Interruption"
                         });
                 });
 
@@ -254,39 +201,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("VenueId");
 
-                    b.ToTable("Events", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Capacity = 200,
-                            Description = "Networking meet and greet.",
-                            EndDateTime = new DateTime(2026, 9, 10, 16, 0, 0, 0, DateTimeKind.Utc),
-                            StartDateTime = new DateTime(2026, 9, 10, 9, 0, 0, 0, DateTimeKind.Utc),
-                            Title = "Annual University Career Fair 2026",
-                            VenueId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Capacity = 800,
-                            Description = "Annual tournament.",
-                            EndDateTime = new DateTime(2026, 10, 18, 18, 0, 0, 0, DateTimeKind.Utc),
-                            StartDateTime = new DateTime(2026, 10, 15, 8, 30, 0, 0, DateTimeKind.Utc),
-                            Title = "Inter-Faculty Cricket Championship",
-                            VenueId = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Capacity = 45,
-                            Description = "Guest lecture from industry specialists.",
-                            EndDateTime = new DateTime(2026, 8, 20, 16, 0, 0, 0, DateTimeKind.Utc),
-                            StartDateTime = new DateTime(2026, 8, 20, 14, 0, 0, 0, DateTimeKind.Utc),
-                            Title = "AI & Ethics Tech Talk",
-                            VenueId = 3
-                        });
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.EventRegistration", b =>
@@ -317,7 +232,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("EventRegistrations", (string)null);
+                    b.ToTable("EventRegistrations");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Faculty", b =>
@@ -338,7 +253,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties", (string)null);
+                    b.ToTable("Faculties");
 
                     b.HasData(
                         new
@@ -357,7 +272,7 @@ namespace CampusServicesPortal.Migrations
                         {
                             Id = 3,
                             IsActive = true,
-                            Name = "Faculty of Business"
+                            Name = "Faculty of Business Management"
                         });
                 });
 
@@ -401,50 +316,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("FeePayments", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Amount = 45000.00m,
-                            BillingPeriod = "2026 - Sem 1",
-                            Description = "Academic Tuition Fees",
-                            FeeTypeId = 1,
-                            PaidAt = new DateTime(2026, 7, 11, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4708),
-                            Status = "Paid",
-                            StudentId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Amount = 1500.00m,
-                            BillingPeriod = "2026 - Sem 1",
-                            Description = "Fine issued for damaged computer mouse hardware.",
-                            FeeTypeId = 4,
-                            Status = "Outstanding",
-                            StudentId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Amount = 5000.00m,
-                            BillingPeriod = "2026 - Sem 1",
-                            Description = "General Amenities Fee run.",
-                            FeeTypeId = 2,
-                            Status = "Outstanding",
-                            StudentId = 2
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Amount = 45000.00m,
-                            BillingPeriod = "2026 - Sem 1",
-                            Description = "Academic Tuition Fees",
-                            FeeTypeId = 1,
-                            Status = "Outstanding",
-                            StudentId = 3
-                        });
+                    b.ToTable("FeePayments");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.FeeType", b =>
@@ -455,6 +327,9 @@ namespace CampusServicesPortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -462,28 +337,38 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FeeTypes", (string)null);
+                    b.ToTable("FeeTypes");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
+                            IsActive = true,
                             Name = "Tuition Fee"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Semester Fee"
+                            IsActive = true,
+                            Name = "Lab Fine / Equipment Fee"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "Exam Fee"
+                            IsActive = true,
+                            Name = "Hostel Accommodation Fee"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "Lab Fine"
+                            IsActive = true,
+                            Name = "Library Fine & Late Return"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            IsActive = true,
+                            Name = "Student Identity Card Renewal Fee"
                         });
                 });
 
@@ -505,21 +390,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Hostels", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsActive = true,
-                            Name = "Jayathilake Hall (Boys)"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsActive = true,
-                            Name = "Sangamitta Hall (Girls)"
-                        });
+                    b.ToTable("Hostels");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.HostelApplication", b =>
@@ -532,6 +403,11 @@ namespace CampusServicesPortal.Migrations
 
                     b.Property<int?>("AssignedRoomId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<int>("PreferredHostelId")
                         .HasColumnType("int");
@@ -561,13 +437,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("HostelApplications", (string)null);
+                    b.ToTable("HostelApplications");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
                             AssignedRoomId = 1,
+                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
                             PreferredHostelId = 1,
                             SpecialRequirements = "Prefer lower floor room.",
                             Status = "RoomAssigned",
@@ -577,6 +454,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
                             PreferredHostelId = 2,
                             Status = "Pending",
                             StudentId = 3,
@@ -616,27 +494,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Labs", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Capacity = 30,
-                            IsActive = true,
-                            LabType = "Computer",
-                            Name = "Main Computer Lab 01",
-                            TotalColumns = 6,
-                            TotalRows = 5
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Capacity = 20,
-                            IsActive = true,
-                            LabType = "Science",
-                            Name = "Chemistry Lab A"
-                        });
+                    b.ToTable("Labs");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabBooking", b =>
@@ -680,7 +538,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("LabBookings", (string)null);
+                    b.ToTable("LabBookings");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabSeat", b =>
@@ -712,45 +570,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.ToTable("LabSeats", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ColumnIndex = 0,
-                            IsBroken = false,
-                            LabId = 1,
-                            RowIndex = 0,
-                            SeatNumber = "PC-01"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ColumnIndex = 1,
-                            IsBroken = false,
-                            LabId = 1,
-                            RowIndex = 0,
-                            SeatNumber = "PC-02"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ColumnIndex = 3,
-                            IsBroken = false,
-                            LabId = 1,
-                            RowIndex = 0,
-                            SeatNumber = "PC-03"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ColumnIndex = 0,
-                            IsBroken = true,
-                            LabId = 1,
-                            RowIndex = 1,
-                            SeatNumber = "PC-04"
-                        });
+                    b.ToTable("LabSeats");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Notification", b =>
@@ -784,27 +604,36 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 7, 30, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4731),
-                            IsRead = false,
-                            Message = "An outstanding Lab Fine of LKR 1,500.00 has been assigned to your billing dashboard.",
-                            StudentId = 1,
-                            Type = "FeeAssignmentCreated"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4733),
-                            IsRead = false,
-                            Message = "Your Transcript request is ready for physical collection at the registrar office desk.",
-                            StudentId = 3,
-                            Type = "CertificateStatusUpdated"
-                        });
+            modelBuilder.Entity("CampusServicesPortal.Models.PasswordHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordHistories");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.PasswordResetToken", b =>
@@ -833,7 +662,41 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("PasswordResetTokens", (string)null);
+                    b.ToTable("PasswordResetTokens");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Room", b =>
@@ -862,33 +725,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("HostelId");
 
-                    b.ToTable("Rooms", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            HostelId = 1,
-                            IsActive = true,
-                            MaxCapacity = 4,
-                            RoomNumber = "B-101"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            HostelId = 1,
-                            IsActive = true,
-                            MaxCapacity = 2,
-                            RoomNumber = "B-102"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            HostelId = 2,
-                            IsActive = true,
-                            MaxCapacity = 4,
-                            RoomNumber = "G-201"
-                        });
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
@@ -900,8 +737,7 @@ namespace CampusServicesPortal.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContactDetails")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeactivatedAt")
                         .HasColumnType("datetime2");
@@ -920,13 +756,11 @@ namespace CampusServicesPortal.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IndexNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -935,45 +769,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("FacultyId");
 
-                    b.HasIndex("IndexNumber")
-                        .IsUnique();
-
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ContactDetails = "+94771234567",
-                            EmailVerified = true,
-                            FacultyId = 1,
-                            FullName = "Kamal Perera",
-                            IndexNumber = "STU/2026/001",
-                            UserId = 2
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ContactDetails = "+94719876543",
-                            EmailVerified = true,
-                            FacultyId = 2,
-                            FullName = "Nimal Silva",
-                            IndexNumber = "STU/2026/002",
-                            UserId = 3
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ContactDetails = "+94751112223",
-                            EmailVerified = true,
-                            FacultyId = 1,
-                            FullName = "Anusha Fernando",
-                            IndexNumber = "STU/2026/003",
-                            UserId = 4
-                        });
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.StudentMasterList", b =>
@@ -1002,30 +801,39 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("IndexNumber")
                         .IsUnique();
 
-                    b.ToTable("StudentMasterLists", (string)null);
+                    b.ToTable("StudentMasterLists");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            FacultyId = 1,
-                            FullName = "Kamal Perera",
-                            IndexNumber = "STU/2026/001"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            FacultyId = 2,
-                            FullName = "Nimal Silva",
-                            IndexNumber = "STU/2026/002"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            FacultyId = 1,
-                            FullName = "Anusha Fernando",
-                            IndexNumber = "STU/2026/003"
-                        });
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentPhoneNumber", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentPhoneNumbers");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.SystemSetting", b =>
@@ -1041,13 +849,18 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("SettingKey");
 
-                    b.ToTable("SystemSettings", (string)null);
+                    b.ToTable("SystemSettings");
 
                     b.HasData(
                         new
                         {
-                            SettingKey = "reservation-hold-minutes",
+                            SettingKey = "LabBookingHoldMinutes",
                             SettingValue = "15"
+                        },
+                        new
+                        {
+                            SettingKey = "MaxDailyLabBookings",
+                            SettingValue = "1"
                         });
                 });
 
@@ -1070,6 +883,9 @@ namespace CampusServicesPortal.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastPasswordChangedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -1085,45 +901,7 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4515),
-                            Email = "admin@university.edu.lk",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$qRzP42b3mY0b6uX8...",
-                            Role = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4519),
-                            Email = "kamal@student.university.ac.lk",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$w8h9x7y6z5u...",
-                            Role = "Student"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4520),
-                            Email = "nimal@student.university.ac.lk",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$w8h9x7y6z5u...",
-                            Role = "Student"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 712, DateTimeKind.Utc).AddTicks(4522),
-                            Email = "anusha@student.university.ac.lk",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$w8h9x7y6z5u...",
-                            Role = "Student"
-                        });
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Venue", b =>
@@ -1152,33 +930,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Venues", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Capacity = 250,
-                            IsActive = true,
-                            Name = "Wimaladharma Main Auditorium",
-                            Type = "Event Hall"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Capacity = 1000,
-                            IsActive = true,
-                            Name = "University Playground",
-                            Type = "Open Space"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Capacity = 50,
-                            IsActive = true,
-                            Name = "Mini Seminar Room B",
-                            Type = "Event Hall"
-                        });
+                    b.ToTable("Venues");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateRequest", b =>
@@ -1342,6 +1094,17 @@ namespace CampusServicesPortal.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("CampusServicesPortal.Models.PasswordHistory", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CampusServicesPortal.Models.PasswordResetToken", b =>
                 {
                     b.HasOne("CampusServicesPortal.Models.Student", "Student")
@@ -1351,6 +1114,17 @@ namespace CampusServicesPortal.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.RefreshToken", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Room", b =>
@@ -1366,7 +1140,7 @@ namespace CampusServicesPortal.Migrations
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
                 {
-                    b.HasOne("CampusServicesPortal.Models.Faculty", null)
+                    b.HasOne("CampusServicesPortal.Models.Faculty", "Faculty")
                         .WithMany()
                         .HasForeignKey("FacultyId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1378,7 +1152,20 @@ namespace CampusServicesPortal.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Faculty");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentPhoneNumber", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.Student", "Student")
+                        .WithMany("PhoneNumbers")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Hostel", b =>
@@ -1389,6 +1176,11 @@ namespace CampusServicesPortal.Migrations
             modelBuilder.Entity("CampusServicesPortal.Models.Lab", b =>
                 {
                     b.Navigation("Seats");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
+                {
+                    b.Navigation("PhoneNumbers");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CampusServicesPortal.Models;
@@ -27,6 +27,9 @@ public class HostelApplication
     public string Status { get; set; } = "Pending";
 
     public int? AssignedRoomId { get; set; }
+
+    // Submission timestamp — consistent with all other application/request models
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties for EF Core relationship maps
     [ForeignKey(nameof(StudentId))]

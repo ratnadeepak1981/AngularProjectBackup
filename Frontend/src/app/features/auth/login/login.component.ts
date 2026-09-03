@@ -6,6 +6,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ActionButtonComponent } from '../../../shared/components/action-button/action-button.component';
+import { HttpContext } from '@angular/common/http';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interceptor';
 
 @Component({
   selector: 'app-login',
@@ -24,9 +26,22 @@ export class LoginComponent {
   // Reactive State Signals
   public readonly isLoading = signal(false);
   public readonly errorMessage = signal<string | null>(null);
+  public readonly resetErrorMessage = signal<string | null>(null);
   public readonly isForgotPasswordOpen = signal(false);
   public readonly resetStep = signal(1);
   public readonly isResetLoading = signal(false);
+
+  // Password Visibility Toggle Signals
+  public readonly showPassword = signal(false);
+  public readonly showResetPassword = signal(false);
+
+  toggleShowPassword(): void {
+    this.showPassword.update((val) => !val);
+  }
+
+  toggleShowResetPassword(): void {
+    this.showResetPassword.update((val) => !val);
+  }
 
   navigateToRegister(): void {
     this.router.navigate(['/auth/register']);
@@ -42,6 +57,7 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     token: [''],
     newPassword: ['', [Validators.minLength(3)]],
+    confirmPassword: [''],
   });
 
   onLogin(): void {
@@ -86,17 +102,21 @@ export class LoginComponent {
   openForgotPassword(): void {
     this.resetStep.set(1);
     this.resetForm.reset();
+    this.resetErrorMessage.set(null);
+    this.showResetPassword.set(false);
     this.isForgotPasswordOpen.set(true);
   }
 
   closeForgotPassword(): void {
     this.isForgotPasswordOpen.set(false);
+    this.resetErrorMessage.set(null);
   }
 
   onRequestResetToken(): void {
+    this.resetErrorMessage.set(null);
     const email = this.resetForm.get('email')?.value;
     if (!email) {
-      this.toast.error('Please enter your registered email address.');
+      this.toast.warning('Please enter your registered email address.');
       return;
     }
 
@@ -109,28 +129,38 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isResetLoading.set(false);
-        this.toast.error(err.error?.message || 'Failed to dispatch reset code.');
+        const msg = err.error?.message || err.error?.Message || 'Failed to dispatch reset code.';
+        this.resetErrorMessage.set(msg);
       },
     });
   }
 
   onSubmitPasswordReset(): void {
-    const { token, newPassword } = this.resetForm.value;
+    this.resetErrorMessage.set(null);
+    const { token, newPassword, confirmPassword } = this.resetForm.value;
     if (!token || !newPassword) {
-      this.toast.error('Please enter the token code and your new password.');
+      this.resetErrorMessage.set('Please enter the OTP token code and your new password.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      this.resetErrorMessage.set('New Password and Confirm Password do not match.');
       return;
     }
 
     this.isResetLoading.set(true);
-    this.apiService.post(this.apiService.routes.password.resetPassword, { token, newPassword }).subscribe({
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    this.apiService.post(this.apiService.routes.password.resetPassword, { token, newPassword }, { context }).subscribe({
       next: () => {
         this.isResetLoading.set(false);
-        this.toast.success('Password updated successfully! Please sign in.');
+        this.resetErrorMessage.set(null);
+        this.toast.success('Password updated successfully! You can now sign in.');
         this.closeForgotPassword();
       },
       error: (err) => {
         this.isResetLoading.set(false);
-        this.toast.error(err.error?.message || 'Failed to update password.');
+        const errorMsg = err.error?.message || err.error?.Message || err.error || 'Failed to update password.';
+        this.resetErrorMessage.set(errorMsg);
       },
     });
   }

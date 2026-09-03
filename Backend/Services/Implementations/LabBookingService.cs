@@ -1,3 +1,4 @@
+using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Labs;
@@ -5,6 +6,7 @@ using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Implementations;
 using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace CampusServicesPortal.Services.Implementations;
@@ -13,13 +15,15 @@ public class LabBookingService : ILabBookingService
 {
     private readonly ILabRepository _labRepo;
     private readonly ILabBookingRepository _bookingRepo;
+    private readonly AppDbContext _context;
     private readonly IConfiguration _config;
     private readonly INotificationService _notificationService;
 
-    public LabBookingService(ILabRepository labRepo, ILabBookingRepository bookingRepo,INotificationService notificationService,IConfiguration config)
+    public LabBookingService(ILabRepository labRepo, ILabBookingRepository bookingRepo, AppDbContext context, INotificationService notificationService, IConfiguration config)
     {
         _labRepo = labRepo;
         _bookingRepo = bookingRepo;
+        _context = context;
         _config = config;
         _notificationService = notificationService; // Assigned service dependency
     }
@@ -116,7 +120,10 @@ public class LabBookingService : ILabBookingService
                 if (activeCount >= lab.Capacity) throw new InvalidOperationException("The requested session slot has reached max student capacity.");
             }
 
-            int holdMinutes = _config.GetValue<int>("SystemSettings:ReservationHoldMinutes", 15);
+            var holdSetting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingKey == "LabBookingHoldMinutes" || s.SettingKey == "reservation-hold-minutes");
+
+            int holdMinutes = holdSetting != null && int.TryParse(holdSetting.SettingValue, out var parsedMins) ? parsedMins : _config.GetValue<int>("SystemSettings:ReservationHoldMinutes", 15);
 
             var newBooking = new LabBooking
             {
@@ -133,13 +140,16 @@ public class LabBookingService : ILabBookingService
             await _bookingRepo.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            var seats = requestDto.SeatId.HasValue ? await _labRepo.GetSeatsByLabIdAsync(requestDto.LabId) : null;
+            var targetSeat = seats?.FirstOrDefault(s => s.Id == requestDto.SeatId);
+
             return new LabBookingResponseDto
             {
                 Id = newBooking.Id,
                 StudentId = newBooking.StudentId,
                 LabName = lab.Name,
                 LabType = lab.LabType,
-                SeatNumber = null,
+                SeatNumber = targetSeat?.SeatNumber,
                 BookingDate = newBooking.BookingDate,
                 TimeSlot = newBooking.TimeSlot,
                 Status = newBooking.Status,

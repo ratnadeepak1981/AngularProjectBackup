@@ -8,7 +8,7 @@ using CampusServicesPortal.Wrappers;
 
 namespace CampusServicesPortal.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Student")]
     [ApiController]
     [Route("api/admin/system-settings")]
     public class SystemSettingsController : BaseApiController
@@ -121,7 +121,34 @@ namespace CampusServicesPortal.Controllers
                     ["AcademicYearsList"] = "2024/2025,2025/2026,2026/2027",
                     ["Semester"] = "Semester 1",
                     ["SemestersList"] = "Semester 1,Semester 2,Summer Trimester",
-                    ["DefaultPageSize"] = "5"
+                    ["DefaultPageSize"] = "5",
+                    // Finance & Fee Structure
+                    ["LateFeeGracePeriodDays"] = "7",
+                    ["DefaultCurrency"] = "LKR",
+                    ["TaxPercentage"] = "0",
+                    ["EnableOnlinePaymentGateway"] = "true",
+                    // Student & Registration Types
+                    ["StudentIdPrefixFormat"] = "STU/2026/",
+                    ["MaxActiveRegistrationsPerStudent"] = "10",
+                    ["RequireEmailVerificationOnRegistration"] = "true",
+                    // Hostel & Room Allocation
+                    ["HostelApplicationWindowDays"] = "30",
+                    ["MaxRoomOccupancyCap"] = "4",
+                    ["AutoApproveHostelApplications"] = "false",
+                    // Campus Events & Venues
+                    ["MaxAdvanceVenueBookingDays"] = "60",
+                    ["RequireAdminApprovalForVenueBooking"] = "true",
+                    ["EventRegistrationCancellationDeadlineHours"] = "24",
+                    // Security & Authentication Policies
+                    ["MinPasswordLength"] = "8",
+                    ["MaxFailedLogins"] = "5",
+                    ["RequirePasswordComplexity"] = "strong",
+                    ["PasswordExpiryDays"] = "90",
+                    ["PasswordReuseHistoryLimit"] = "5",
+                    // Notifications & Templates
+                    ["EnableEmailNotifications"] = "true",
+                    ["EnableSmsNotifications"] = "false",
+                    ["NotificationRetentionDays"] = "90"
                 };
 
                 bool addedNewSeed = false;

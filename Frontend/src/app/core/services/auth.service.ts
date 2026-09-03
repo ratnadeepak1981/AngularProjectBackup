@@ -1,8 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, throwError } from 'rxjs';
 import { ApiService } from './api.service';
 import { ToastService } from './toast.service';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../interceptors/error-interceptor';
 import { LoginRequest } from '../models/auth/login-request.model';
 import { StudentProfile } from '../models/auth/student-profile.model';
 import { AuthResponse } from '../models/auth/auth-response.model';
@@ -54,7 +56,11 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.api
-      .post<ApiResponse<AuthResponse>>(this.api.routes.auth.login, credentials)
+      .post<ApiResponse<AuthResponse>>(
+        this.api.routes.auth.login,
+        credentials,
+        { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+      )
       .pipe(
         tap((response) => {
           const payload = response.data || (response as any);

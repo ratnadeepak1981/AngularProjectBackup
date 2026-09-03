@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CampusServicesPortal.DTOs.Requests.Student;
 using CampusServicesPortal.DTOs.Responses.Student;
@@ -28,7 +28,7 @@ namespace CampusServicesPortal.Services.Interfaces
         Task<ServiceResult<object>> VerifyMasterIndexAsync(string indexNumber);
 
         // GET /api/student-master?search= [Index 0.1.4]
-        Task<ServiceResult<IEnumerable<StudentMasterList>>> SearchMasterRecordsAsync(string? search);
+        Task<ServiceResult<IEnumerable<object>>> SearchMasterRecordsAsync(string? search);
 
         // POST /api/student-master/import [Index 0.1.4]
         Task<ServiceResult<int>> BulkImportMasterRecordsAsync(IFormFile file);

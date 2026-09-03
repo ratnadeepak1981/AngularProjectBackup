@@ -7,7 +7,6 @@ namespace CampusServicesPortal.Controllers
 {
     [AllowAnonymous]
     [ApiController]
-    [Route("api/emails")]
     [Route("api/email")]
     public class EmailsController : BaseApiController
     {
@@ -18,9 +17,8 @@ namespace CampusServicesPortal.Controllers
             _emailService = emailService;
         }
 
-        // GET /api/emails/preview/verification or /api/email/preview/verify-email — Render HTML verification email preview
+        // GET /api/email/preview/verification — Render HTML verification email preview
         [HttpGet("preview/verification")]
-        [HttpGet("preview/verify-email")]
         public async Task<IActionResult> PreviewVerificationEmail([FromQuery] string email)
         {
             var result = await _emailService.GenerateVerificationEmailPreviewAsync(email);

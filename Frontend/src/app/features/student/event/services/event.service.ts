@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { CampusEvent } from '../../../../core/models/event/event.model';
@@ -15,6 +15,15 @@ export class EventService {
 
   getAvailableEvents(): Observable<any> {
     return this.api.get<any>(this.api.routes.events.list);
+  }
+
+  getFormattedEvents(): Observable<StudentEventDto[]> {
+    return this.getAvailableEvents().pipe(
+      map((res) => {
+        const data = res?.data || res || [];
+        return Array.isArray(data) ? data : [];
+      })
+    );
   }
 
   registerForEvent(eventId: number): Observable<any> {

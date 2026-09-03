@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { FeeTypeItem } from '../../services/admin-billing';
 import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
+import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
   selector: 'app-fee-types-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, ActionButtonComponent],
   templateUrl: './fee-types-list.component.html',
   styleUrl: './fee-types-list.component.css',
 })

@@ -39,7 +39,8 @@
           [holdMinutes]="systemHoldMinutes()"
           [isSubmitting]="isSubmitting()"
           (confirm)="promptConfirmBookingModal()"
-          (cancelHold)="promptCancelHoldModal()"
+          (releaseClick)="promptCancelHoldModal()"
+          (holdExpired)="onHoldTimerExpired()"
         ></app-active-hold-timer>
       }
 

@@ -78,12 +78,8 @@ export class StudentPaymentPageComponent implements OnInit {
 
   loadInvoiceDetails(id: number): void {
     this.isLoading.set(true);
-    this.billingService.getStudentLedger().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: FeePaymentItem[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        const found = items.find((i) => i.id === id);
-
+    this.billingService.getInvoiceDetails(id).subscribe({
+      next: (found) => {
         if (found) {
           this.invoiceItem.set(found);
         } else {

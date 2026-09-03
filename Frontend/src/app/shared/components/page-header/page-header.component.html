@@ -1,29 +1,67 @@
-<div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
-  <div>
-    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-      @if (icon()) {
-        <span>{{ icon() }}</span>
+<div class="theme-header relative overflow-hidden rounded-2xl shadow-md border border-white/10 p-5 sm:p-6 text-white transition-all">
+  <!-- Subtle ambient background glow overlay -->
+  <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-white/5 blur-2xl pointer-events-none"></div>
+
+  <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    
+    @if (authService.isStudent()) {
+      <!-- Student Hero Header Layout with Faculty & Academic Year (Matching Mockup Screenshot) -->
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner shrink-0">
+          {{ avatarInitials }}
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+              Welcome back, {{ studentName }}! 👋
+            </h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              Active Student
+            </span>
+          </div>
+          <p class="text-xs text-slate-100/90 font-medium mt-1 flex flex-wrap items-center gap-2.5">
+            <span>🆔 <strong>Index:</strong> {{ studentIndex }}</span>
+            <span>•</span>
+            <span>🏛️ <strong>Faculty:</strong> {{ studentFaculty }}</span>
+            <span>•</span>
+            <span>📅 <strong>Academic Year:</strong> {{ academicYear() }} ({{ semester() }})</span>
+            @if (title() && title() !== 'Student Workspace') {
+              <span>•</span>
+              <span class="font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">📍 {{ title() }}</span>
+            }
+          </p>
+        </div>
+      </div>
+    } @else {
+      <!-- Admin / Standard Page Header Layout -->
+      <div class="flex items-center gap-3">
+        @if (icon()) {
+          <span class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-lg shrink-0 shadow-inner">
+            {{ icon() }}
+          </span>
+        }
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+            {{ title() }}
+          </h1>
+          @if (description()) {
+            <p class="text-xs sm:text-sm text-slate-100/90 font-medium mt-1">
+              {{ description() }}
+            </p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Varying Action Buttons projected via ng-content per page -->
+    <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+      @if (badgeText()) {
+        <span class="px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-extrabold rounded-xl shadow-2xs">
+          {{ badgeText() }}
+        </span>
       }
-      <span>{{ title() }}</span>
-    </h1>
-    @if (description()) {
-      <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-medium mt-1">
-        {{ description() }}
-      </p>
-    }
-  </div>
+      <ng-content />
+    </div>
 
-  <div class="flex flex-wrap items-center gap-2.5">
-    @if (badgeText()) {
-      <span class="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold rounded-lg shadow-2xs">
-        {{ badgeText() }}
-      </span>
-    } @else if (showIndexBadge() && authService.isStudent() && authService.userProfile()?.indexNumber) {
-      <span class="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-lg shadow-2xs font-mono">
-        Index: {{ authService.userProfile()?.indexNumber }}
-      </span>
-    }
-
-    <ng-content />
   </div>
 </div>

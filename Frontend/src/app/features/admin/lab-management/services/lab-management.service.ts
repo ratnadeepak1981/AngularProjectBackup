@@ -5,26 +5,10 @@ import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { Lab } from '../../../../core/models/lab/lab.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
+import { LabBooking, LabMatrixLayoutResponse } from '../../../../core/models/lab/lab-booking.model';
 
-export interface LabLayoutResponse {
-  totalRows: number;
-  totalColumns: number;
-  seats: LabSeat[];
-}
-
-export interface LabBookingRecord {
-  id: number;
-  labId: number;
-  labName: string;
-  studentId: number;
-  studentName: string;
-  seatId?: number;
-  seatNumber?: string;
-  bookingDate: string;
-  timeSlot: string;
-  status: 'Confirmed' | 'Held' | 'Cancelled' | 'Completed' | string;
-  createdAt: string;
-}
+export type LabLayoutResponse = LabMatrixLayoutResponse;
+export type LabBookingRecord = LabBooking;
 
 export interface RawApiLab {
   id?: number;
@@ -112,7 +96,7 @@ export class LabManagementService {
   /**
    * Get 1-indexed 2D Matrix Layout for a lab
    */
-  getLabLayout(labId: number): Observable<LabLayoutResponse> {
+  getLabLayout(labId: number): Observable<LabMatrixLayoutResponse> {
     const today = new Date().toISOString().split('T')[0];
     return this.api.get<RawApiLayoutPayload>(`/lab-bookings/layout/${labId}?date=${today}&timeSlot=09%3A00%20-%2011%3A00%20AM`).pipe(
       map((res: RawApiLayoutPayload) => {
@@ -177,7 +161,7 @@ export class LabManagementService {
   /**
    * Get Lab Reservations & Seat Hold Audit History
    */
-  getBookingsHistory(): Observable<LabBookingRecord[]> {
+  getBookingsHistory(): Observable<LabBooking[]> {
     const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
     return this.api.get<any>('/lab-bookings/audit-history', undefined, { context }).pipe(
       map((res: any) => {

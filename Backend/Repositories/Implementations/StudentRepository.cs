@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Data;
+using CampusServicesPortal.Data;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -74,13 +74,17 @@ namespace CampusServicesPortal.Repositories.Implementations
         {
             return await _context.Students
                 .Include(s => s.User)
+                .Include(s => s.Faculty)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
         // GET /api/students Search/Filtering Logic [Index 0.1.3]
         public async Task<IEnumerable<Student>> SearchStudentsAsync(string? search, string? faculty)
         {
-            var query = _context.Students.AsQueryable();
+            var query = _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Faculty)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -89,8 +93,7 @@ namespace CampusServicesPortal.Repositories.Implementations
 
             if (!string.IsNullOrWhiteSpace(faculty))
             {
-                // Assuming Faculty name check or relationship key match
-                query = query.Where(s => s.FacultyId.ToString() == faculty);
+                query = query.Where(s => s.Faculty.Name == faculty || s.FacultyId.ToString() == faculty);
             }
 
             return await query.ToListAsync();
@@ -104,6 +107,14 @@ namespace CampusServicesPortal.Repositories.Implementations
                 query = query.Where(m => m.FullName.Contains(search) || m.IndexNumber.Contains(search));
             }
             return await query.ToListAsync();
+        }
+
+        public async Task<HashSet<string>> GetRegisteredIndexNumbersAsync()
+        {
+            var registeredIndices = await _context.Students
+                .Select(s => s.IndexNumber.ToLower())
+                .ToListAsync();
+            return new HashSet<string>(registeredIndices);
         }
 
         public async Task BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords)

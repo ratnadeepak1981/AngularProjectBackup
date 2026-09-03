@@ -124,21 +124,23 @@
     >
       <ng-template #cellActions let-row>
         @if (row.isActive) {
-          <button
-            type="button"
-            (click)="openSafetyModal(row)"
-            class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs rounded-lg border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-          >
-            Deactivate Account
-          </button>
+          <app-action-button
+            label="Deactivate Account"
+            icon="trash"
+            variant="danger"
+            size="sm"
+            tooltip="Execute cross-module safety deactivation audit"
+            (btnClick)="openSafetyModal(row)"
+          ></app-action-button>
         } @else {
-          <button
-            type="button"
-            (click)="reactivateAccount(row)"
-            class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-lg border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
-          >
-            Reactivate Account
-          </button>
+          <app-action-button
+            label="Reactivate Account"
+            icon="refresh"
+            variant="success"
+            size="sm"
+            tooltip="Reactivate student account access"
+            (btnClick)="reactivateAccount(row)"
+          ></app-action-button>
         }
       </ng-template>
     </app-data-table>

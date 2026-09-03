@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DataTableComponent } from '../../../../../shared/components/tables-utilities/data-table/data-table.component';
+import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
@@ -25,7 +25,7 @@ export class StudentHistoryListComponent {
     { key: 'seatNumber', header: 'Workstation Seat', sortable: true, filterable: true },
     { key: 'bookingDate', header: 'Booking Date', sortable: true, filterable: true },
     { key: 'timeSlot', header: 'Session Time Slot', sortable: true, filterable: true },
-    { key: 'status', header: 'Status', sortable: true, filterable: true, type: 'status' },
+    { key: 'status', header: 'Status', sortable: true, filterable: true, type: 'badge' },
     { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
 

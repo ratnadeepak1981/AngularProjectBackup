@@ -233,8 +233,20 @@ export class LabBookingPageComponent implements OnInit {
         this.myBookingsHistory.set(bookings);
         this.isLoadingHistory.set(false);
 
-        // Check if there is an active held booking for this student
-        const activeHold = bookings.find((b) => b.status === 'Held');
+        // Check if there is an active valid held booking for this student
+        const now = Date.now();
+        const parseUtcTime = (iso: string) => {
+          if (!iso) return 0;
+          const formatted = iso.endsWith('Z') ? iso : `${iso}Z`;
+          return new Date(formatted).getTime();
+        };
+
+        const activeHold = bookings.find((b) => {
+          if (b.status !== 'Held') return false;
+          if (!b.expiresAt) return true;
+          return parseUtcTime(b.expiresAt) > now;
+        });
+
         if (activeHold) {
           this.activeHoldBooking.set(activeHold);
         } else {
@@ -243,6 +255,13 @@ export class LabBookingPageComponent implements OnInit {
       },
       error: () => this.isLoadingHistory.set(false),
     });
+  }
+
+  public onHoldTimerExpired(): void {
+    const active = this.activeHoldBooking();
+    if (!active) return;
+    this.toast.info('Reservation hold lock expired. Seat returned to pool.');
+    this.executeCancelHold();
   }
 
   public openMatrixModal(): void {
@@ -394,7 +413,11 @@ export class LabBookingPageComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.isSubmitting.set(false);
-          if (res.success) {
+          if (res.success && res.data) {
+            if (seat?.seatNumber && (!res.data.seatNumber || res.data.seatNumber === 'N/A')) {
+              res.data.seatNumber = seat.seatNumber;
+            }
+            this.activeHoldBooking.set(res.data);
             this.toast.success(
               `Temporary ${this.systemHoldMinutes()}-minute reservation hold placed on Workstation ${seat?.seatNumber || 'Bench Slot'}!`
             );

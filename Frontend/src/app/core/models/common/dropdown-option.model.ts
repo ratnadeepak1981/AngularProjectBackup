@@ -3,4 +3,5 @@ export interface DropdownOption {
   label: string;
   icon?: string;
   description?: string;
+  badgeClass?: string;
 }

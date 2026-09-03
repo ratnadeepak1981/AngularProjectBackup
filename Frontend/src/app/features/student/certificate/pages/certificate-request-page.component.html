@@ -1,1 +1,120 @@
-<p>certificate-request-page works!</p>
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="Official Certificate Requests"
+    description="Request student verification letters, transcript testimonials, and official campus documents"
+    icon="📜"
+  ></app-page-header>
+
+  <!-- Space-Saving Tab Navigation -->
+  <app-tab-component
+    [tabs]="tabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- Tab 1: Request Certificate Form Card -->
+  @if (activeTabId() === 'request') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="max-w-2xl space-y-6">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📜</span> Submit Certificate Request
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Official certificates will be issued by the University Registrar after review.
+          </p>
+        </div>
+
+        <form [formGroup]="requestForm" (ngSubmit)="submitRequest()" class="space-y-5" novalidate>
+          <!-- Inline Error Banner -->
+          @if (errorMessage()) {
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center justify-between gap-3 animate-fade-in">
+              <div class="flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+              <button type="button" (click)="errorMessage.set(null)" class="text-rose-500 hover:text-rose-700 font-bold text-sm cursor-pointer">✕</button>
+            </div>
+          }
+
+          <!-- Certificate Type Dropdown -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              Select Certificate Type <span class="text-rose-500">*</span>
+            </label>
+            <app-select-dropdown
+              [options]="dropdownOptions()"
+              [selectedValue]="requestForm.get('certificateTypeId')?.value"
+              placeholder="-- Choose Document / Certificate Type --"
+              (selectionChange)="onSelectType($event)"
+            ></app-select-dropdown>
+            @if (requestForm.get('certificateTypeId')?.touched && requestForm.get('certificateTypeId')?.hasError('required')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Please select a certificate type.</p>
+            }
+          </div>
+
+          <!-- Reason / Purpose Textarea -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="reason" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Reason / Purpose of Request <span class="text-rose-500">*</span>
+              </label>
+              <span class="text-[11px] text-slate-400 font-medium">
+                {{ requestForm.get('reason')?.value?.length || 0 }}/500 chars
+              </span>
+            </div>
+            <textarea
+              id="reason"
+              formControlName="reason"
+              rows="4"
+              maxlength="500"
+              placeholder="Provide clear justification (e.g., Bank Loan Application, Embassy Visa Processing, Job Application)..."
+              class="w-full px-4 py-3 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+              [ngClass]="{
+                'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+                  requestForm.get('reason')?.touched && requestForm.get('reason')?.invalid
+              }"
+            ></textarea>
+            @if (requestForm.get('reason')?.touched && requestForm.get('reason')?.hasError('required')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Please provide a reason for your request.</p>
+            }
+            @if (requestForm.get('reason')?.touched && requestForm.get('reason')?.hasError('minlength')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Reason must be at least 5 characters long.</p>
+            }
+            @if (requestForm.get('reason')?.touched && requestForm.get('reason')?.hasError('maxlength')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Reason cannot exceed 500 characters (database limit).</p>
+            }
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2 flex items-center justify-end gap-3">
+            <app-action-button
+              type="submit"
+              variant="primary"
+              size="md"
+              label="Submit Certificate Request →"
+              icon="🚀"
+              [disabled]="isSubmitting()"
+              [loading]="isSubmitting()"
+            ></app-action-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Tab 2: My Requests Data Table -->
+  @if (activeTabId() === 'my-requests') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <app-data-table
+        [columns]="requestColumns"
+        [data]="myRequests()"
+        [isLoading]="isLoading()"
+        [showSearch]="true"
+        searchPlaceholder="Search my certificate requests..."
+        emptyMessage="No certificate requests submitted yet."
+      ></app-data-table>
+    </div>
+  }
+</div>

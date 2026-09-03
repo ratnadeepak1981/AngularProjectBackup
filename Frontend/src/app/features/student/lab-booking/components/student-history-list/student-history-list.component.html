@@ -21,8 +21,10 @@
     [columns]="bookingColumns"
     [data]="bookings()"
     [pageSize]="5"
+    [showSearch]="true"
+    searchPlaceholder="Search history by lab, seat, date, or slot..."
     [isLoading]="isLoading()"
-    [emptyMessage]="'No lab workstation bookings found in your account history.'"
+    emptyMessage="No lab workstation bookings found in your account history."
   >
     <ng-template #cellStatus let-row>
       <app-status-badge [status]="row.status"></app-status-badge>

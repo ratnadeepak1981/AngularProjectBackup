@@ -133,10 +133,9 @@ export class StudentEventPageComponent implements OnInit {
 
   loadEvents(): void {
     this.isLoading.set(true);
-    this.eventService.getAvailableEvents().subscribe({
-      next: (res) => {
-        const data = res?.data || res || [];
-        this.rawEvents.set(Array.isArray(data) ? data : []);
+    this.eventService.getFormattedEvents().subscribe({
+      next: (events) => {
+        this.rawEvents.set(events);
         this.isLoading.set(false);
       },
       error: (err) => {

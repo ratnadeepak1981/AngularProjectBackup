@@ -197,13 +197,28 @@
               <div class="flex gap-2 mb-2">
                 <select
                   [ngModel]="academicYear()"
-                  (ngModelChange)="academicYear.set($event)"
+                  (ngModelChange)="onAcademicYearSelect($event)"
                   class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
                 >
                   @for (year of academicYearsList(); track year) {
                     <option [value]="year">{{ year }}</option>
                   }
                 </select>
+              </div>
+
+              <!-- Date-Linked Academic Year Date Range Pickers -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                <app-date-picker
+                  [label]="'Academic Year Start Date'"
+                  [selectedDate]="academicYearStartDate()"
+                  (dateChange)="academicYearStartDate.set($event)"
+                />
+                <app-date-picker
+                  [label]="'Academic Year End Date'"
+                  [selectedDate]="academicYearEndDate()"
+                  [minDate]="academicYearStartDate()"
+                  (dateChange)="academicYearEndDate.set($event)"
+                />
               </div>
 
               <!-- Add New Academic Year Inline Control -->
@@ -237,6 +252,21 @@
                     <option [value]="sem">{{ sem }}</option>
                   }
                 </select>
+              </div>
+
+              <!-- Date-Linked Semester Date Range Pickers -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                <app-date-picker
+                  [label]="'Semester Start Date'"
+                  [selectedDate]="semesterStartDate()"
+                  (dateChange)="semesterStartDate.set($event)"
+                />
+                <app-date-picker
+                  [label]="'Semester End Date'"
+                  [selectedDate]="semesterEndDate()"
+                  [minDate]="semesterStartDate()"
+                  (dateChange)="semesterEndDate.set($event)"
+                />
               </div>
 
               <!-- Add New Semester Inline Control -->
@@ -279,6 +309,39 @@
                 class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               />
             </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🛡️ Password Complexity Requirement Level</label>
+              <app-select-dropdown
+                label=""
+                icon="🔐"
+                [options]="passwordComplexityOptions"
+                [selectedValue]="passwordComplexityTier()"
+                (selectionChange)="passwordComplexityTier.set($event)"
+              ></app-select-dropdown>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">⏰ Password Expiry Duration (Days)</label>
+              <input
+                type="number"
+                [ngModel]="passwordExpiryDays()"
+                (ngModelChange)="passwordExpiryDays.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">Maximum days before user password expires (Enter 0 for no expiration).</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📜 Password Reuse History Limit (Past Passwords)</label>
+              <input
+                type="number"
+                [ngModel]="passwordReuseHistoryLimit()"
+                (ngModelChange)="passwordReuseHistoryLimit.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">Prevents users from reusing any of their last N previous passwords.</p>
+            </div>
           </div>
         } @else if (activeCategory()?.id === 'application') {
           <div class="space-y-4 text-xs font-semibold">
@@ -303,6 +366,197 @@
                 (ngModelChange)="defaultPageSize.set($event)"
                 class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               />
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'finance') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">⏳ Late Fee Payment Grace Period (Days)</label>
+              <input
+                type="number"
+                [ngModel]="lateFeeGracePeriodDays()"
+                (ngModelChange)="lateFeeGracePeriodDays.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">Days allowed after due date before late payment penalties apply.</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">💱 Primary Payment Currency Unit</label>
+              <select
+                [ngModel]="defaultCurrency()"
+                (ngModelChange)="defaultCurrency.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+              >
+                <option value="LKR">LKR — Sri Lankan Rupee</option>
+                <option value="USD">USD — US Dollar</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="GBP">GBP — British Pound</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📊 Default Tax / Service Surcharge (%)</label>
+              <input
+                type="number"
+                [ngModel]="taxPercentage()"
+                (ngModelChange)="taxPercentage.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">💳 Online Payment Gateway Checkout Integration</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="enableOnlinePaymentGateway()"
+                  (ngModelChange)="enableOnlinePaymentGateway.set($event)"
+                  class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+              <p class="text-2xs text-slate-500 mt-1">Enable direct credit/debit card online checkout vs bursar counter payments.</p>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'student') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🏷️ Auto Student ID Generator Prefix Format</label>
+              <input
+                type="text"
+                [ngModel]="studentIdPrefixFormat()"
+                (ngModelChange)="studentIdPrefixFormat.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+              <p class="text-2xs text-slate-400 mt-1">Example format: STU/2026/001</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🔢 Max Active Registrations per Student</label>
+              <input
+                type="number"
+                [ngModel]="maxActiveRegistrationsPerStudent()"
+                (ngModelChange)="maxActiveRegistrationsPerStudent.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">✉️ Require Email Verification On Self-Registration</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="requireEmailVerificationOnRegistration()"
+                  (ngModelChange)="requireEmailVerificationOnRegistration.set($event)"
+                  class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+              <p class="text-2xs text-slate-500 mt-1">Enforces OTP verification link check before activating new student profile logins.</p>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'hostel') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📅 Hostel Housing Intake Application Window (Days)</label>
+              <input
+                type="number"
+                [ngModel]="hostelApplicationWindowDays()"
+                (ngModelChange)="hostelApplicationWindowDays.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🛏️ Physical Room Maximum Occupancy Ceiling</label>
+              <input
+                type="number"
+                [ngModel]="maxRoomOccupancyCap()"
+                (ngModelChange)="maxRoomOccupancyCap.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">⚡ Auto-Approve Eligible Hostel Applications</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="autoApproveHostelApplications()"
+                  (ngModelChange)="autoApproveHostelApplications.set($event)"
+                  class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+              <p class="text-2xs text-slate-500 mt-1">Auto-approves incoming requests matching available hostel capacity criteria.</p>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'events') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">📅 Maximum Advance Venue Booking Window (Days)</label>
+              <input
+                type="number"
+                [ngModel]="maxAdvanceVenueBookingDays()"
+                (ngModelChange)="maxAdvanceVenueBookingDays.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">⏰ Registration Cancellation Cut-off Window (Hours)</label>
+              <input
+                type="number"
+                [ngModel]="eventRegistrationCancellationDeadlineHours()"
+                (ngModelChange)="eventRegistrationCancellationDeadlineHours.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">🛡️ Require Admin Triage Approval For Venue Bookings</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="requireAdminApprovalForVenueBooking()"
+                  (ngModelChange)="requireAdminApprovalForVenueBooking.set($event)"
+                  class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+        } @else if (activeCategory()?.id === 'notifications') {
+          <div class="space-y-4 text-xs font-semibold">
+            <div>
+              <label class="block text-slate-700 dark:text-slate-300 mb-1">🧹 Historical Notification Auto-Purge Retention (Days)</label>
+              <input
+                type="number"
+                [ngModel]="notificationRetentionDays()"
+                (ngModelChange)="notificationRetentionDays.set($event)"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">📧 Enable System-Wide Email Notification Dispatch</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="enableEmailNotifications()"
+                  (ngModelChange)="enableEmailNotifications.set($event)"
+                  class="rounded border-slate-300 text-slate-600 focus:ring-slate-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">📱 Enable System-Wide SMS Alert Dispatch</span>
+                <input
+                  type="checkbox"
+                  [ngModel]="enableSmsNotifications()"
+                  (ngModelChange)="enableSmsNotifications.set($event)"
+                  class="rounded border-slate-300 text-slate-600 focus:ring-slate-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
             </div>
           </div>
         } @else {

@@ -118,11 +118,14 @@ export class HostelManagementPageComponent implements OnInit {
   public readonly hostels = signal<HostelBuilding[]>([]);
   public readonly isLoading = signal<boolean>(false);
 
+  // Filtered Approved Housing Applications (Status === 'Approved' || 'RoomAssigned')
+  public readonly approvedApplications = computed<HousingApplication[]>(() =>
+    this.allApplications().filter((a) => a.status === 'Approved' || a.status === 'RoomAssigned')
+  );
+
   // Header Tab Configuration
   public readonly pendingCount = computed(() => this.pendingApplications().length);
-  public readonly approvedCount = computed(() =>
-    this.allApplications().filter((a) => a.status === 'Approved' || a.status === 'RoomAssigned').length
-  );
+  public readonly approvedCount = computed(() => this.approvedApplications().length);
   public readonly hostelsCount = computed(() => this.hostels().length);
 
   public readonly hostelTabs = computed<TabItem[]>(() => [
@@ -138,10 +141,8 @@ export class HostelManagementPageComponent implements OnInit {
   loadData(): void {
     this.isLoading.set(true);
 
-    this.hostelService.getHostelsMasterList(1, 100).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || {};
-        const items = payload.items || payload.Items || (Array.isArray(payload) ? payload : []);
+    this.hostelService.getFormattedHostelsList(1, 100).subscribe({
+      next: (items) => {
         this.hostels.set(items);
         if (items.length > 0 && (!this.selectedHostelId() || !items.some((h: any) => h.id === this.selectedHostelId()))) {
           this.selectedHostelId.set(items[0].id);
@@ -150,27 +151,10 @@ export class HostelManagementPageComponent implements OnInit {
       error: () => this.hostels.set([]),
     });
 
-    this.hostelService.getAllApplications().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        const formatted: HousingApplication[] = items.map((a: any) => ({
-          id: a.id || a.Id,
-          studentId: a.studentId || a.StudentId,
-          studentIndexNumber: a.studentIndexNumber || a.student?.indexNumber || a.Student?.IndexNumber || 'N/A',
-          studentName: a.studentName || a.student?.fullName || a.Student?.FullName || 'Student',
-          preferredHostelId: a.preferredHostelId || a.PreferredHostelId || (a.preferredHostel ? a.preferredHostel.id : 0),
-          preferredHostelName: a.hostelName || a.preferredHostel?.name || a.PreferredHostel?.Name || 'Hostel',
-          termSemester: a.termSemester || a.TermSemester || 'Year 1 - Sem 1',
-          specialRequirements: a.specialRequirements || a.SpecialRequirements || 'None',
-          status: a.status || a.Status || 'Pending',
-          assignedRoomId: a.assignedRoomId || a.AssignedRoomId || a.room?.id,
-          assignedRoomNumber: a.roomNumber || a.room?.roomNumber || a.Room?.RoomNumber,
-          createdAt: a.createdAt || a.CreatedAt,
-        }));
-
-        this.allApplications.set(formatted);
-        this.pendingApplications.set(formatted.filter((a) => a.status === 'Pending'));
+    this.hostelService.getFormattedApplications().subscribe({
+      next: (group) => {
+        this.allApplications.set(group.all);
+        this.pendingApplications.set(group.pending);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
@@ -211,6 +195,25 @@ export class HostelManagementPageComponent implements OnInit {
     this.confirmButtonIcon.set('✓');
     this.pendingConfirmAction = event.action;
     this.isConfirmOpen.set(true);
+  }
+
+  promptApproveApplication(app: HousingApplication): void {
+    this.onTriggerConfirm({
+      title: 'Approve Housing Application',
+      message: `Are you sure you want to approve housing application for ${app.studentName}? Room assignment will become available once approved.`,
+      icon: '✅',
+      variant: 'primary',
+      action: () => {
+        this.hostelService.updateApplicationStatus(app.id, 'Approved').subscribe({
+          next: () => {
+            this.toast.success(`Housing application approved for ${app.studentName}. You can now assign a room in Approved Allocations.`);
+            this.loadData();
+            this.activeTabId.set('approved-apps');
+          },
+          error: (err) => this.toast.error(err?.error?.message || 'Failed to approve application.'),
+        });
+      },
+    });
   }
 
   promptRejectApplication(app: HousingApplication): void {

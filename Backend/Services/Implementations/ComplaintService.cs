@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Complaints;
+using CampusServicesPortal.DTOs.Requests.Complaints;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Complaints;
 using CampusServicesPortal.Models;
@@ -281,25 +281,8 @@ namespace CampusServicesPortal.Services.Implementations
                         404);
             }
 
-            bool categoryHasComplaints =
-                await _complaintRepository
-                    .CategoryHasComplaintsAsync(categoryId);
-
-            if (categoryHasComplaints)
-            {
-                // Referenced category: soft delete
-                category.IsActive = false;
-
-                _complaintRepository
-                    .UpdateCategory(category);
-            }
-            else
-            {
-                // Unused category: hard delete
-                _complaintRepository
-                    .DeleteCategory(category);
-            }
-
+            category.IsActive = false;
+            _complaintRepository.UpdateCategory(category);
             await _complaintRepository.SaveChangesAsync();
 
             return ServiceResult<bool>

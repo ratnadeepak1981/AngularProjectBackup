@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { StudentBillingService, FeePaymentItem } from '../services/student-billing.service';
+import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -25,31 +26,20 @@ import { BillLedgerListComponent } from '../components/bill-ledger-list/bill-led
 })
 export class StudentBillingPageComponent implements OnInit {
   private readonly billingService = inject(StudentBillingService);
+  private readonly systemSettingsService = inject(SystemSettingsService);
   public readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   public readonly ledgerItems = signal<FeePaymentItem[]>([]);
   public readonly isLoadingLedger = signal<boolean>(false);
+  public readonly totalOutstandingFormatted = signal<string>('$0.00');
+  public readonly totalPaidFormatted = signal<string>('$0.00');
+  public readonly institutionName = signal<string>('University of Knowledge (UOK)');
 
   // Official Bursar Receipt Modal Signals
   public readonly selectedReceiptItem = signal<FeePaymentItem | null>(null);
   public readonly isReceiptModalOpen = signal<boolean>(false);
-
-  // Reusable AmountCard Metric Signals
-  public readonly totalOutstandingFormatted = computed(() => {
-    const total = (this.ledgerItems() || [])
-      .filter((i) => (i.status || '').toLowerCase() !== 'paid')
-      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    return `$${total.toFixed(2)}`;
-  });
-
-  public readonly totalPaidFormatted = computed(() => {
-    const total = (this.ledgerItems() || [])
-      .filter((i) => (i.status || '').toLowerCase() === 'paid')
-      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    return `$${total.toFixed(2)}`;
-  });
 
   ngOnInit(): void {
     this.loadLedger();
@@ -57,11 +47,21 @@ export class StudentBillingPageComponent implements OnInit {
 
   loadLedger(): void {
     this.isLoadingLedger.set(true);
-    this.billingService.getStudentLedger().subscribe({
+
+    // Fetch dynamic institution name from System Settings
+    this.systemSettingsService.getAllSettings().subscribe({
       next: (res) => {
-        const payload = res?.data || res || [];
-        const items: FeePaymentItem[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
-        this.ledgerItems.set(items);
+        if (res.data && res.data['InstitutionName']) {
+          this.institutionName.set(res.data['InstitutionName']);
+        }
+      },
+    });
+
+    this.billingService.getFormattedLedger().subscribe({
+      next: (summary) => {
+        this.ledgerItems.set(summary.items);
+        this.totalOutstandingFormatted.set(summary.outstandingFormatted);
+        this.totalPaidFormatted.set(summary.paidFormatted);
         this.isLoadingLedger.set(false);
       },
       error: () => {

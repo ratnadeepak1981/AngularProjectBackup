@@ -13,7 +13,9 @@ namespace CampusServicesPortal.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<StudentMasterList> StudentMasterLists => Set<StudentMasterList>();
         public DbSet<Student> Students => Set<Student>();
+        public DbSet<StudentPhoneNumber> StudentPhoneNumbers => Set<StudentPhoneNumber>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+        public DbSet<PasswordHistory> PasswordHistories => Set<PasswordHistory>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         // Module 2: Hostel Accommodation
@@ -102,6 +104,10 @@ namespace CampusServicesPortal.Data
                 .WithMany()
                 .HasForeignKey(ha => ha.AssignedRoomId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<HostelApplication>()
+                .Property(ha => ha.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
 
             // --- MODULE 3 RULES (Lab Reservation) ---
             modelBuilder.Entity<LabSeat>()
@@ -237,6 +243,31 @@ namespace CampusServicesPortal.Data
             modelBuilder.Entity<CertificateType>().HasData(
                 new CertificateType { Id = 1, Name = "Official Academic Transcript", IsActive = true },
                 new CertificateType { Id = 2, Name = "Bonafide Student Status Letter", IsActive = true }
+            );
+
+            modelBuilder.Entity<HostelApplication>().HasData(
+                new HostelApplication
+                {
+                    Id = 1,
+                    StudentId = 1,
+                    PreferredHostelId = 1,
+                    AssignedRoomId = 1,
+                    TermSemester = "Year 1 - Sem 1",
+                    SpecialRequirements = "Prefer lower floor room.",
+                    Status = "RoomAssigned",
+                    CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, DateTimeKind.Utc)
+                },
+                new HostelApplication
+                {
+                    Id = 2,
+                    StudentId = 3,
+                    PreferredHostelId = 2,
+                    AssignedRoomId = null,
+                    TermSemester = "Year 1 - Sem 1",
+                    SpecialRequirements = null,
+                    Status = "Pending",
+                    CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, DateTimeKind.Utc)
+                }
             );
         }
     }

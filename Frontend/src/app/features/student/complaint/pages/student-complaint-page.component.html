@@ -1,1 +1,174 @@
-<p>student-complaint-page works!</p>
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="Student Grievance & Helpdesk"
+    description="Submit complaints, report campus issues, and track official staff resolution progress"
+    icon="📢"
+  ></app-page-header>
+
+  <!-- Space-Saving Tab Navigation -->
+  <app-tab-component
+    [tabs]="tabs()"
+    [activeTabId]="activeTabId()"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- Tab 1: Lodge Complaint Form Card -->
+  @if (activeTabId() === 'lodge') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="max-w-2xl space-y-6">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📝</span> Lodge a New Complaint Ticket
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Your grievance will be assigned to administrative staff for triage and resolution.
+          </p>
+        </div>
+
+        <form [formGroup]="complaintForm" (ngSubmit)="submitComplaint()" class="space-y-5" novalidate>
+          <!-- Inline Error Banner -->
+          @if (errorMessage()) {
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center justify-between gap-3 animate-fade-in">
+              <div class="flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+              <button type="button" (click)="errorMessage.set(null)" class="text-rose-500 hover:text-rose-700 font-bold text-sm cursor-pointer">✕</button>
+            </div>
+          }
+
+          <!-- Category Dropdown -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              Select Category <span class="text-rose-500">*</span>
+            </label>
+            <app-select-dropdown
+              [options]="dropdownOptions()"
+              [selectedValue]="complaintForm.get('categoryId')?.value"
+              placeholder="-- Choose Grievance Category --"
+              (selectionChange)="onSelectCategory($event)"
+            ></app-select-dropdown>
+            @if (complaintForm.get('categoryId')?.touched && complaintForm.get('categoryId')?.hasError('required')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Please select a complaint category.</p>
+            }
+          </div>
+
+          <!-- DYNAMIC FORM FIELDS (Category-Driven) -->
+          @if (selectedCategoryType() === 'maintenance') {
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 animate-fade-in">
+              <div>
+                <label for="building" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Building Name / Block <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="building"
+                  formControlName="building"
+                  placeholder="e.g. Block C, Science Hall"
+                  class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+                />
+                @if (complaintForm.get('building')?.touched && complaintForm.get('building')?.hasError('required')) {
+                  <p class="text-xs text-rose-600 mt-1 font-medium">Building name is required for maintenance requests.</p>
+                }
+              </div>
+              <div>
+                <label for="roomNumber" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Room / Lab Number <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="roomNumber"
+                  formControlName="roomNumber"
+                  placeholder="e.g. Room 302, Lab 4"
+                  class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+                />
+                @if (complaintForm.get('roomNumber')?.touched && complaintForm.get('roomNumber')?.hasError('required')) {
+                  <p class="text-xs text-rose-600 mt-1 font-medium">Room number is required for maintenance requests.</p>
+                }
+              </div>
+            </div>
+          }
+
+          @if (selectedCategoryType() === 'academic') {
+            <div class="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50 animate-fade-in">
+              <label for="courseCode" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Relevant Course Code <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="courseCode"
+                formControlName="courseCode"
+                placeholder="e.g. CS2040, ENG101"
+                class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+              />
+              @if (complaintForm.get('courseCode')?.touched && complaintForm.get('courseCode')?.hasError('required')) {
+                <p class="text-xs text-rose-600 mt-1 font-medium">Course code is required for academic requests.</p>
+              }
+            </div>
+          }
+
+          <!-- Description Textarea -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="description" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Detailed Description <span class="text-rose-500">*</span>
+              </label>
+              <span class="text-[11px] text-slate-400 font-medium">
+                {{ complaintForm.get('description')?.value?.length || 0 }}/1000 chars
+              </span>
+            </div>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="5"
+              maxlength="1000"
+              placeholder="Provide full details regarding the issue (location, dates, specific concerns)..."
+              class="w-full px-4 py-3 text-sm bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white"
+              [ngClass]="{
+                'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
+                  complaintForm.get('description')?.touched && complaintForm.get('description')?.invalid
+              }"
+            ></textarea>
+            @if (complaintForm.get('description')?.touched && complaintForm.get('description')?.hasError('required')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Description is required.</p>
+            }
+            @if (complaintForm.get('description')?.touched && complaintForm.get('description')?.hasError('minlength')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Description must be at least 10 characters long.</p>
+            }
+            @if (complaintForm.get('description')?.touched && complaintForm.get('description')?.hasError('maxlength')) {
+              <p class="text-xs text-rose-600 mt-1.5 font-medium">Description cannot exceed 1000 characters (database limit).</p>
+            }
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2 flex items-center justify-end gap-3">
+            <app-action-button
+              type="submit"
+              variant="primary"
+              size="md"
+              label="Submit Grievance Ticket →"
+              icon="🚀"
+              [disabled]="isSubmitting()"
+              [loading]="isSubmitting()"
+            ></app-action-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Tab 2: My Grievance Tickets Data Table -->
+  @if (activeTabId() === 'my-tickets') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <app-data-table
+        [columns]="complaintColumns"
+        [data]="myComplaints()"
+        [isLoading]="isLoading()"
+        [showSearch]="true"
+        searchPlaceholder="Search my grievance tickets..."
+        emptyMessage="No complaint tickets submitted yet."
+      ></app-data-table>
+    </div>
+  }
+</div>

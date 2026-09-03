@@ -85,7 +85,8 @@ namespace CampusServicesPortal.Services.Implementations
 
             var latestToken = await _passwordRepo.GetLatestUnusedTokenAsync();
             string tokenCode = latestToken?.Token ?? "482910";
-            string expiresAtStr = latestToken?.ExpiresAt.ToString("g") + " UTC" ?? "30 Minutes from Request";
+            int remainingMins = latestToken != null ? Math.Max(1, (int)Math.Ceiling((latestToken.ExpiresAt - DateTime.UtcNow).TotalMinutes)) : 15;
+            string expiresAtStr = $"Valid for {remainingMins} minutes (Expires in ~{remainingMins} mins)";
             string phoneNo = !string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails : "+94 77 123 4567";
 
             string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "ForgotPasswordOtp.cshtml");

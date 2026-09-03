@@ -96,5 +96,26 @@ namespace CampusServicesPortal.Repositories.Implementations
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<SystemSetting?> GetSystemSettingAsync(string key)
+        {
+            return await _context.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
+        }
+
+        public async Task<IEnumerable<PasswordHistory>> GetRecentPasswordHistoriesAsync(int userId, int limit)
+        {
+            if (limit <= 0) return Enumerable.Empty<PasswordHistory>();
+            return await _context.PasswordHistories
+                .Where(p => p.UserId == userId)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task AddPasswordHistoryAsync(PasswordHistory history)
+        {
+            await _context.PasswordHistories.AddAsync(history);
+            await _context.SaveChangesAsync();
+        }
     }
 }

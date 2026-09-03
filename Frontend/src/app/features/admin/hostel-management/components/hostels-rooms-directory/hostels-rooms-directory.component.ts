@@ -19,8 +19,24 @@ export class HostelsRoomsDirectoryComponent {
   private readonly hostelService = inject(HostelManagementService);
   private readonly toast = inject(ToastService);
 
-  @Input() hostels: HostelBuilding[] = [];
-  @Input() selectedHostelId = 0;
+  // Reactive Input Signals for Hostels and Selected Hostel ID
+  private readonly _hostels = signal<HostelBuilding[]>([]);
+  private readonly _selectedHostelId = signal<number>(0);
+
+  @Input() set hostels(val: HostelBuilding[]) {
+    this._hostels.set(val || []);
+  }
+  get hostels(): HostelBuilding[] {
+    return this._hostels();
+  }
+
+  @Input() set selectedHostelId(val: number) {
+    this._selectedHostelId.set(val || 0);
+  }
+  get selectedHostelId(): number {
+    return this._selectedHostelId();
+  }
+
   @Input() isLoading = false;
 
   @Output() hostelTabChange = new EventEmitter<number>();
@@ -57,7 +73,7 @@ export class HostelsRoomsDirectoryComponent {
   public readonly columnFilters = signal<Record<string, string[]>>({});
 
   public readonly hostelBuildingTabs = computed<TabItem[]>(() => {
-    return this.hostels.map((h) => ({
+    return this._hostels().map((h) => ({
       id: h.id.toString(),
       label: h.name,
       icon: '🏢',
@@ -66,8 +82,10 @@ export class HostelsRoomsDirectoryComponent {
   });
 
   public readonly selectedHostel = computed<HostelBuilding | null>(() => {
-    if (this.hostels.length === 0) return null;
-    return this.hostels.find((h) => h.id === this.selectedHostelId) || this.hostels[0] || null;
+    const list = this._hostels();
+    const targetId = this._selectedHostelId();
+    if (list.length === 0) return null;
+    return list.find((h) => h.id === targetId) || list[0] || null;
   });
 
   public readonly selectedHostelTotalCapacity = computed(() => {
@@ -161,6 +179,8 @@ export class HostelsRoomsDirectoryComponent {
 
   onHostelTabChange(tabId: string): void {
     const id = parseInt(tabId, 10);
+    this._selectedHostelId.set(id);
+    this.roomPage.set(1);
     this.hostelTabChange.emit(id);
   }
 
@@ -275,6 +295,25 @@ export class HostelsRoomsDirectoryComponent {
             this.refreshed.emit();
           },
           error: (err: any) => this.toast.error(err?.error?.message || 'Failed to deactivate room.'),
+        });
+      },
+    });
+  }
+
+  // Reactivate Room Action
+  reactivateRoom(room: HostelRoom): void {
+    this.triggerConfirm.emit({
+      title: 'Reactivate Room',
+      message: `Are you sure you want to reactivate Room ${room.roomNumber}?`,
+      icon: '🔄',
+      variant: 'primary',
+      action: () => {
+        this.hostelService.updateRoom(room.id, room.roomNumber, room.maxCapacity, true).subscribe({
+          next: () => {
+            this.toast.success(`Room ${room.roomNumber} reactivated successfully.`);
+            this.refreshed.emit();
+          },
+          error: (err: any) => this.toast.error(err?.error?.message || 'Failed to reactivate room.'),
         });
       },
     });

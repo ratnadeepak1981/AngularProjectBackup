@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Data;
+using CampusServicesPortal.Data;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +66,6 @@ namespace CampusServicesPortal.Repositories.Implementations
             GetActiveCategoriesAsync()
         {
             return await _context.ComplaintCategories
-                .Where(c => c.IsActive)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }

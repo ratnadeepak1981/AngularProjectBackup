@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { Lab } from '../../../../core/models/lab/lab.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
 import { CreateHoldPayload, LabBooking, LabMatrixLayoutResponse } from '../../../../core/models/lab/lab-booking.model';
@@ -76,10 +78,26 @@ export class LabBookingService {
    */
   createHold(payload: CreateHoldPayload): Observable<{ success: boolean; data?: LabBooking; message?: string }> {
     return this.api.post<any>('/lab-bookings', payload).pipe(
-      map((res) => ({
-        success: true,
-        data: res?.data || res,
-      })),
+      map((res) => {
+        const raw = res?.data || res || {};
+        const booking: LabBooking = {
+          id: raw.id || raw.Id || 0,
+          studentId: raw.studentId || raw.StudentId || payload.studentId,
+          labId: raw.labId || raw.LabId || payload.labId,
+          labName: raw.labName || raw.LabName || 'Campus Lab',
+          labType: raw.labType || raw.LabType || 'Computer',
+          seatId: raw.seatId || raw.SeatId || payload.seatId,
+          seatNumber: raw.seatNumber || raw.SeatNumber || (payload.seatId ? `PC #${payload.seatId}` : 'Workstation'),
+          bookingDate: raw.bookingDate ? raw.bookingDate.split('T')[0] : payload.bookingDate,
+          timeSlot: raw.timeSlot || payload.timeSlot,
+          status: raw.status || 'Held',
+          expiresAt: raw.expiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
+        };
+        return {
+          success: true,
+          data: booking,
+        };
+      }),
       catchError((err: any) => {
         const msg = err?.error?.message || err?.error || 'Failed to place reservation hold on target seat.';
         return of({ success: false, message: msg });
@@ -147,12 +165,17 @@ export class LabBookingService {
   }
 
   /**
-   * Read System Hold Minutes Setting from Admin System Settings
+   * Read System Hold Minutes Setting with fail-safe fallback to 15 mins
    */
   getSystemHoldMinutes(): Observable<number> {
-    return this.api.get<any>('/admin/system-settings/reservation-hold-minutes').pipe(
-      map((res) => res?.holdMinutes || res?.HoldMinutes || 15),
-      catchError(() => of(15))
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.api.get<any>('/admin/system-settings/reservation-hold-minutes', undefined, { context }).pipe(
+      map((res) => {
+        const payload = res?.data || res || {};
+        const mins = payload.holdMinutes ?? payload.HoldMinutes ?? res?.holdMinutes ?? res?.HoldMinutes;
+        return mins ? Number(mins) : 10;
+      }),
+      catchError(() => of(10))
     );
   }
 }

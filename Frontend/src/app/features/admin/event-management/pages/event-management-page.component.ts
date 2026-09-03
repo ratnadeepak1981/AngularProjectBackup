@@ -184,10 +184,8 @@ export class EventManagementPageComponent implements OnInit {
 
   loadEvents(): void {
     this.isLoadingEvents.set(true);
-    this.eventService.getEvents().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: AdminEventItem[] = Array.isArray(payload) ? payload : (payload.items || []);
+    this.eventService.getFormattedEvents().subscribe({
+      next: (items) => {
         this.eventsList.set(items);
         this.updateTabCounts();
         this.isLoadingEvents.set(false);
@@ -201,10 +199,8 @@ export class EventManagementPageComponent implements OnInit {
 
   loadVenues(): void {
     this.isLoadingVenues.set(true);
-    this.eventService.getVenues().subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: AdminVenueItem[] = Array.isArray(payload) ? payload : (payload.items || []);
+    this.eventService.getFormattedVenues().subscribe({
+      next: (items) => {
         this.venuesList.set(items);
         this.updateTabCounts();
         this.isLoadingVenues.set(false);
@@ -492,10 +488,8 @@ export class EventManagementPageComponent implements OnInit {
     this.isLoadingAttendees.set(true);
     this.isAttendeesModalOpen.set(true);
 
-    this.eventService.getEventRegistrations(eventItem.id).subscribe({
-      next: (res) => {
-        const payload = res?.data || res || [];
-        const items: EventAttendeeItem[] = Array.isArray(payload) ? payload : (payload.items || []);
+    this.eventService.getFormattedEventRegistrations(eventItem.id).subscribe({
+      next: (items) => {
         this.attendeesList.set(items);
         this.isLoadingAttendees.set(false);
       },
