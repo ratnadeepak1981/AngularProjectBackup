@@ -35,6 +35,24 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "A fresh email verification link has been dispatched.");
         }
 
+        // POST /api/account/send-phone-otp or /api/auth/send-phone-otp
+        [AllowAnonymous]
+        [HttpPost("send-phone-otp")]
+        public async Task<IActionResult> SendPhoneOtp([FromBody] SendPhoneOtpRequestDto request)
+        {
+            var result = await _accountService.SendPhoneOtpAsync(request);
+            return ProcessServiceResult(result, "SMS verification OTP dispatched successfully.");
+        }
+
+        // POST /api/account/verify-phone-otp or /api/auth/verify-phone-otp
+        [AllowAnonymous]
+        [HttpPost("verify-phone-otp")]
+        public async Task<IActionResult> VerifyPhoneOtp([FromBody] VerifyPhoneOtpRequestDto request)
+        {
+            var result = await _accountService.VerifyPhoneOtpAsync(request);
+            return ProcessServiceResult(result, "Primary mobile number verified and activated successfully.");
+        }
+
         // GET /api/account/deactivate-check/{studentId} or /api/auth/deactivate-check/{studentId}
         [Authorize(Roles = "Admin")]
         [HttpGet("deactivate-check/{studentId}")]

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
+import { ApiResponse } from '../../../../core/models/common/api-response.model';
 import { FeePaymentItem } from '../../../../core/models/billing/fee-payment-item.model';
 import { FeeTypeItem } from '../../../../core/models/billing/fee-type-item.model';
 import { AssignFeePayload } from '../../../../core/models/billing/assign-fee-payload.model';
@@ -18,8 +19,8 @@ export interface FormattedLedgerResponse {
 export class AdminBillingService {
   private readonly apiService = inject(ApiService);
 
-  getFeeLedger(page: number = 1, size: number = 5): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.billing.ledger, {
+  getFeeLedger(page: number = 1, size: number = 5): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.billing.ledger, {
       pageNumber: page,
       pageSize: size,
     });
@@ -27,7 +28,7 @@ export class AdminBillingService {
 
   getFormattedFeeLedger(page: number = 1, size: number = 5): Observable<FormattedLedgerResponse> {
     return this.getFeeLedger(page, size).pipe(
-      map((res) => {
+      map((res: any) => {
         const payload = res?.data || res || {};
         const items: FeePaymentItem[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
         const total = payload.totalRecords || payload.totalCount || payload.totalItems || items.length;
@@ -36,13 +37,13 @@ export class AdminBillingService {
     );
   }
 
-  getFeeTypes(): Observable<any> {
-    return this.apiService.get<any>('/fee-types');
+  getFeeTypes(): Observable<ApiResponse<FeeTypeItem[]>> {
+    return this.apiService.get<ApiResponse<FeeTypeItem[]>>(this.apiService.routes.billing.feeTypes);
   }
 
   getFormattedFeeTypes(): Observable<FeeTypeItem[]> {
     return this.getFeeTypes().pipe(
-      map((res) => {
+      map((res: any) => {
         const payload = res?.data || res || [];
         const incoming: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
         
@@ -62,12 +63,12 @@ export class AdminBillingService {
     );
   }
 
-  getStudentsDirectory(): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.students.directory);
+  getStudentsDirectory(): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.students.directory);
   }
 
-  searchStudents(search: string = '', faculty: string = '', page: number = 1, size: number = 10): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.students.directory, {
+  searchStudents(search: string = '', faculty: string = '', page: number = 1, size: number = 10): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.students.directory, {
       search,
       faculty,
       pageNumber: page,
@@ -75,27 +76,27 @@ export class AdminBillingService {
     });
   }
 
-  getFaculties(): Observable<any> {
-    return this.apiService.get<any>('/faculties');
+  getFaculties(): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.faculties.list);
   }
 
-  assignFee(payload: AssignFeePayload): Observable<any> {
-    return this.apiService.post<any>('/billing/fees/assign', payload);
+  assignFee(payload: AssignFeePayload): Observable<ApiResponse<any>> {
+    return this.apiService.post<ApiResponse<any>>(this.apiService.routes.billing.assignFee, payload);
   }
 
-  createFeeType(name: string): Observable<any> {
-    return this.apiService.post<any>('/fee-types', { name });
+  createFeeType(name: string): Observable<ApiResponse<FeeTypeItem>> {
+    return this.apiService.post<ApiResponse<FeeTypeItem>>(this.apiService.routes.billing.createFeeType, { name });
   }
 
-  deactivateFeeType(id: number): Observable<any> {
-    return this.apiService.delete<any>(`/fee-types/${id}`);
+  deactivateFeeType(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.billing.deleteFeeType(id));
   }
 
-  toggleFeeTypeStatus(id: number): Observable<any> {
-    return this.apiService.put<any>(`/fee-types/${id}/toggle-status`, {});
+  toggleFeeTypeStatus(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.put<ApiResponse<any>>(this.apiService.routes.billing.toggleFeeTypeStatus(id), {});
   }
 
-  cancelUnpaidFee(id: number): Observable<any> {
-    return this.apiService.delete<any>(`/billing/fee-payments/${id}`);
+  cancelUnpaidFee(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.billing.cancelUnpaid(id));
   }
 }

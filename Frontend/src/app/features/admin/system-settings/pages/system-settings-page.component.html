@@ -1,39 +1,126 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Page Header -->
-  <app-page-header
-    title="Admin System Settings Control Panel"
-    subtitle="Windows Control Panel style system configuration hub. Click any category card to customize global parameters, hold timeouts, policies, and themes."
-    icon="⚙️"
-    badgeText="System Admin Mode"
-  ></app-page-header>
+  <!-- Page Header with Quick Snapshot Toggle -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex-1">
+      <app-page-header
+        title="Admin System Settings Control Panel"
+        subtitle="Enterprise configuration hub. Click any category card to customize global parameters, hold timeouts, security policies, fee structures, and application themes."
+        icon="⚙️"
+        badgeText="System Admin Mode"
+      ></app-page-header>
+    </div>
+    
+    <button
+      type="button"
+      (click)="toggleSnapshotStrip()"
+      class="self-start sm:self-auto px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
+    >
+      <span>{{ showSnapshotStrip() ? '🔼 Hide Overview' : '🔽 Show Overview' }}</span>
+    </button>
+  </div>
 
-  <!-- Reusable Live Search & Filter Bar (Shared Utilities Rule #13) -->
-  <div class="relative z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-      <div class="w-full md:w-80">
+  <!-- Collapsible Live System Snapshot Overview Strip -->
+  @if (showSnapshotStrip()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 animate-fade-in">
+      <!-- Academic Calendar Snapshot -->
+      <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center gap-3 hover:shadow-xs transition-shadow">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg shadow-2xs shrink-0 font-bold">
+          📅
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Academic Period</span>
+          <span class="text-xs font-black text-slate-800 dark:text-slate-100 truncate block">{{ academicYear() }}</span>
+          <span class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate block">{{ semester() }}</span>
+        </div>
+      </div>
+
+      <!-- Seat Hold Protection Snapshot -->
+      <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center gap-3 hover:shadow-xs transition-shadow">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-2xs shrink-0 font-bold">
+          ⏱️
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Seat Hold Protection</span>
+          <span class="text-xs font-black text-slate-800 dark:text-slate-100 truncate block">{{ holdMinutes() }} Minutes Hold</span>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate block">Max {{ maxDailySlots() }} Slots / Day</span>
+        </div>
+      </div>
+
+      <!-- Password Security Policy Snapshot -->
+      <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center gap-3 hover:shadow-xs transition-shadow">
+        <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shadow-2xs shrink-0 font-bold">
+          🔐
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Security Policy</span>
+          <span class="text-xs font-black text-slate-800 dark:text-slate-100 capitalize truncate block">{{ passwordComplexityTier() }} Complexity</span>
+          <span class="text-[11px] text-rose-600 dark:text-rose-400 font-semibold truncate block">Min {{ minPasswordLength() }} Chars ({{ maxFailedLogins() }} Fails)</span>
+        </div>
+      </div>
+
+      <!-- Default Currency & Gateway Snapshot -->
+      <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center gap-3 hover:shadow-xs transition-shadow">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shadow-2xs shrink-0 font-bold">
+          💰
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Financial Unit</span>
+          <span class="text-xs font-black text-slate-800 dark:text-slate-100 truncate block">{{ defaultCurrency() }} Currency</span>
+          <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold truncate block">{{ lateFeeGracePeriodDays() }}-Day Grace Period</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Sticky Reusable Live Search & 1-Click Horizontal Scrollable Category Filter Chips Bar -->
+  <div class="sticky top-4 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-4 shadow-md border border-slate-200/80 dark:border-slate-800 space-y-3 transition-shadow">
+    <!-- Top Row: Search and Live Persistence Badge -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="w-full md:w-96">
         <app-search
-          placeholder="Search control panel cards..."
+          placeholder="Search parameters, hold timeouts, policies, or themes..."
           [value]="searchQuery()"
           (searchChange)="searchQuery.set($event)"
           (clear)="searchQuery.set('')"
         ></app-search>
       </div>
 
-      <app-filter
-        label="Category"
-        [options]="categoryFilterOptions"
-        [selectedValues]="[selectedCategoryFilter()]"
-        (filterChange)="onCategoryFilterChange($event)"
-      ></app-filter>
+      <div class="flex items-center gap-2 text-2xs font-bold text-slate-500 dark:text-slate-400">
+        <span class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 flex items-center gap-1.5 font-bold shadow-2xs">
+          <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          {{ filteredCards().length }} / {{ masterCategoryCards.length }} Active
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-1.5 font-bold shadow-2xs">
+          <span>⚡</span> Live DB
+        </span>
+      </div>
     </div>
 
-    <div class="flex items-center gap-2 text-2xs font-bold text-slate-500 dark:text-slate-400">
-      <span class="px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-        9 Control Panel Cards
-      </span>
-      <span class="px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-        Backend Connected (Live Persistence)
-      </span>
+    <!-- Single-Row Smooth Horizontal Scrollable Category Chips Strip -->
+    <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto pb-1 scroll-smooth">
+      <button
+        type="button"
+        (click)="setCategoryFilter('ALL')"
+        class="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 border"
+        [ngClass]="selectedCategoryFilter() === 'ALL'
+          ? 'bg-blue-600 text-white border-blue-600 shadow-xs shadow-blue-500/20'
+          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'"
+      >
+        <span>🌟</span> All Modules ({{ masterCategoryCards.length }})
+      </button>
+
+      @for (opt of categoryFilterOptions.slice(1); track opt.value) {
+        <button
+          type="button"
+          (click)="setCategoryFilter(opt.value)"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0 flex items-center gap-1.5 border"
+          [ngClass]="selectedCategoryFilter() === opt.value
+            ? 'bg-blue-600 text-white border-blue-600 shadow-xs shadow-blue-500/20'
+            : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'"
+        >
+          <span>{{ opt.label }}</span>
+        </button>
+      }
     </div>
   </div>
 
@@ -341,6 +428,39 @@
                 class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               />
               <p class="text-2xs text-slate-400 mt-1">Prevents users from reusing any of their last N previous passwords.</p>
+            </div>
+
+            <!-- Enterprise Mobile SMS OTP Expiration Policies -->
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <span class="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                <span>📱</span> Mobile SMS OTP Security Policies
+              </span>
+
+              <div>
+                <label class="block text-slate-700 dark:text-slate-300 mb-1">⏱️ Mobile OTP Validity Duration (Minutes)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  [ngModel]="otpValidityMinutes()"
+                  (ngModelChange)="otpValidityMinutes.set($event)"
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+                <p class="text-2xs text-slate-400 mt-1">Duration for which SMS OTP security tokens remain active (Recommended: 2 - 5 minutes).</p>
+              </div>
+
+              <div>
+                <label class="block text-slate-700 dark:text-slate-300 mb-1">🔄 Maximum OTP Resend Attempts (Rate Limit)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  [ngModel]="maxOtpResendAttempts()"
+                  (ngModelChange)="maxOtpResendAttempts.set($event)"
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+                <p class="text-2xs text-slate-400 mt-1">Maximum consecutive resend requests allowed per session to protect telecom billing.</p>
+              </div>
             </div>
           </div>
         } @else if (activeCategory()?.id === 'application') {

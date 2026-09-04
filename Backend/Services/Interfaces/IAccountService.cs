@@ -9,6 +9,8 @@ namespace CampusServicesPortal.Services.Interfaces
     {
         Task<ServiceResult<bool>> VerifyEmailAsync(VerifyEmailRequestDto request);
         Task<ServiceResult<bool>> ResendVerificationEmailAsync(ResendVerificationRequestDto request);
+        Task<ServiceResult<object>> SendPhoneOtpAsync(SendPhoneOtpRequestDto request);
+        Task<ServiceResult<bool>> VerifyPhoneOtpAsync(VerifyPhoneOtpRequestDto request);
         Task<ServiceResult<DeactivationCheckResponseDto>> CheckDeactivationEligibilityAsync(int studentId);
         Task<ServiceResult<object>> DeactivateAccountAsync(int studentId);
         Task<ServiceResult<object>> ReactivateAccountAsync(int studentId);

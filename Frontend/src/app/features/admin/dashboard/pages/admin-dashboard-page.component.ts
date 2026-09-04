@@ -1,17 +1,24 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { AdminDashboardService } from '../services/admin-dashboard.service';
+import { AdminDashboardMetricsSummary, AdminDashboardService } from '../services/admin-dashboard.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-admin-dashboard-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DashboardCardComponent, PageHeaderComponent, ActionButtonComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    DashboardCardComponent,
+    PageHeaderComponent,
+    ActionButtonComponent,
+    StatusBadgeComponent,
+  ],
   templateUrl: './admin-dashboard-page.component.html',
   styleUrl: './admin-dashboard-page.component.css',
 })
@@ -19,81 +26,106 @@ export class AdminDashboardPageComponent implements OnInit {
   private readonly dashboardService = inject(AdminDashboardService);
   private readonly toast = inject(ToastService);
 
-  // Metrics Signals
+  // Critical Queue Signals
   public readonly pendingHostels = signal<number>(0);
   public readonly pendingComplaints = signal<number>(0);
   public readonly pendingCertificates = signal<number>(0);
   public readonly totalStudents = signal<number>(0);
+
+  // Financial & Facility Signals
+  public readonly pendingFeesCount = signal<number>(0);
+  public readonly pendingFeesAmount = signal<number>(0);
+  public readonly totalPaidFeesAmount = signal<number>(0);
+  public readonly totalLabs = signal<number>(0);
+  public readonly totalFaculties = signal<number>(0);
   public readonly isLoadingMetrics = signal<boolean>(true);
 
-  // System Configuration Settings
-  public holdMinutes = signal<number>(15);
-  public defaultPageSize = signal<number>(10);
-  public isSavingHold = signal<boolean>(false);
-  public isSavingPageSize = signal<boolean>(false);
+  // Computed Critical Triage Stats
+  public readonly totalCriticalItems = computed(() => {
+    return (
+      this.pendingHostels() +
+      this.pendingComplaints() +
+      this.pendingCertificates() +
+      this.pendingFeesCount()
+    );
+  });
+
+  public readonly feeCollectionRate = computed(() => {
+    const total = this.pendingFeesAmount() + this.totalPaidFeesAmount();
+    if (total === 0) return 100;
+    return Math.round((this.totalPaidFeesAmount() / total) * 100);
+  });
+
+  public readonly formattedPendingFeesAmount = computed(() => {
+    return `LKR ${this.pendingFeesAmount().toLocaleString()}`;
+  });
+
+  // SVG Donut Chart Calculated Offsets (Circumference = 2 * PI * 40 = 251.32)
+  public readonly donutCircumference = 251.32;
+
+  public readonly donutSegments = computed(() => {
+    const total = this.totalCriticalItems();
+    if (total === 0) {
+      return {
+        fees: { dash: '0 251.32', offset: 0, percent: 0 },
+        hostels: { dash: '0 251.32', offset: 0, percent: 0 },
+        complaints: { dash: '0 251.32', offset: 0, percent: 0 },
+        certs: { dash: '0 251.32', offset: 0, percent: 0 },
+      };
+    }
+
+    const feesPct = this.pendingFeesCount() / total;
+    const hostelsPct = this.pendingHostels() / total;
+    const complaintsPct = this.pendingComplaints() / total;
+    const certsPct = this.pendingCertificates() / total;
+
+    const feesDash = feesPct * this.donutCircumference;
+    const hostelsDash = hostelsPct * this.donutCircumference;
+    const complaintsDash = complaintsPct * this.donutCircumference;
+    const certsDash = certsPct * this.donutCircumference;
+
+    let currentOffset = 0;
+    const feesOffset = currentOffset;
+    currentOffset -= feesDash;
+
+    const hostelsOffset = currentOffset;
+    currentOffset -= hostelsDash;
+
+    const complaintsOffset = currentOffset;
+    currentOffset -= complaintsDash;
+
+    const certsOffset = currentOffset;
+
+    return {
+      fees: { dash: `${feesDash} ${this.donutCircumference}`, offset: feesOffset, percent: Math.round(feesPct * 100) },
+      hostels: { dash: `${hostelsDash} ${this.donutCircumference}`, offset: hostelsOffset, percent: Math.round(hostelsPct * 100) },
+      complaints: { dash: `${complaintsDash} ${this.donutCircumference}`, offset: complaintsOffset, percent: Math.round(complaintsPct * 100) },
+      certs: { dash: `${certsDash} ${this.donutCircumference}`, offset: certsOffset, percent: Math.round(certsPct * 100) },
+    };
+  });
 
   ngOnInit(): void {
     this.loadAnalytics();
-    this.loadSystemSettings();
   }
 
   loadAnalytics(): void {
     this.isLoadingMetrics.set(true);
     this.dashboardService.getAdminDashboardMetrics().subscribe({
-      next: (summary) => {
+      next: (summary: AdminDashboardMetricsSummary) => {
         this.pendingHostels.set(summary.pendingHostels);
         this.pendingComplaints.set(summary.pendingComplaints);
         this.pendingCertificates.set(summary.pendingCertificates);
         this.totalStudents.set(summary.totalStudents);
+        this.pendingFeesCount.set(summary.pendingFeesCount);
+        this.pendingFeesAmount.set(summary.pendingFeesAmount);
+        this.totalPaidFeesAmount.set(summary.totalPaidFeesAmount);
+        this.totalLabs.set(summary.totalLabs);
+        this.totalFaculties.set(summary.totalFaculties);
         this.isLoadingMetrics.set(false);
       },
       error: () => {
         this.isLoadingMetrics.set(false);
-      },
-    });
-  }
-
-  loadSystemSettings(): void {
-    this.dashboardService.getHoldMinutes().subscribe({
-      next: (val) => this.holdMinutes.set(val),
-    });
-
-    this.dashboardService.getDefaultPageSize().subscribe({
-      next: (val) => this.defaultPageSize.set(val),
-    });
-  }
-
-  saveHoldMinutes(): void {
-    const mins = Number(this.holdMinutes());
-    if (mins <= 0) {
-      this.toast.error('Reservation hold timeout must be at least 1 minute.');
-      return;
-    }
-
-    this.isSavingHold.set(true);
-    this.dashboardService.saveHoldMinutes(mins).subscribe({
-      next: () => {
-        this.isSavingHold.set(false);
-        this.toast.success(`Reservation hold timeout successfully updated to ${mins} minutes.`);
-      },
-      error: (err) => {
-        this.isSavingHold.set(false);
-        this.toast.error(err.error?.message || 'Failed to update reservation hold timeout.');
-      },
-    });
-  }
-
-  saveDefaultPageSize(): void {
-    const size = Number(this.defaultPageSize());
-    this.isSavingPageSize.set(true);
-    this.dashboardService.saveDefaultPageSize(size).subscribe({
-      next: () => {
-        this.isSavingPageSize.set(false);
-        this.toast.success(`System default page size updated to ${size} records per page.`);
-      },
-      error: (err) => {
-        this.isSavingPageSize.set(false);
-        this.toast.error(err.error?.message || 'Failed to update default page size.');
+        this.toast.error('Failed to reload administrative live metrics.');
       },
     });
   }

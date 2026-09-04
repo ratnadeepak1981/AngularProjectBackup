@@ -1,12 +1,17 @@
 using CampusServicesPortal.DTOs.Requests.Auth;
+using CampusServicesPortal.DTOs.Requests.Sms;
 using CampusServicesPortal.DTOs.Requests.Student;
 using CampusServicesPortal.DTOs.Responses.Student;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
 using CampusServicesPortal.Wrappers;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CampusServicesPortal.Services.Implementations
@@ -15,11 +20,24 @@ namespace CampusServicesPortal.Services.Implementations
     {
         private readonly IStudentRepository _studentRepository;
         private readonly IPasswordRepository _passwordRepository;
+        private readonly ISmsService _smsService;
+        private readonly IMemoryCache _memoryCache;
 
-        public StudentService(IStudentRepository studentRepository, IPasswordRepository passwordRepository)
+        public StudentService(
+            IStudentRepository studentRepository, 
+            IPasswordRepository passwordRepository,
+            ISmsService smsService,
+            IMemoryCache memoryCache)
         {
             _studentRepository = studentRepository;
             _passwordRepository = passwordRepository;
+            _smsService = smsService;
+            _memoryCache = memoryCache;
+        }
+
+        private static string NormalizePhoneKey(string raw)
+        {
+            return string.IsNullOrWhiteSpace(raw) ? string.Empty : Regex.Replace(raw, @"[^\d]", "");
         }
 
         // POST /api/students/register [BRD Section 4 - Module 1]
@@ -67,17 +85,75 @@ namespace CampusServicesPortal.Services.Implementations
             // 4. Secure Hashing: Generate cryptographically safe salted password hash [BRD Section 10]
             string securePasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // 5. MANUAL MAPPING: Instantiate structural database fields exactly matching your schema
+            // 5. Build structured phone numbers
+            var phoneEntities = new List<StudentPhoneNumber>();
+            if (request.PhoneNumbers != null && request.PhoneNumbers.Count > 0)
+            {
+                foreach (var p in request.PhoneNumbers)
+                {
+                    if (!string.IsNullOrWhiteSpace(p.PhoneNumber))
+                    {
+                        phoneEntities.Add(new StudentPhoneNumber
+                        {
+                            PhoneType = p.PhoneType,
+                            PhoneNumber = p.PhoneNumber.Trim(),
+                            IsPrimary = p.IsPrimary,
+                            IsVerified = false // Must be verified via OTP
+                        });
+                    }
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(request.ContactDetails))
+            {
+                phoneEntities.Add(new StudentPhoneNumber
+                {
+                    PhoneType = "Primary Mobile",
+                    PhoneNumber = request.ContactDetails.Trim(),
+                    IsPrimary = true,
+                    IsVerified = false
+                });
+            }
+
+            // Build structured addresses
+            var addressEntities = new List<StudentAddress>();
+            if (request.Addresses != null && request.Addresses.Count > 0)
+            {
+                foreach (var a in request.Addresses)
+                {
+                    if (!string.IsNullOrWhiteSpace(a.AddressLine1))
+                    {
+                        addressEntities.Add(new StudentAddress
+                        {
+                            AddressType = a.AddressType,
+                            AddressLine1 = a.AddressLine1.Trim(),
+                            AddressLine2 = a.AddressLine2?.Trim(),
+                            City = a.City.Trim(),
+                            DistrictOrProvince = a.DistrictOrProvince?.Trim(),
+                            PostalCode = a.PostalCode?.Trim(),
+                            Country = string.IsNullOrWhiteSpace(a.Country) ? "Sri Lanka" : a.Country.Trim(),
+                            IsPrimary = a.IsPrimary
+                        });
+                    }
+                }
+            }
+
+            string contactSummary = phoneEntities.Count > 0
+                ? string.Join(" | ", phoneEntities.Select(p => $"{p.PhoneType}: {p.PhoneNumber}"))
+                : (request.ContactDetails ?? string.Empty);
+
+            // 6. Instantiate structural database fields
             var newStudent = new CampusServicesPortal.Models.Student
             {
                 IndexNumber = masterRecord.IndexNumber,
-                FullName = masterRecord.FullName, // Pulls authoritative trusted name from university master list
-                ContactDetails = request.ContactDetails,
-                EmailVerified = false, // Remains false until out-of-band token confirmation occurs [BRD Rule 16]
+                FullName = masterRecord.FullName,
+                ContactDetails = contactSummary,
+                EmailVerified = false,
                 FacultyId = request.FacultyId,
                 EmailVerificationToken = Guid.NewGuid().ToString(),
                 EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24),
                 DeactivatedAt = null,
+                PhoneNumbers = phoneEntities,
+                Addresses = addressEntities,
 
                 User = new CampusServicesPortal.Models.User
                 {
@@ -92,19 +168,33 @@ namespace CampusServicesPortal.Services.Implementations
             await _studentRepository.AddStudentAsync(newStudent);
             await _studentRepository.SaveChangesAsync();
 
-            // 6. Response Mapping
-            var profileResponse = new StudentProfileResponseDto
+            // 7. Dispatch Initial Registration SMS OTP Simulation
+            var primaryPhone = phoneEntities.FirstOrDefault(p => p.IsPrimary) ?? phoneEntities.FirstOrDefault();
+            if (primaryPhone != null)
             {
-                Id = newStudent.Id,
-                IndexNumber = newStudent.IndexNumber,
-                Name = newStudent.FullName,
-                Email = request.Email,
-                ContactDetails = newStudent.ContactDetails,
-                EmailVerified = newStudent.EmailVerified,
-                IsActive = true,
-                FacultyName = "Assigned Profile"
-            };
+                string regOtp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+                string cleanPhone = NormalizePhoneKey(primaryPhone.PhoneNumber);
+                var cacheOptions = new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3) };
 
+                if (!string.IsNullOrEmpty(cleanPhone))
+                {
+                    _memoryCache.Set($"PhoneOtp_Phone_{cleanPhone}", regOtp, cacheOptions);
+                }
+                if (!string.IsNullOrEmpty(newStudent.IndexNumber))
+                {
+                    _memoryCache.Set($"PhoneOtp_User_{newStudent.IndexNumber.Trim().ToLowerInvariant()}", regOtp, cacheOptions);
+                }
+
+                await _smsService.DispatchSmsAsync(new SendSmsRequestDto
+                {
+                    PhoneNumber = primaryPhone.PhoneNumber,
+                    Purpose = SmsPurposes.RegistrationOtp,
+                    OtpCode = regOtp
+                });
+            }
+
+            // 8. Response Mapping
+            var profileResponse = MapToProfileResponseDto(newStudent, request.Email);
             return ServiceResult<StudentProfileResponseDto>.Success(profileResponse, 201);
         }
 
@@ -117,18 +207,7 @@ namespace CampusServicesPortal.Services.Implementations
                 return ServiceResult<StudentProfileResponseDto>.Failure("Student profile not found.", 404);
             }
 
-            var response = new StudentProfileResponseDto
-            {
-                Id = student.Id,
-                IndexNumber = student.IndexNumber,
-                Name = student.FullName,
-                Email = student.User?.Email ?? string.Empty,
-                ContactDetails = student.ContactDetails,
-                EmailVerified = student.EmailVerified,
-                IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
-                FacultyName = student.Faculty?.Name ?? "Unassigned"
-            };
-
+            var response = MapToProfileResponseDto(student, student.User?.Email ?? string.Empty);
             return ServiceResult<StudentProfileResponseDto>.Success(response, 200);
         }
 
@@ -141,9 +220,101 @@ namespace CampusServicesPortal.Services.Implementations
                 return ServiceResult<StudentProfileResponseDto>.Failure("Student profile not found.", 404);
             }
 
-            // Business Rule: Students cannot edit their own index number once registered [BRD Section 4]
-            student.ContactDetails = request.ContactDetails;
+            // 1. Check if Primary Mobile Number was changed
+            static string NormalizePhone(string p) => string.IsNullOrWhiteSpace(p) 
+                ? string.Empty 
+                : p.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+
+            var existingPrimary = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
+                ?? student.ContactDetails?.Split('|').FirstOrDefault()?.Split(':').LastOrDefault()?.Trim() 
+                ?? string.Empty;
+            var newPrimary = request.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() ?? string.Empty;
+
+            bool isPrimaryMobileChanged = !string.IsNullOrWhiteSpace(existingPrimary) 
+                && !string.IsNullOrWhiteSpace(newPrimary) 
+                && !NormalizePhone(newPrimary).Equals(NormalizePhone(existingPrimary), StringComparison.OrdinalIgnoreCase);
+
+            if (isPrimaryMobileChanged)
+            {
+                string inputOtp = request.MobileOtpCode?.Trim() ?? string.Empty;
+                string cleanNewPhone = NormalizePhoneKey(newPrimary);
+                string userKey = student.IndexNumber.Trim().ToLowerInvariant();
+
+                bool validOtp = false;
+                if (!string.IsNullOrEmpty(cleanNewPhone) && _memoryCache.TryGetValue($"PhoneOtp_Phone_{cleanNewPhone}", out string? cachedPhoneOtp) && cachedPhoneOtp == inputOtp)
+                {
+                    validOtp = true;
+                    _memoryCache.Remove($"PhoneOtp_Phone_{cleanNewPhone}");
+                }
+                else if (_memoryCache.TryGetValue($"PhoneOtp_User_{userKey}", out string? cachedUserOtp) && cachedUserOtp == inputOtp)
+                {
+                    validOtp = true;
+                    _memoryCache.Remove($"PhoneOtp_User_{userKey}");
+                }
+
+                if (!validOtp)
+                {
+                    return ServiceResult<StudentProfileResponseDto>.Failure("OTP verification required: Please verify the dynamic OTP sent to your new primary mobile number.", 400);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+            {
+                student.FullName = request.FullName.Trim();
+            }
+
             student.FacultyId = request.FacultyId;
+
+            // 2. Sync Phone Numbers
+            if (request.PhoneNumbers != null && request.PhoneNumbers.Count > 0)
+            {
+                var updatedPhones = new List<StudentPhoneNumber>();
+                foreach (var p in request.PhoneNumbers)
+                {
+                    if (!string.IsNullOrWhiteSpace(p.PhoneNumber))
+                    {
+                        bool wasVerified = p.IsPrimary 
+                            ? (isPrimaryMobileChanged ? true : (student.PhoneNumbers.FirstOrDefault(x => x.IsPrimary)?.IsVerified ?? false))
+                            : p.IsVerified;
+
+                        updatedPhones.Add(new StudentPhoneNumber
+                        {
+                            StudentId = id,
+                            PhoneType = p.PhoneType,
+                            PhoneNumber = p.PhoneNumber.Trim(),
+                            IsPrimary = p.IsPrimary,
+                            IsVerified = wasVerified
+                        });
+                    }
+                }
+                await _studentRepository.SyncPhoneNumbersAsync(id, updatedPhones);
+                student.ContactDetails = string.Join(" | ", updatedPhones.Select(p => $"{p.PhoneType}: {p.PhoneNumber}"));
+            }
+
+            // 3. Sync Addresses
+            if (request.Addresses != null)
+            {
+                var updatedAddresses = new List<StudentAddress>();
+                foreach (var a in request.Addresses)
+                {
+                    if (!string.IsNullOrWhiteSpace(a.AddressLine1))
+                    {
+                        updatedAddresses.Add(new StudentAddress
+                        {
+                            StudentId = id,
+                            AddressType = a.AddressType,
+                            AddressLine1 = a.AddressLine1.Trim(),
+                            AddressLine2 = a.AddressLine2?.Trim(),
+                            City = a.City.Trim(),
+                            DistrictOrProvince = a.DistrictOrProvince?.Trim(),
+                            PostalCode = a.PostalCode?.Trim(),
+                            Country = string.IsNullOrWhiteSpace(a.Country) ? "Sri Lanka" : a.Country.Trim(),
+                            IsPrimary = a.IsPrimary
+                        });
+                    }
+                }
+                await _studentRepository.SyncAddressesAsync(id, updatedAddresses);
+            }
 
             await _studentRepository.UpdateAsync(student);
             await _studentRepository.SaveChangesAsync();
@@ -155,24 +326,48 @@ namespace CampusServicesPortal.Services.Implementations
         public async Task<ServiceResult<IEnumerable<StudentProfileResponseDto>>> SearchStudentsAsync(string? search, string? faculty)
         {
             var students = await _studentRepository.SearchStudentsAsync(search, faculty);
-            var resultList = new List<StudentProfileResponseDto>();
-
-            foreach (var student in students)
-            {
-                resultList.Add(new StudentProfileResponseDto
-                {
-                    Id = student.Id,
-                    IndexNumber = student.IndexNumber,
-                    Name = student.FullName,
-                    Email = student.User?.Email ?? string.Empty,
-                    ContactDetails = student.ContactDetails,
-                    EmailVerified = student.EmailVerified,
-                    IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
-                    FacultyName = student.Faculty?.Name ?? "Unassigned"
-                });
-            }
-
+            var resultList = students.Select(s => MapToProfileResponseDto(s, s.User?.Email ?? string.Empty)).ToList();
             return ServiceResult<IEnumerable<StudentProfileResponseDto>>.Success(resultList, 200);
+        }
+
+        private static StudentProfileResponseDto MapToProfileResponseDto(Student student, string email)
+        {
+            var phoneDtos = student.PhoneNumbers.Select(p => new StudentPhoneNumberDto
+            {
+                Id = p.Id,
+                PhoneType = p.PhoneType,
+                PhoneNumber = p.PhoneNumber,
+                IsPrimary = p.IsPrimary,
+                IsVerified = p.IsVerified
+            }).ToList();
+
+            var addressDtos = student.Addresses.Select(a => new StudentAddressDto
+            {
+                Id = a.Id,
+                AddressType = a.AddressType,
+                AddressLine1 = a.AddressLine1,
+                AddressLine2 = a.AddressLine2,
+                City = a.City,
+                DistrictOrProvince = a.DistrictOrProvince,
+                PostalCode = a.PostalCode,
+                Country = a.Country,
+                IsPrimary = a.IsPrimary
+            }).ToList();
+
+            return new StudentProfileResponseDto
+            {
+                Id = student.Id,
+                IndexNumber = student.IndexNumber,
+                Name = student.FullName,
+                Email = email,
+                ContactDetails = student.ContactDetails,
+                EmailVerified = student.EmailVerified,
+                PhoneVerified = student.PhoneNumbers.Any(p => p.IsPrimary && p.IsVerified),
+                IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
+                FacultyName = student.Faculty?.Name ?? "Unassigned",
+                PhoneNumbers = phoneDtos,
+                Addresses = addressDtos
+            };
         }
 
         // DELETE /api/students/{id} (Deactivate Action) [BRD Rule 11]

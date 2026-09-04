@@ -1,4 +1,4 @@
-﻿namespace CampusServicesPortal.DTOs.Responses.Labs
+namespace CampusServicesPortal.DTOs.Responses.Labs
 {
     public class LabMinimalResponseDto
     {
@@ -6,5 +6,6 @@
         public string Name { get; set; } = string.Empty;
         public string LabType { get; set; } = string.Empty; // "Computer" or "Science"
         public int Capacity { get; set; }
+        public int SeatsBuilt { get; set; }
     }
 }

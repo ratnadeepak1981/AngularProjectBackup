@@ -29,6 +29,32 @@
     </div>
   </app-page-header>
 
+  <!-- Progressive Verification Alert Banner: Primary Mobile Verification Required -->
+  @if (!isPrimaryPhoneVerified()) {
+    <div class="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-400/50 dark:border-amber-500/40 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-fade-in">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-400/50 dark:border-amber-500/40 flex items-center justify-center text-xl shrink-0">
+          ⚠️
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center gap-2">
+            Primary Mobile Number Unverified
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 dark:border-amber-500/30">Action Needed</span>
+          </h4>
+          <p class="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5">
+            Your primary mobile <strong class="text-slate-900 dark:text-white font-bold">({{ primaryPhoneNumber() }})</strong> is not verified yet. Verify via SMS OTP to enable Fee Payments, Hostel Allocation, and instant SMS receipts.
+          </p>
+        </div>
+      </div>
+      <button
+        (click)="openDirectPhoneVerification()"
+        class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide transition-all shadow-md hover:shadow-amber-500/30 shrink-0 flex items-center gap-2 cursor-pointer"
+      >
+        <span>📱</span> Verify Mobile Now
+      </button>
+    </div>
+  }
+
   <!-- 2. Full 6 Live Quick Metrics Grid (Reusable DashboardCardComponent in 3x2 Grid) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
     <!-- Metric 1: Hostel Application -->
@@ -213,9 +239,15 @@
             <span class="text-lg">👤</span>
             <h2 class="text-base font-bold text-slate-900 dark:text-white">Student Profile</h2>
           </div>
-          <span class="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            Verified Account
-          </span>
+          @if (isPrimaryPhoneVerified()) {
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+              <span>✓</span> Fully Verified
+            </span>
+          } @else {
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 flex items-center gap-1">
+              <span>⚠️</span> Mobile Unverified
+            </span>
+          }
         </div>
 
         <div class="space-y-3 text-xs">
@@ -245,10 +277,29 @@
             <div class="space-y-1">
               @for (phone of allPhoneNumbersList(); track $index) {
                 <div class="flex items-center justify-between text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
-                  <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{{ phone.phoneType }}:</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{{ phone.phoneType }}:</span>
+                    @if (phone.phoneType === 'Primary Mobile') {
+                      @if (isPrimaryPhoneVerified()) {
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Verified</span>
+                      } @else {
+                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">⚠️ Unverified</span>
+                      }
+                    }
+                  </div>
                   <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ phone.phoneNumber }}</span>
                 </div>
               }
+            </div>
+          </div>
+
+          <!-- Structured Address Summary -->
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+              POSTAL ADDRESS
+            </span>
+            <div class="text-xs bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60 font-medium text-slate-700 dark:text-slate-300">
+              📍 {{ currentAddressSummary() }}
             </div>
           </div>
 
@@ -268,139 +319,112 @@
 
   <!-- 4. Edit Personal Coordinates Modal Dialog -->
   @if (isEditProfileModalOpen()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in" (click)="closeEditProfileModal()">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-fade-in" (click)="closeEditProfileModal()">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 space-y-4 text-slate-800 dark:text-slate-100 max-h-[92vh] overflow-y-auto" (click)="$event.stopPropagation()">
         
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>⚙️</span> Edit Personal Coordinates
+            <span>⚙️</span> Edit Personal Coordinates & Contact Info
           </h3>
-          <button (click)="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 cursor-pointer">✕</button>
+          <button (click)="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold p-1 cursor-pointer transition-colors">✕</button>
         </div>
 
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Full Name
-            </label>
-            <input
-              type="text"
-              formControlName="fullName"
-              placeholder="Enter full name"
-              class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-medium"
-              [ngClass]="{
-                'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
-                  profileForm.get('fullName')?.touched && profileForm.get('fullName')?.invalid
-              }"
-            />
-            @if (profileForm.get('fullName')?.touched && profileForm.get('fullName')?.hasError('required')) {
-              <p class="text-xs text-rose-600 mt-1 font-medium">Student Full Name is required.</p>
-            }
-          </div>
+          <!-- Compact 2-Column Top Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div class="sm:col-span-2 space-y-1">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Full Name <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                formControlName="fullName"
+                placeholder="Enter full name"
+                class="w-full h-10 px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-medium shadow-2xs"
+                [ngClass]="{
+                  'border-amber-400 dark:border-amber-500 focus:ring-amber-500 bg-amber-50/30 dark:bg-amber-950/20':
+                    profileForm.get('fullName')?.touched && profileForm.get('fullName')?.invalid
+                }"
+              />
+              @if (profileForm.get('fullName')?.touched && profileForm.get('fullName')?.hasError('required')) {
+                <p class="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 mt-1">
+                  <span>⚠️</span>
+                  <span>Student Full Name is required.</span>
+                </p>
+              }
+            </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div class="space-y-1">
+              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">
                 Index Number (Read-Only)
               </label>
               <input
                 type="text"
                 [value]="indexNumber()"
                 readonly
-                class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 font-mono font-bold cursor-not-allowed"
+                class="w-full h-10 px-3.5 py-2 text-sm bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 font-mono font-bold cursor-not-allowed shadow-2xs"
               />
             </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div class="space-y-1">
+              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">
                 Faculty (Read-Only)
               </label>
               <input
                 type="text"
                 [value]="facultyName()"
                 readonly
-                class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 font-bold cursor-not-allowed"
+                class="w-full h-10 px-3.5 py-2 text-sm bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 font-bold cursor-not-allowed shadow-2xs"
               />
             </div>
           </div>
 
-          <!-- FormArray Dynamic Telephone Numbers -->
-          <div formArrayName="phoneNumbers" class="space-y-3">
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Contact Telephone Numbers
-            </label>
+          <!-- Reusable Phone Numbers Form Component with Dual Verification Notice -->
+          <app-phone-numbers-form
+            [phoneNumbersArray]="phoneNumbersArray"
+            [isPrimaryVerified]="isPrimaryPhoneVerified()"
+          ></app-phone-numbers-form>
 
-            @for (phoneGroup of phoneNumbersArray.controls; track $index) {
-              <div [formGroupName]="$index" class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <select
-                    formControlName="phoneType"
-                    class="w-2/5 px-2.5 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold cursor-pointer"
-                  >
-                    <option value="Primary Mobile">📱 Primary</option>
-                    <option value="Home Landline">☎️ Landline</option>
-                    <option value="Emergency Contact">🚨 Emergency</option>
-                  </select>
+          <!-- Reusable Structured Address Form Component with Country Selection -->
+          <app-address-editor
+            [addressForm]="addressGroup"
+          ></app-address-editor>
 
-                  <input
-                    type="text"
-                    formControlName="phoneNumber"
-                    placeholder="+94 77 123 4567"
-                    class="flex-1 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white font-medium"
-                    [ngClass]="{
-                      'border-rose-400 focus:ring-rose-500 bg-rose-50/20':
-                        phoneGroup.get('phoneNumber')?.touched && phoneGroup.get('phoneNumber')?.invalid,
-                      'border-slate-300 dark:border-slate-700':
-                        !phoneGroup.get('phoneNumber')?.touched || !phoneGroup.get('phoneNumber')?.invalid
-                    }"
-                  />
-
-                  @if (phoneNumbersArray.length > 1) {
-                    <button
-                      type="button"
-                      (click)="removePhoneNumber($index)"
-                      title="Remove Phone Number"
-                      class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-
-            <button
-              type="button"
-              (click)="addPhoneNumber()"
-              class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1 mt-1"
-            >
-              <span>➕</span> Add Phone Number
-            </button>
-          </div>
-
+          <!-- Action Buttons using Reusable ActionButtonComponent -->
           <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              (click)="closeEditProfileModal()"
-              class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
+            <app-action-button
+              variant="outline"
+              size="sm"
+              icon="✕"
+              label="Cancel"
+              (btnClick)="closeEditProfileModal()"
+            ></app-action-button>
+            <app-action-button
               type="submit"
-              [disabled]="isSavingProfile()"
-              class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors disabled:opacity-60 cursor-pointer"
-            >
-              @if (isSavingProfile()) {
-                <span>Saving...</span>
-              } @else {
-                <span>Save Profile</span>
-              }
-            </button>
+              variant="primary"
+              size="sm"
+              icon="💾"
+              label="Save Profile"
+              [loading]="isSavingProfile()"
+            ></app-action-button>
           </div>
         </form>
 
       </div>
     </div>
   }
+
+  <!-- REUSABLE PHONE OTP VERIFICATION MODAL FOR PRIMARY MOBILE UPDATE -->
+  <app-otp-verification-modal
+    [isOpen]="isOtpModalOpen()"
+    [mode]="'phone-only'"
+    [phoneNumber]="primaryPhoneNumber()"
+    [validityMinutes]="otpValidityMinutes()"
+    [isVerifying]="isVerifyingSms()"
+    [isResending]="isResendingSms()"
+    [canClose]="true"
+    (verifyOtp)="submitPhoneOtpForProfileUpdate($event)"
+    (resendSms)="resendPhoneOtpForProfileUpdate()"
+    (cancelled)="isOtpModalOpen.set(false)"
+  ></app-otp-verification-modal>
 
 </div>

@@ -11,39 +11,26 @@ namespace CampusServicesPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "LastPasswordChangedAt",
-                table: "Users",
-                type: "datetime2",
-                nullable: true,
-                defaultValueSql: "GETUTCDATE()");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'LastPasswordChangedAt')
+                BEGIN
+                    ALTER TABLE [dbo].[Users] ADD [LastPasswordChangedAt] datetime2 NULL DEFAULT (GETUTCDATE());
+                END
 
-            migrationBuilder.CreateTable(
-                name: "PasswordHistories",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PasswordSalt = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PasswordHistories", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PasswordHistories_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PasswordHistories_UserId",
-                table: "PasswordHistories",
-                column: "UserId");
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PasswordHistories')
+                BEGIN
+                    CREATE TABLE [dbo].[PasswordHistories] (
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [UserId] int NOT NULL,
+                        [PasswordHash] nvarchar(max) NOT NULL,
+                        [PasswordSalt] nvarchar(max) NOT NULL,
+                        [CreatedAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
+                        CONSTRAINT [PK_PasswordHistories] PRIMARY KEY CLUSTERED ([Id] ASC),
+                        CONSTRAINT [FK_PasswordHistories_Users_UserId] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE NONCLUSTERED INDEX [IX_PasswordHistories_UserId] ON [dbo].[PasswordHistories]([UserId] ASC);
+                END
+            ");
         }
 
         /// <inheritdoc />

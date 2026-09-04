@@ -775,6 +775,52 @@ namespace CampusServicesPortal.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AddressType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DistrictOrProvince")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentAddresses");
+                });
+
             modelBuilder.Entity("CampusServicesPortal.Models.StudentMasterList", b =>
                 {
                     b.Property<int>("Id")
@@ -1157,6 +1203,17 @@ namespace CampusServicesPortal.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentAddress", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.Student", "Student")
+                        .WithMany("Addresses")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("CampusServicesPortal.Models.StudentPhoneNumber", b =>
                 {
                     b.HasOne("CampusServicesPortal.Models.Student", "Student")
@@ -1180,6 +1237,8 @@ namespace CampusServicesPortal.Migrations
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
                 {
+                    b.Navigation("Addresses");
+
                     b.Navigation("PhoneNumbers");
                 });
 #pragma warning restore 612, 618

@@ -64,5 +64,19 @@ namespace CampusServicesPortal.Controllers
 
             return Content(result.Data ?? string.Empty, "text/html");
         }
+
+        // GET /api/sms/preview/phone-otp?phoneNumber=...&emailOrIndex=... — Render HTML SMS simulation preview for Mobile Phone OTP
+        [HttpGet("preview/phone-otp")]
+        public async Task<IActionResult> PreviewPhoneOtpSms([FromQuery] string? phoneNumber, [FromQuery] string? emailOrIndex, [FromQuery] string? purpose)
+        {
+            string identifier = !string.IsNullOrWhiteSpace(phoneNumber) ? phoneNumber : (emailOrIndex ?? string.Empty);
+            var result = await _smsService.GeneratePhoneOtpSmsPreviewAsync(identifier, null, purpose ?? "Verification");
+            if (!result.IsSuccess)
+            {
+                return ProcessServiceResult(result, "Phone OTP SMS preview generation failed.");
+            }
+
+            return Content(result.Data ?? string.Empty, "text/html");
+        }
     }
 }

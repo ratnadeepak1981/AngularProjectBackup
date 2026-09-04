@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
-import { SystemSettingsService } from '../../../features/admin/system-settings/services/system-settings.service';
+import { SystemSettingsService } from '../../../core/services/system-settings.service';
 
 @Component({
   selector: 'app-page-header',

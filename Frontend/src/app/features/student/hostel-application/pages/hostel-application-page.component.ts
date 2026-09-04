@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HostelApplicationService } from '../services/hostel-application.service';
-import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';

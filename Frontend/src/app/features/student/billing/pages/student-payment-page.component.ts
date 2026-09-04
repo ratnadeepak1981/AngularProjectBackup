@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { StudentBillingService, FeePaymentItem } from '../services/student-billing.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaymentCheckoutComponent } from '../components/payment-checkout/payment-checkout.component';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';

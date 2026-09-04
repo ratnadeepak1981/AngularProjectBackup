@@ -8,4 +8,5 @@ export interface TableColumn<T = any> {
   align?: 'left' | 'center' | 'right';
   width?: string;
   badgeMap?: Record<string, { label: string; class: string }>;
+  format?: (value: any, row: T) => string;
 }

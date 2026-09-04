@@ -14,6 +14,7 @@ namespace CampusServicesPortal.Data
         public DbSet<StudentMasterList> StudentMasterLists => Set<StudentMasterList>();
         public DbSet<Student> Students => Set<Student>();
         public DbSet<StudentPhoneNumber> StudentPhoneNumbers => Set<StudentPhoneNumber>();
+        public DbSet<StudentAddress> StudentAddresses => Set<StudentAddress>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
         public DbSet<PasswordHistory> PasswordHistories => Set<PasswordHistory>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -66,6 +67,20 @@ namespace CampusServicesPortal.Data
                 .HasOne(s => s.User)
                 .WithOne()
                 .HasForeignKey<Student>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 1-to-Many Relationship mapping for Student Phone Numbers
+            modelBuilder.Entity<StudentPhoneNumber>()
+                .HasOne(p => p.Student)
+                .WithMany(s => s.PhoneNumbers)
+                .HasForeignKey(p => p.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 1-to-Many Relationship mapping for Student Addresses
+            modelBuilder.Entity<StudentAddress>()
+                .HasOne(a => a.Student)
+                .WithMany(s => s.Addresses)
+                .HasForeignKey(a => a.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<PasswordResetToken>()

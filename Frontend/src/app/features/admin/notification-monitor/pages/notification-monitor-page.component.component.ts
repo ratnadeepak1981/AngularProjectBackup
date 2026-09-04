@@ -327,3 +327,6 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
     }
   }
 }
+
+export { NotificationMonitorPageComponentComponent as NotificationMonitorPageComponent };
+

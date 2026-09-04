@@ -3,6 +3,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../../core/services/api.service';
 import { Notification } from '../../../../core/models/system/notification.model';
+import { UpdateStudentProfileRequest } from '../../../../core/models/auth/student-profile.model';
 
 export interface StudentDashboardMetricsSummary {
   hostelStatus: string;
@@ -26,7 +27,7 @@ export class StudentDashboardService {
 
   updateStudentProfile(
     studentId: number,
-    payload: { fullName: string; contactDetails: string; facultyId: number }
+    payload: UpdateStudentProfileRequest
   ): Observable<any> {
     return this.apiService.put(this.apiService.routes.students.updateProfile(studentId), payload);
   }

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { Lab } from '../../../../core/models/lab/lab.model';
@@ -55,23 +55,58 @@ export class LabManagementService {
   private readonly api = inject(ApiService);
 
   /**
-   * Get all campus laboratories
+   * Get all campus laboratories with enriched live workstation counts
    */
   getLabs(): Observable<Lab[]> {
     return this.api.get<RawApiLab[] | { data: RawApiLab[] }>('/labs').pipe(
-      map((res) => {
+      switchMap((res) => {
         const labsArray: RawApiLab[] = Array.isArray(res) ? res : (res as { data: RawApiLab[] })?.data || [];
-        return labsArray.map((l: RawApiLab): Lab => ({
+        const baseLabs: Lab[] = labsArray.map((l: RawApiLab): Lab => ({
           id: l.id || 0,
           name: l.name || 'Laboratory',
           labType: l.labType || 'Computer',
           capacity: l.capacity || 24,
           isActive: l.isActive ?? true,
           requiresSeatSelection: l.requiresSeatSelection ?? (l.labType === 'Computer' || l.labType === 'computer'),
-          seatsBuilt: l.seatsBuilt ?? l.totalSeats ?? (l.seats ? l.seats.length : 0),
+          seatsBuilt: (l as any).seatsBuilt ?? (l as any).SeatsBuilt ?? (l as any).totalSeats ?? (l.seats ? l.seats.length : 0),
           totalRows: l.totalRows || 4,
           totalColumns: l.totalColumns || 3,
         }));
+
+        const computerLabs = baseLabs.filter((lab) => lab.requiresSeatSelection);
+        if (computerLabs.length === 0) {
+          return of(baseLabs);
+        }
+
+        const layoutRequests = computerLabs.map((lab) =>
+          this.getLabLayout(lab.id).pipe(
+            map((layout) => ({
+              labId: lab.id,
+              count: layout.seats?.length || 0,
+              totalRows: layout.totalRows,
+              totalColumns: layout.totalColumns,
+            })),
+            catchError(() => of({ labId: lab.id, count: 0, totalRows: lab.totalRows, totalColumns: lab.totalColumns }))
+          )
+        );
+
+        return forkJoin(layoutRequests).pipe(
+          map((results) => {
+            const countMap = new Map(results.map((r) => [r.labId, r]));
+            return baseLabs.map((lab) => {
+              const enriched = countMap.get(lab.id);
+              if (enriched) {
+                return {
+                  ...lab,
+                  seatsBuilt: enriched.count > 0 ? enriched.count : lab.seatsBuilt,
+                  totalRows: enriched.totalRows || lab.totalRows,
+                  totalColumns: enriched.totalColumns || lab.totalColumns,
+                };
+              }
+              return lab;
+            });
+          })
+        );
       }),
       catchError((err: unknown) => {
         console.error('Failed to fetch labs directory:', err);

@@ -1,150 +1,375 @@
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
   <!-- Page Title & Header (Reusable PageHeaderComponent) -->
   <app-page-header
     [icon]="'🛡️'"
     [title]="'Administrative Control Console'"
-    [description]="'System analytics, housing allocations, student intake verification, and global system configuration.'"
+    [description]="'Executive operational intelligence, critical triage queues, financial settlements, and facility oversight.'"
   >
-    <app-action-button
-      label="Refresh Metrics"
-      icon="refresh"
-      variant="secondary"
-      tooltip="Reload system analytics metrics"
-      (btnClick)="loadAnalytics()"
-    ></app-action-button>
-  </app-page-header>
-
-  <!-- 4 Overview Metrics Grid (Reusable DashboardCardComponent) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <!-- Card 1: Pending Hostel Apps -->
-    <app-dashboard-card
-      [title]="'Pending Hostel Apps'"
-      [value]="pendingHostels()"
-      [icon]="'🏢'"
-      [iconVariant]="'amber'"
-      [valueVariant]="'amber'"
-      [linkText]="'Review Allocations'"
-      [linkRoute]="'/admin/hostel-management'"
-      [isLoading]="isLoadingMetrics()"
-    />
-
-    <!-- Card 2: Pending Helpdesk Tickets -->
-    <app-dashboard-card
-      [title]="'Pending Helpdesk Tickets'"
-      [value]="pendingComplaints()"
-      [icon]="'🎫'"
-      [iconVariant]="'rose'"
-      [valueVariant]="'rose'"
-      [linkText]="'Triage Tickets'"
-      [linkRoute]="'/admin/complaint-management'"
-      [isLoading]="isLoadingMetrics()"
-    />
-
-    <!-- Card 3: Pending Certificate Requests -->
-    <app-dashboard-card
-      [title]="'Pending Certificates'"
-      [value]="pendingCertificates()"
-      [icon]="'🎓'"
-      [iconVariant]="'blue'"
-      [valueVariant]="'blue'"
-      [linkText]="'Approve Documents'"
-      [linkRoute]="'/admin/certificate-management'"
-      [isLoading]="isLoadingMetrics()"
-    />
-
-    <!-- Card 4: Registered Students -->
-    <app-dashboard-card
-      [title]="'Registered Students'"
-      [value]="totalStudents()"
-      [icon]="'👥'"
-      [iconVariant]="'emerald'"
-      [valueVariant]="'emerald'"
-      [linkText]="'View Accounts'"
-      [linkRoute]="'/admin/students'"
-      [isLoading]="isLoadingMetrics()"
-    />
-  </div>
-
-  <!-- Global System Configuration Card -->
-  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
-    <div class="border-b border-slate-100 dark:border-slate-800 pb-3 mb-5 flex items-center justify-between">
-      <div>
-        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span>⚙️</span> Global System Configuration Settings
-        </h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure system reservation timeouts, pagination parameters, and control panel modules.</p>
-      </div>
+    <div class="flex items-center gap-2">
+      <app-action-button
+        label="Refresh Metrics"
+        icon="refresh"
+        variant="secondary"
+        size="sm"
+        tooltip="Reload system analytics metrics"
+        (btnClick)="loadAnalytics()"
+      ></app-action-button>
 
       <a
         routerLink="/admin/system-settings"
-        class="px-3 py-1.5 text-xs font-bold bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center gap-1.5 shadow-2xs"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors shadow-2xs cursor-pointer"
       >
-        <span>⚙️</span> Open Control Panel ➔
+        <span>⚙️</span> Control Panel ➔
       </a>
     </div>
+  </app-page-header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Setting 1: Lab Seat Hold Timeout -->
-      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between">
-        <div>
-          <label class="block text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-            Lab Seat Hold Timeout (Minutes) [BRD Page 12]
-          </label>
-          <p class="text-xs font-medium text-slate-700 dark:text-slate-200 mb-3">
-            Minutes before an unconfirmed seat reservation expires and frees back to the pool.
-          </p>
+  <!-- TIER 1: CRITICAL ACTION & FINANCIAL QUEUES (Top Priority Triage) -->
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+        Critical Attention & Triage Queues
+      </h3>
+      <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+        {{ totalCriticalItems() }} Items Pending Action
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Card 1: Unpaid Fees & Fines (CRITICAL FINANCIAL MONITOR) -->
+      <app-dashboard-card
+        [title]="'Unpaid Fees & Fines'"
+        [value]="formattedPendingFeesAmount()"
+        [icon]="'💳'"
+        [iconVariant]="'rose'"
+        [valueVariant]="'rose'"
+        [linkText]="'Review Unpaid (' + pendingFeesCount() + ')'"
+        [linkRoute]="'/admin/billing-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 2: Pending Hostel Applications -->
+      <app-dashboard-card
+        [title]="'Pending Hostel Apps'"
+        [value]="pendingHostels()"
+        [icon]="'🏢'"
+        [iconVariant]="'amber'"
+        [valueVariant]="'amber'"
+        [linkText]="'Assign Rooms'"
+        [linkRoute]="'/admin/hostel-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 3: Pending Helpdesk Tickets -->
+      <app-dashboard-card
+        [title]="'Open Helpdesk Tickets'"
+        [value]="pendingComplaints()"
+        [icon]="'🎫'"
+        [iconVariant]="'rose'"
+        [valueVariant]="'rose'"
+        [linkText]="'Triage Tickets'"
+        [linkRoute]="'/admin/complaint-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 4: Pending Certificate Requests -->
+      <app-dashboard-card
+        [title]="'Pending Certificates'"
+        [value]="pendingCertificates()"
+        [icon]="'🎓'"
+        [iconVariant]="'blue'"
+        [valueVariant]="'blue'"
+        [linkText]="'Sign & Dispatch'"
+        [linkRoute]="'/admin/certificate-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+    </div>
+  </div>
+
+  <!-- TIER 2: CAMPUS INVENTORY & SETTLEMENT HEALTH -->
+  <div>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+      <span>🏛️</span> Campus Facilities, Accounts & Financial Settlements
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Card 5: Registered Students -->
+      <app-dashboard-card
+        [title]="'Registered Students'"
+        [value]="totalStudents()"
+        [icon]="'👥'"
+        [iconVariant]="'emerald'"
+        [valueVariant]="'emerald'"
+        [linkText]="'Manage Accounts'"
+        [linkRoute]="'/admin/students'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 6: Configured Campus Laboratories -->
+      <app-dashboard-card
+        [title]="'Configured Labs'"
+        [value]="totalLabs()"
+        [icon]="'💻'"
+        [iconVariant]="'blue'"
+        [valueVariant]="'blue'"
+        [linkText]="'Inspect 2D Grid'"
+        [linkRoute]="'/admin/lab-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 7: Academic Faculties -->
+      <app-dashboard-card
+        [title]="'Academic Faculties'"
+        [value]="totalFaculties()"
+        [icon]="'🏛️'"
+        [iconVariant]="'purple'"
+        [valueVariant]="'purple'"
+        [linkText]="'Master Directory'"
+        [linkRoute]="'/admin/faculty-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 8: Fee Settlement Rate -->
+      <app-dashboard-card
+        [title]="'Fee Settlement Rate'"
+        [value]="feeCollectionRate() + '%'"
+        [icon]="'📈'"
+        [iconVariant]="'emerald'"
+        [valueVariant]="'emerald'"
+        [linkText]="'Manage Fee Types'"
+        [linkRoute]="'/admin/billing-management'"
+        [isLoading]="isLoadingMetrics()"
+      />
+    </div>
+  </div>
+
+  <!-- TIER 3: VISUAL ANALYTICS (Pure SVG & Tailwind — Zero External Runtime Bloat) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Chart A: Critical Workload Distribution Donut (5 cols) -->
+    <div class="lg:col-span-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📊</span> Critical Queue Breakdown
+          </h4>
+          <span class="text-2xs text-slate-400 font-mono">LIVE RATIO</span>
         </div>
-        <div class="flex gap-3">
-          <input
-            type="number"
-            [ngModel]="holdMinutes()"
-            (ngModelChange)="holdMinutes.set($event)"
-            min="1"
-            class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-slate-900 dark:text-white font-bold"
-          />
-          <app-action-button
-            label="Save Timeout"
-            icon="save"
-            variant="primary"
-            [loading]="isSavingHold()"
-            [disabled]="isSavingHold()"
-            tooltip="Save lab seat hold duration"
-            (btnClick)="saveHoldMinutes()"
-          ></app-action-button>
+
+        <!-- Donut Chart & Center Stats -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
+          <div class="relative w-36 h-36 shrink-0 flex items-center justify-center">
+            <svg class="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+              <!-- Background Track -->
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="transparent"
+                stroke="currentColor"
+                stroke-width="12"
+                class="text-slate-100 dark:text-slate-800"
+              />
+              <!-- Donut Slices -->
+              @if (totalCriticalItems() > 0) {
+                <!-- S1: Unpaid Fees (Rose) -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#e11d48"
+                  stroke-width="12"
+                  [attr.stroke-dasharray]="donutSegments().fees.dash"
+                  [attr.stroke-dashoffset]="donutSegments().fees.offset"
+                  class="transition-all duration-700 ease-out"
+                />
+                <!-- S2: Hostels (Amber) -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#f59e0b"
+                  stroke-width="12"
+                  [attr.stroke-dasharray]="donutSegments().hostels.dash"
+                  [attr.stroke-dashoffset]="donutSegments().hostels.offset"
+                  class="transition-all duration-700 ease-out"
+                />
+                <!-- S3: Complaints (Purple) -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#a855f7"
+                  stroke-width="12"
+                  [attr.stroke-dasharray]="donutSegments().complaints.dash"
+                  [attr.stroke-dashoffset]="donutSegments().complaints.offset"
+                  class="transition-all duration-700 ease-out"
+                />
+                <!-- S4: Certificates (Blue) -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#3b82f6"
+                  stroke-width="12"
+                  [attr.stroke-dasharray]="donutSegments().certs.dash"
+                  [attr.stroke-dashoffset]="donutSegments().certs.offset"
+                  class="transition-all duration-700 ease-out"
+                />
+              }
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center text-center pointer-events-none">
+              <span class="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                {{ totalCriticalItems() }}
+              </span>
+              <span class="text-3xs uppercase tracking-wider text-slate-400 font-bold">
+                Pending
+              </span>
+            </div>
+          </div>
+
+          <!-- Color-Coded Interactive Legend -->
+          <div class="space-y-2.5 w-full text-xs">
+            <div class="flex items-center justify-between p-1.5 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+              <span class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Unpaid Invoices
+              </span>
+              <span class="font-bold text-rose-600 dark:text-rose-400 font-mono">{{ pendingFeesCount() }} ({{ donutSegments().fees.percent }}%)</span>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
+              <span class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hostel Apps
+              </span>
+              <span class="font-bold text-amber-600 dark:text-amber-400 font-mono">{{ pendingHostels() }} ({{ donutSegments().hostels.percent }}%)</span>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded-lg bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
+              <span class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Open Complaints
+              </span>
+              <span class="font-bold text-purple-600 dark:text-purple-400 font-mono">{{ pendingComplaints() }} ({{ donutSegments().complaints.percent }}%)</span>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+              <span class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Certificates
+              </span>
+              <span class="font-bold text-blue-600 dark:text-blue-400 font-mono">{{ pendingCertificates() }} ({{ donutSegments().certs.percent }}%)</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Setting 2: Default Page Size -->
-      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between">
-        <div>
-          <label class="block text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-            System Default Records Per Page (Pagination) [BRD Page 21]
-          </label>
-          <p class="text-xs font-medium text-slate-700 dark:text-slate-200 mb-3">
-            Default item limit for paginated data tables across all administrative modules.
-          </p>
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 text-2xs text-slate-400 flex items-center justify-between">
+        <span>⚡ Synchronized real-time with database transaction ledgers</span>
+      </div>
+    </div>
+
+    <!-- Chart B: Operations Health & Performance Gauges (7 cols) -->
+    <div class="lg:col-span-7 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📈</span> Operational Settlement & Resource Utilization
+          </h4>
+          <app-status-badge status="Active" [pulse]="false"></app-status-badge>
         </div>
-        <div class="flex gap-3">
-          <select
-            [ngModel]="defaultPageSize()"
-            (ngModelChange)="defaultPageSize.set($event)"
-            class="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-slate-900 dark:text-white"
+
+        <div class="space-y-4 text-xs">
+          <!-- Gauge 1: Tuition & Fee Collection Rate -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between font-semibold text-slate-700 dark:text-slate-200">
+              <span>Financial Clearing Settlement Rate</span>
+              <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ feeCollectionRate() }}% Settled</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+              <div
+                class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2.5 rounded-full transition-all duration-700"
+                [style.width.%]="feeCollectionRate()"
+              ></div>
+            </div>
+            <div class="flex justify-between text-3xs text-slate-400">
+              <span>Collected: LKR {{ totalPaidFeesAmount().toLocaleString() }}</span>
+              <span>Outstanding: {{ formattedPendingFeesAmount() }}</span>
+            </div>
+          </div>
+
+          <!-- Gauge 2: Campus Laboratories Deployment -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between font-semibold text-slate-700 dark:text-slate-200">
+              <span>Computer & Science Laboratory Modules</span>
+              <span class="font-bold font-mono text-blue-600 dark:text-blue-400">{{ totalLabs() }} Total Active</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+              <div
+                class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-700"
+                [style.width.%]="totalLabs() > 0 ? 100 : 0"
+              ></div>
+            </div>
+            <div class="flex justify-between text-3xs text-slate-400">
+              <span>Interactive 2D Grid Maps Operational</span>
+              <span>15-min Hold Window Active</span>
+            </div>
+          </div>
+
+          <!-- Gauge 3: Academic Faculties Directory -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between font-semibold text-slate-700 dark:text-slate-200">
+              <span>Academic Faculties Master Directory</span>
+              <span class="font-bold font-mono text-purple-600 dark:text-purple-400">{{ totalFaculties() }} Faculties Mastered</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+              <div
+                class="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full transition-all duration-700"
+                [style.width.%]="totalFaculties() > 0 ? 100 : 0"
+              ></div>
+            </div>
+            <div class="flex justify-between text-3xs text-slate-400">
+              <span>Student Dependency Integrity Protected</span>
+              <span>Full Cross-Module Verification</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Operations Command Center -->
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+        <h5 class="text-3xs uppercase tracking-wider text-slate-400 font-bold mb-2">
+          Executive 1-Click Operations Shortcuts
+        </h5>
+        <div class="flex flex-wrap items-center gap-2">
+          <a
+            routerLink="/admin/billing-management"
+            class="px-3 py-1.5 text-xs bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold rounded-xl border border-rose-200 dark:border-rose-800 transition-all flex items-center gap-1.5"
           >
-            <option [value]="5">5 per page</option>
-            <option [value]="10">10 per page</option>
-            <option [value]="15">15 per page</option>
-            <option [value]="20">20 per page</option>
-            <option [value]="25">25 per page</option>
-          </select>
-          <app-action-button
-            label="Save Default"
-            icon="save"
-            variant="primary"
-            [loading]="isSavingPageSize()"
-            [disabled]="isSavingPageSize()"
-            tooltip="Save default pagination limit"
-            (btnClick)="saveDefaultPageSize()"
-          ></app-action-button>
+            <span>💳</span> Assign Fee / Fine
+          </a>
+
+          <a
+            routerLink="/admin/lab-management"
+            class="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold rounded-xl border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1.5"
+          >
+            <span>💻</span> Build 2D Lab Matrix
+          </a>
+
+          <a
+            routerLink="/admin/faculty-management"
+            class="px-3 py-1.5 text-xs bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold rounded-xl border border-purple-200 dark:border-purple-800 transition-all flex items-center gap-1.5"
+          >
+            <span>🏛️</span> Add Academic Faculty
+          </a>
+
+          <a
+            routerLink="/admin/studentmaster"
+            class="px-3 py-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1.5"
+          >
+            <span>📥</span> Student Master Intake
+          </a>
         </div>
       </div>
     </div>

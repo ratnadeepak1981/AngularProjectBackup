@@ -1,4 +1,7 @@
-﻿namespace CampusServicesPortal.DTOs.Responses.Student
+using System.Collections.Generic;
+using CampusServicesPortal.DTOs.Requests.Student;
+
+namespace CampusServicesPortal.DTOs.Responses.Student
 {
     public class StudentProfileResponseDto
     {
@@ -9,6 +12,10 @@
         public string FacultyName { get; set; } = null!;
         public string? ContactDetails { get; set; }
         public bool EmailVerified { get; set; }
+        public bool PhoneVerified { get; set; }
         public bool IsActive { get; set; }
+
+        public List<StudentPhoneNumberDto> PhoneNumbers { get; set; } = new();
+        public List<StudentAddressDto> Addresses { get; set; } = new();
     }
 }

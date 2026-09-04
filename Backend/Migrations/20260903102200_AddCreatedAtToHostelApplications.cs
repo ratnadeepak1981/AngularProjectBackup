@@ -11,26 +11,17 @@ namespace CampusServicesPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CreatedAt",
-                table: "HostelApplications",
-                type: "datetime2",
-                nullable: false,
-                defaultValueSql: "GETUTCDATE()");
-
-            migrationBuilder.UpdateData(
-                table: "HostelApplications",
-                keyColumn: "Id",
-                keyValue: 1,
-                column: "CreatedAt",
-                value: new DateTime(2026, 7, 31, 10, 5, 16, DateTimeKind.Utc));
-
-            migrationBuilder.UpdateData(
-                table: "HostelApplications",
-                keyColumn: "Id",
-                keyValue: 2,
-                column: "CreatedAt",
-                value: new DateTime(2026, 7, 31, 10, 5, 16, DateTimeKind.Utc));
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns 
+                    WHERE object_id = OBJECT_ID(N'[dbo].[HostelApplications]') 
+                    AND name = 'CreatedAt'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[HostelApplications] ADD [CreatedAt] datetime2 NOT NULL DEFAULT (GETUTCDATE());
+                END
+            ");
+            migrationBuilder.Sql("UPDATE [HostelApplications] SET [CreatedAt] = '2026-07-31T10:05:16Z' WHERE [Id] IN (1, 2)");
         }
 
         /// <inheritdoc />

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Data; // Replace with your DbContext namespace
+using CampusServicesPortal.Data; // Replace with your DbContext namespace
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +18,7 @@ public class LabRepository : ILabRepository
         await _context.Labs.FindAsync(id);
 
     public async Task<IEnumerable<Lab>> GetAllAsync() =>
-        await _context.Labs.ToListAsync();
+        await _context.Labs.Include(l => l.Seats).AsNoTracking().ToListAsync();
 
     public async Task<IEnumerable<LabSeat>> GetSeatsByLabIdAsync(int labId) =>
         await _context.LabSeats.Where(s => s.LabId == labId).ToListAsync();

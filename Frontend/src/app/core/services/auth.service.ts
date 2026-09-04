@@ -124,6 +124,22 @@ export class AuthService {
     }
   }
 
+  requestPasswordReset(email: string): Observable<ApiResponse<any>> {
+    return this.api.post<ApiResponse<any>>(
+      this.api.routes.password.forgotPassword,
+      { email },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
+  }
+
+  resetPassword(payload: { email?: string; token: string; newPassword: string }): Observable<ApiResponse<any>> {
+    return this.api.post<ApiResponse<any>>(
+      this.api.routes.password.resetPassword,
+      payload,
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);

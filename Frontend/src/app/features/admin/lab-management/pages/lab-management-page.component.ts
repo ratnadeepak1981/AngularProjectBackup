@@ -47,17 +47,48 @@ export class LabManagementPageComponent implements OnInit {
 
   // Tab Definition Items
   public readonly tabs: TabItem[] = [
-    { id: 'labs-list', label: 'Campus Labs Directory', icon: 'building' },
-    { id: 'seat-builder', label: '2D Seat Map Builder', icon: 'grid' },
-    { id: 'bookings-audit', label: 'Seat Reservations Audit', icon: 'ticket' },
+    { id: 'labs-list', label: 'Campus Labs Directory', icon: '🏛️' },
+    { id: 'seat-builder', label: '2D Seat Map Builder', icon: '🗺️' },
+    { id: 'bookings-audit', label: 'Seat Reservations Audit', icon: '🎫' },
   ];
 
   // Directory Table Columns Configuration
   public readonly directoryColumns: TableColumn[] = [
     { key: 'name', header: 'Laboratory Name', sortable: true, filterable: true, type: 'text' },
-    { key: 'labType', header: 'Lab Type', sortable: true, filterable: true, type: 'badge' },
+    {
+      key: 'labType',
+      header: 'Lab Type',
+      sortable: true,
+      filterable: true,
+      type: 'badge',
+      badgeMap: {
+        Computer: {
+          label: '💻 Computer Lab',
+          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs',
+        },
+        Science: {
+          label: '🧪 Science Lab',
+          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs',
+        },
+        computer: {
+          label: '💻 Computer Lab',
+          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs',
+        },
+        science: {
+          label: '🧪 Science Lab',
+          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs',
+        },
+      },
+    },
     { key: 'capacity', header: 'Capacity', sortable: true, filterable: false, type: 'text' },
-    { key: 'seatsBuilt', header: 'Workstations Built', sortable: true, filterable: false, type: 'text' },
+    {
+      key: 'seatsBuilt',
+      header: 'Workstations Built',
+      sortable: true,
+      filterable: false,
+      type: 'text',
+      format: (val, row) => (row.labType === 'Science' || row.labType === 'science' ? '— (Batch Lab)' : `${val ?? 0} Workstations`),
+    },
     { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions' },
   ];
 

@@ -9,6 +9,10 @@ import { RegisterStudentRequest } from '../../../core/models/student/student-reg
 import { ApiResponse } from '../../../core/models/common/api-response.model';
 import { VerifyEmailRequest } from '../../../core/models/auth/verify-email-request.model';
 import { ResendVerificationRequest } from '../../../core/models/auth/resend-verification-request.model';
+import { ActionButtonComponent } from '../../../shared/components/action-button/action-button.component';
+import { PhoneNumbersFormComponent } from '../../../shared/components/forms/phone-numbers-form/phone-numbers-form.component';
+import { AddressEditorComponent } from '../../../shared/components/forms/address-editor/address-editor.component';
+import { OtpVerificationModalComponent } from '../../../shared/components/modals/otp-verification-modal/otp-verification-modal.component';
 
 import { HttpContext } from '@angular/common/http';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interceptor';
@@ -16,7 +20,15 @@ import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interc
 @Component({
   selector: 'app-student-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    RouterModule,
+    ActionButtonComponent,
+    PhoneNumbersFormComponent,
+    AddressEditorComponent,
+    OtpVerificationModalComponent
+  ],
   templateUrl: './student-registration.component.html',
   styleUrl: './student-registration.component.css',
 })
@@ -62,21 +74,20 @@ export class StudentRegistrationComponent {
     fullName: [{ value: '', disabled: true }],
     email: ['', [Validators.required, Validators.email]],
     contactDetails: [''],
-    // BRD FormArray for dynamic multiple phone numbers with per-item validation
     phoneNumbers: this.fb.array([
       this.createPhoneControl('Primary Mobile')
     ]),
+    address: this.fb.group({
+      addressLine1: ['', [Validators.required]],
+      addressLine2: [''],
+      city: ['', [Validators.required]],
+      districtOrProvince: ['Colombo'],
+      postalCode: [''],
+      country: ['Sri Lanka'],
+    }),
     facultyId: [1, [Validators.required]],
     password: ['', [Validators.required]],
     confirmPassword: ['', [Validators.required]],
-  });
-
-  public readonly verificationForm: FormGroup = this.fb.group({
-    token: ['', [Validators.required]],
-  });
-
-  public readonly smsForm: FormGroup = this.fb.group({
-    smsCode: ['', [Validators.required, Validators.minLength(4)]],
   });
 
   private createPhoneControl(defaultType: string = 'Primary Mobile'): FormGroup {
@@ -88,11 +99,17 @@ export class StudentRegistrationComponent {
     return this.fb.group({
       phoneType: [defaultType, [Validators.required]],
       phoneNumber: ['', validators],
+      isPrimary: [defaultType === 'Primary Mobile'],
+      isVerified: [false]
     });
   }
 
   get phoneNumbersArray(): FormArray {
     return this.registrationForm.get('phoneNumbers') as FormArray;
+  }
+
+  get addressGroup(): FormGroup {
+    return this.registrationForm.get('address') as FormGroup;
   }
 
   public readonly primaryMobileNumber = computed<string>(() => {
@@ -101,19 +118,8 @@ export class StudentRegistrationComponent {
       const primary = array.at(0)?.get('phoneNumber')?.value;
       if (primary) return primary;
     }
-    return 'Primary Mobile';
+    return '+94 77 123 4567';
   });
-
-  addPhoneNumber(): void {
-    const nextType = this.phoneNumbersArray.length === 1 ? 'Home Landline' : 'Emergency Contact';
-    this.phoneNumbersArray.push(this.createPhoneControl(nextType));
-  }
-
-  removePhoneNumber(index: number): void {
-    if (this.phoneNumbersArray.length > 1) {
-      this.phoneNumbersArray.removeAt(index);
-    }
-  }
 
   verifyMasterIndex(): void {
     const indexNum = this.registrationForm.get('indexNumber')?.value?.trim();
@@ -163,7 +169,7 @@ export class StudentRegistrationComponent {
 
     if (this.registrationForm.invalid) {
       this.registrationForm.markAllAsTouched();
-      this.toast.warning('Please fill in all required registration fields.');
+      this.toast.warning('Please fill in all required registration fields including address and primary mobile.');
       return;
     }
 
@@ -177,16 +183,30 @@ export class StudentRegistrationComponent {
     this.isRegistering.set(true);
 
     const phoneList = formVal.phoneNumbers || [];
-    const formattedContact = phoneList.length > 0
-      ? phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | ')
-      : (formVal.contactDetails?.trim() || '');
+    const addr = formVal.address;
 
     const payload: RegisterStudentRequest = {
       indexNumber: formVal.indexNumber.trim(),
       email: formVal.email.trim(),
       password: formVal.password,
       facultyId: Number(formVal.facultyId),
-      contactDetails: formattedContact,
+      contactDetails: phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | '),
+      phoneNumbers: phoneList.map((p: any) => ({
+        phoneType: p.phoneType,
+        phoneNumber: p.phoneNumber.trim(),
+        isPrimary: p.phoneType === 'Primary Mobile' || p.isPrimary,
+        isVerified: false
+      })),
+      addresses: addr?.addressLine1 ? [{
+        addressType: 'Permanent',
+        addressLine1: addr.addressLine1.trim(),
+        addressLine2: addr.addressLine2?.trim(),
+        city: addr.city.trim(),
+        districtOrProvince: addr.districtOrProvince,
+        postalCode: addr.postalCode?.trim(),
+        country: addr.country || 'Sri Lanka',
+        isPrimary: true
+      }] : []
     };
 
     const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
@@ -208,12 +228,8 @@ export class StudentRegistrationComponent {
     });
   }
 
-  submitEmailVerification(): void {
-    const token = this.verificationForm.get('token')?.value?.trim();
-    if (!token) {
-      this.toast.warning('Please enter your single-use email verification token.');
-      return;
-    }
+  submitEmailVerification(token: string): void {
+    if (!token) return;
 
     this.isVerifyingToken.set(true);
     const payload: VerifyEmailRequest = { token };
@@ -233,28 +249,37 @@ export class StudentRegistrationComponent {
     });
   }
 
-  submitSmsVerification(): void {
-    const smsCode = this.smsForm.get('smsCode')?.value?.trim();
-    if (!smsCode) {
-      this.toast.warning('Please enter the SMS OTP code sent to your primary mobile.');
-      return;
-    }
+  submitSmsVerification(smsCode: string): void {
+    if (!smsCode) return;
 
     this.isVerifyingSms.set(true);
+    const formVal = this.registrationForm.getRawValue();
 
-    // Enterprise Gateway Primary Mobile OTP Verification
-    setTimeout(() => {
-      this.isVerifyingSms.set(false);
-      this.isPhoneVerified.set(true);
-      this.toast.success(
-        `Enterprise Registration Complete! Email and Primary Mobile (${this.primaryMobileNumber()}) successfully verified. Redirecting to sign in...`
-      );
-      this.isVerifyModalOpen.set(false);
+    const payload = {
+      emailOrIndex: formVal.email?.trim() || formVal.indexNumber?.trim(),
+      phoneNumber: this.primaryMobileNumber(),
+      otpCode: smsCode.trim()
+    };
 
-      setTimeout(() => {
-        this.router.navigate(['/auth/login']);
-      }, 800);
-    }, 600);
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.verifyPhoneOtp, payload).subscribe({
+      next: () => {
+        this.isVerifyingSms.set(false);
+        this.isPhoneVerified.set(true);
+        this.toast.success(
+          `Enterprise Registration Complete! Email and Primary Mobile (${this.primaryMobileNumber()}) verified. Redirecting to sign in...`
+        );
+        this.isVerifyModalOpen.set(false);
+
+        setTimeout(() => {
+          this.router.navigate(['/auth/login']);
+        }, 800);
+      },
+      error: (err) => {
+        this.isVerifyingSms.set(false);
+        const errorMsg = err.error?.message || err.error?.Message || 'Invalid SMS OTP code. Please try again.';
+        this.toast.error(errorMsg);
+      }
+    });
   }
 
   resendVerificationToken(): void {
@@ -282,9 +307,23 @@ export class StudentRegistrationComponent {
 
   resendSmsOtp(): void {
     this.isResendingSms.set(true);
-    setTimeout(() => {
-      this.isResendingSms.set(false);
-      this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Please check SMS preview.`);
-    }, 500);
+    const formVal = this.registrationForm.getRawValue();
+
+    const payload = {
+      emailOrIndex: formVal.email?.trim() || formVal.indexNumber?.trim(),
+      phoneNumber: this.primaryMobileNumber(),
+      purpose: 'Registration'
+    };
+
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.sendPhoneOtp, payload).subscribe({
+      next: () => {
+        this.isResendingSms.set(false);
+        this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Check SMS preview.`);
+      },
+      error: () => {
+        this.isResendingSms.set(false);
+        this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Check SMS preview.`);
+      }
+    });
   }
 }

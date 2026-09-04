@@ -28,6 +28,7 @@ namespace CampusServicesPortal
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddCors(options =>
             {
@@ -71,7 +72,9 @@ namespace CampusServicesPortal
             });
 
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("CampusServicesPortalConnection")));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("CampusServicesPortalConnection"),
+                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
             // Core Identity Service & Repository Registrations
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();

@@ -75,7 +75,20 @@ namespace CampusServicesPortal.Repositories.Implementations
             return await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Faculty)
+                .Include(s => s.PhoneNumbers)
+                .Include(s => s.Addresses)
                 .FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        public async Task<Student?> GetByIndexOrEmailAsync(string indexOrEmail)
+        {
+            var clean = (indexOrEmail ?? string.Empty).Trim().ToLower();
+            return await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Faculty)
+                .Include(s => s.PhoneNumbers)
+                .Include(s => s.Addresses)
+                .FirstOrDefaultAsync(s => s.IndexNumber.ToLower() == clean || (s.User != null && s.User.Email.ToLower() == clean));
         }
 
         // GET /api/students Search/Filtering Logic [Index 0.1.3]
@@ -84,6 +97,8 @@ namespace CampusServicesPortal.Repositories.Implementations
             var query = _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Faculty)
+                .Include(s => s.PhoneNumbers)
+                .Include(s => s.Addresses)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -97,6 +112,36 @@ namespace CampusServicesPortal.Repositories.Implementations
             }
 
             return await query.ToListAsync();
+        }
+
+        public async Task SyncPhoneNumbersAsync(int studentId, IEnumerable<StudentPhoneNumber> phoneNumbers)
+        {
+            var existing = await _context.StudentPhoneNumbers
+                .Where(p => p.StudentId == studentId)
+                .ToListAsync();
+
+            _context.StudentPhoneNumbers.RemoveRange(existing);
+
+            foreach (var phone in phoneNumbers)
+            {
+                phone.StudentId = studentId;
+                await _context.StudentPhoneNumbers.AddAsync(phone);
+            }
+        }
+
+        public async Task SyncAddressesAsync(int studentId, IEnumerable<StudentAddress> addresses)
+        {
+            var existing = await _context.StudentAddresses
+                .Where(a => a.StudentId == studentId)
+                .ToListAsync();
+
+            _context.StudentAddresses.RemoveRange(existing);
+
+            foreach (var addr in addresses)
+            {
+                addr.StudentId = studentId;
+                await _context.StudentAddresses.AddAsync(addr);
+            }
         }
 
         public async Task<IEnumerable<StudentMasterList>> SearchMasterListAsync(string? search)

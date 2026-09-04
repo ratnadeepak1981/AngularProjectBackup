@@ -1,10 +1,10 @@
 import { Directive, ElementRef, HostListener, Renderer2, inject } from '@angular/core';
 
 @Directive({
-  selector: '[appButtonHover]',
+  selector: '[appHighlight]',
   standalone: true,
 })
-export class AppButtonHoverDirective {
+export class AppHighlightDirective {
   private readonly el = inject(ElementRef);
   private readonly renderer = inject(Renderer2);
 

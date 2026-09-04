@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { LoginComponent } from './features/auth/login/login.component';
 import { authGuard } from './core/guards/auth-guard';
 import { adminGuard } from './core/guards/admin-guard';
+import { studentGuard } from './core/guards/student-guard';
 
 import { StudentRegistrationComponent } from './features/auth/student-registration/student-registration.component';
 
@@ -180,6 +181,7 @@ export const routes: Routes = [
           import('./features/student/dashboard/student-dashboard.routes').then(
             (m) => m.STUDENT_DASHBOARD_ROUTES
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/settings',
@@ -187,6 +189,7 @@ export const routes: Routes = [
           import('./features/student/settings/pages/student-settings-page.component').then(
             (m) => m.StudentSettingsPageComponent
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/preferences',
@@ -199,6 +202,7 @@ export const routes: Routes = [
           import('./features/student/certificate/student-certificate.routes').then(
             (m) => m.STUDENT_CERTIFICATE_ROUTES
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/certificates',
@@ -211,6 +215,7 @@ export const routes: Routes = [
           import('./features/student/complaint/student-complaint.routes').then(
             (m) => m.STUDENT_COMPLAINT_ROUTES
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/complaints',
@@ -223,6 +228,7 @@ export const routes: Routes = [
           import('./features/student/hostel-application/pages/hostel-application-page.component').then(
             (m) => m.HostelApplicationPageComponent
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/hostel-application',
@@ -235,6 +241,7 @@ export const routes: Routes = [
           import('./features/student/event/student-event.routes').then(
             (m) => m.STUDENT_EVENT_ROUTES
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/event',
@@ -247,6 +254,7 @@ export const routes: Routes = [
           import('./features/student/billing/pages/student-billing-page.component').then(
             (m) => m.StudentBillingPageComponent
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/billing/checkout/:id',
@@ -254,6 +262,7 @@ export const routes: Routes = [
           import('./features/student/billing/pages/student-payment-page.component').then(
             (m) => m.StudentPaymentPageComponent
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/notification',
@@ -261,6 +270,7 @@ export const routes: Routes = [
           import(
             './features/student/notification/pages/student-notification-page/student-notification-page.component'
           ).then((m) => m.StudentNotificationPageComponent),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/notifications',
@@ -273,6 +283,7 @@ export const routes: Routes = [
           import('./features/student/lab-booking/student-booking.routes').then(
             (m) => m.STUDENT_BOOKING_ROUTES
           ),
+        canActivate: [studentGuard],
       },
       {
         path: 'student/labbooking',

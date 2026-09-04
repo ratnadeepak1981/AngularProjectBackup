@@ -1,13 +1,23 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { StudentDashboardService } from '../services/student-dashboard.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PhoneNumbersFormComponent } from '../../../../shared/components/forms/phone-numbers-form/phone-numbers-form.component';
+import { AddressEditorComponent } from '../../../../shared/components/forms/address-editor/address-editor.component';
+import { OtpVerificationModalComponent } from '../../../../shared/components/modals/otp-verification-modal/otp-verification-modal.component';
+import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 import { Notification } from '../../../../core/models/system/notification.model';
+import { StudentPhoneNumber } from '../../../../core/models/student/student-phone-number.model';
+import { StudentAddress } from '../../../../core/models/student/student-address.model';
+import { UpdateStudentProfileRequest } from '../../../../core/models/auth/student-profile.model';
+import { ApiResponse } from '../../../../core/models/common/api-response.model';
 
 export type NotificationItem = Notification;
 
@@ -20,6 +30,10 @@ export type NotificationItem = Notification;
     RouterModule,
     DashboardCardComponent,
     PageHeaderComponent,
+    ActionButtonComponent,
+    PhoneNumbersFormComponent,
+    AddressEditorComponent,
+    OtpVerificationModalComponent,
   ],
   templateUrl: './student-dashboard-page.component.html',
   styleUrl: './student-dashboard-page.component.css',
@@ -27,6 +41,7 @@ export type NotificationItem = Notification;
 export class StudentDashboardPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly dashboardService = inject(StudentDashboardService);
+  private readonly apiService = inject(ApiService);
   public readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
 
@@ -36,6 +51,18 @@ export class StudentDashboardPageComponent implements OnInit {
   public readonly isSavingProfile = signal<boolean>(false);
   public readonly isLoadingMetrics = signal<boolean>(true);
   public readonly isEditProfileModalOpen = signal<boolean>(false);
+
+  // OTP Verification for Primary Mobile Update
+  public readonly initialPrimaryMobile = signal<string>('');
+  public readonly isPrimaryPhoneVerified = signal<boolean>(true);
+  public readonly isOtpModalOpen = signal<boolean>(false);
+  public readonly isVerifyingSms = signal<boolean>(false);
+  public readonly isResendingSms = signal<boolean>(false);
+  public readonly otpValidityMinutes = signal<number>(3);
+  public readonly pendingUpdatePayload = signal<UpdateStudentProfileRequest | null>(null);
+
+  // Address Display Summary
+  public readonly currentAddressSummary = signal<string>('Not provided');
 
   // 6 Live Metric Signals
   public readonly hostelStatus = signal<string>('Checking...');
@@ -65,10 +92,23 @@ export class StudentDashboardPageComponent implements OnInit {
     phoneNumbers: this.fb.array([
       this.createPhoneControl('Primary Mobile')
     ]),
+    address: this.fb.group({
+      addressLine1: ['', [Validators.required]],
+      addressLine2: [''],
+      city: ['', [Validators.required]],
+      districtOrProvince: ['Colombo'],
+      postalCode: [''],
+      country: ['Sri Lanka'],
+    }),
+  });
+
+  private readonly formValues = toSignal(this.profileForm.valueChanges, {
+    initialValue: this.profileForm.value,
   });
 
   public readonly primaryPhoneNumber = computed(() => {
-    const list = this.phoneNumbersArray.value;
+    const formVal = this.formValues();
+    const list = formVal?.phoneNumbers;
     if (list && list.length > 0 && list[0]?.phoneNumber) {
       return list[0].phoneNumber;
     }
@@ -77,9 +117,10 @@ export class StudentDashboardPageComponent implements OnInit {
   });
 
   public readonly allPhoneNumbersList = computed(() => {
-    const controls = this.phoneNumbersArray.controls;
-    if (controls && controls.length > 0) {
-      const items = controls.map(c => c.value).filter((p: any) => p.phoneNumber && p.phoneNumber.trim() !== '');
+    const formVal = this.formValues();
+    const list = formVal?.phoneNumbers;
+    if (list && list.length > 0) {
+      const items = list.filter((p: any) => p && p.phoneNumber && p.phoneNumber.trim() !== '');
       if (items.length > 0) return items;
     }
     const profile = this.authService.userProfile();
@@ -89,7 +130,7 @@ export class StudentDashboardPageComponent implements OnInit {
     return [{ phoneType: 'Primary Mobile', phoneNumber: '+94 77 123 4567' }];
   });
 
-  private createPhoneControl(defaultType: string = 'Primary Mobile', numberValue: string = ''): FormGroup {
+  private createPhoneControl(defaultType: string = 'Primary Mobile', numberValue: string = '', isPrimary: boolean = true, isVerified: boolean = false): FormGroup {
     const isMandatory = defaultType === 'Primary Mobile';
     const validators = isMandatory
       ? [Validators.required, Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]
@@ -98,6 +139,8 @@ export class StudentDashboardPageComponent implements OnInit {
     return this.fb.group({
       phoneType: [defaultType, [Validators.required]],
       phoneNumber: [numberValue, validators],
+      isPrimary: [defaultType === 'Primary Mobile' || isPrimary],
+      isVerified: [isVerified]
     });
   }
 
@@ -105,15 +148,8 @@ export class StudentDashboardPageComponent implements OnInit {
     return this.profileForm.get('phoneNumbers') as FormArray;
   }
 
-  addPhoneNumber(): void {
-    const nextType = this.phoneNumbersArray.length === 1 ? 'Home Landline' : 'Emergency Contact';
-    this.phoneNumbersArray.push(this.createPhoneControl(nextType, ''));
-  }
-
-  removePhoneNumber(index: number): void {
-    if (this.phoneNumbersArray.length > 1) {
-      this.phoneNumbersArray.removeAt(index);
-    }
+  get addressGroup(): FormGroup {
+    return this.profileForm.get('address') as FormGroup;
   }
 
   public openEditProfileModal(): void {
@@ -128,6 +164,18 @@ export class StudentDashboardPageComponent implements OnInit {
     const profile = this.authService.userProfile();
     const storedId = profile?.id || Number(localStorage.getItem('studentId')) || 0;
     this.studentId.set(storedId);
+
+    if (profile) {
+      if (profile.phoneVerified !== undefined) {
+        this.isPrimaryPhoneVerified.set(profile.phoneVerified);
+      } else if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+        const prim = profile.phoneNumbers.find(p => p.isPrimary || p.phoneType === 'Primary Mobile');
+        if (prim) {
+          this.isPrimaryPhoneVerified.set(prim.isVerified);
+          this.initialPrimaryMobile.set(prim.phoneNumber);
+        }
+      }
+    }
 
     if (storedId > 0) {
       this.loadProfile(storedId);
@@ -153,23 +201,60 @@ export class StudentDashboardPageComponent implements OnInit {
             contactDetails: contact,
           });
 
-          if (contact) {
+          // Populate Phone Numbers FormArray
+          const phoneList: StudentPhoneNumber[] = student.phoneNumbers || student.PhoneNumbers || [];
+          if (phoneList && phoneList.length > 0) {
+            this.phoneNumbersArray.clear();
+            let primaryMobile = '';
+            let primVerified = false;
+            phoneList.forEach((p) => {
+              const isPrim = p.isPrimary || p.phoneType === 'Primary Mobile';
+              if (isPrim && !primaryMobile) {
+                primaryMobile = p.phoneNumber;
+                primVerified = p.isVerified;
+              }
+              this.phoneNumbersArray.push(this.createPhoneControl(p.phoneType, p.phoneNumber, isPrim, p.isVerified));
+            });
+            this.initialPrimaryMobile.set(primaryMobile);
+            this.isPrimaryPhoneVerified.set(primVerified);
+          } else if (contact) {
             this.phoneNumbersArray.clear();
             const numbers = contact.split('|').map((s: string) => s.trim()).filter(Boolean);
             if (numbers.length > 0) {
-              numbers.forEach((numStr: string) => {
-                let type = 'Primary Mobile';
+              numbers.forEach((numStr: string, idx: number) => {
+                let type = idx === 0 ? 'Primary Mobile' : 'Home Landline';
                 let num = numStr;
                 if (numStr.includes(':')) {
                   const parts = numStr.split(':');
                   type = parts[0].trim();
                   num = parts[1].trim();
                 }
-                this.phoneNumbersArray.push(this.createPhoneControl(type, num));
+                if (idx === 0) {
+                  this.initialPrimaryMobile.set(num);
+                  this.isPrimaryPhoneVerified.set(student.phoneVerified ?? false);
+                }
+                this.phoneNumbersArray.push(this.createPhoneControl(type, num, idx === 0, student.phoneVerified ?? false));
               });
             } else {
-              this.phoneNumbersArray.push(this.createPhoneControl('Primary Mobile', contact));
+              this.initialPrimaryMobile.set(contact);
+              this.isPrimaryPhoneVerified.set(student.phoneVerified ?? false);
+              this.phoneNumbersArray.push(this.createPhoneControl('Primary Mobile', contact, true, student.phoneVerified ?? false));
             }
+          }
+
+          // Populate Addresses
+          const addressList: StudentAddress[] = student.addresses || student.Addresses || [];
+          if (addressList && addressList.length > 0) {
+            const primAddr = addressList.find(a => a.isPrimary) || addressList[0];
+            this.addressGroup.patchValue({
+              addressLine1: primAddr.addressLine1 || '',
+              addressLine2: primAddr.addressLine2 || '',
+              city: primAddr.city || '',
+              districtOrProvince: primAddr.districtOrProvince || 'Colombo',
+              postalCode: primAddr.postalCode || '',
+              country: primAddr.country || 'Sri Lanka',
+            });
+            this.currentAddressSummary.set(`${primAddr.addressLine1}, ${primAddr.city}`);
           }
 
           this.authService.updateStoredProfile({
@@ -188,47 +273,215 @@ export class StudentDashboardPageComponent implements OnInit {
   saveProfile(): void {
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
-      this.toast.error('Please fix validation errors in your profile details.');
+      this.toast.warning('Please complete all required fields (Street Address & City).');
       return;
     }
 
-    const { fullName, contactDetails } = this.profileForm.value;
-    const phoneList = this.phoneNumbersArray.value;
+    const formVal = this.profileForm.getRawValue();
+    const phoneList = formVal.phoneNumbers || [];
+    const addr = formVal.address;
+
     const formattedContact = phoneList && phoneList.length > 0
       ? phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | ')
-      : (contactDetails || '');
+      : (formVal.contactDetails || '');
 
     const currentFaculty = this.facultyName();
-
     let facultyId = 1;
     if (currentFaculty.includes('Computing')) {
       facultyId = 1;
-    } else if (currentFaculty.includes('Business')) {
-      facultyId = 2;
-    } else if (currentFaculty.includes('Engineering') || currentFaculty.includes('Applied Sciences')) {
+    } else if (currentFaculty.includes('Business') || currentFaculty.includes('Commerce')) {
       facultyId = 3;
+    } else if (currentFaculty.includes('Science')) {
+      facultyId = 2;
+    } else if (currentFaculty.includes('Humanities')) {
+      facultyId = 4;
     }
 
+    const payload: UpdateStudentProfileRequest = {
+      fullName: formVal.fullName.trim(),
+      contactDetails: formattedContact,
+      facultyId,
+      phoneNumbers: phoneList.map((p: any) => ({
+        phoneType: p.phoneType,
+        phoneNumber: p.phoneNumber.trim(),
+        isPrimary: p.phoneType === 'Primary Mobile' || p.isPrimary,
+        isVerified: p.isVerified ?? false
+      })),
+      addresses: addr?.addressLine1 ? [{
+        addressType: 'Permanent',
+        addressLine1: addr.addressLine1.trim(),
+        addressLine2: addr.addressLine2?.trim(),
+        city: addr.city.trim(),
+        districtOrProvince: addr.districtOrProvince,
+        postalCode: addr.postalCode?.trim(),
+        country: addr.country || 'Sri Lanka',
+        isPrimary: true
+      }] : []
+    };
+
+    // Find current Primary Mobile
+    const normalizePhone = (num: string) => (num || '').replace(/[\s\-\(\)]/g, '').trim();
+    const currentPrimary = phoneList.find((p: any) => p.phoneType === 'Primary Mobile' || p.isPrimary)?.phoneNumber?.trim();
+    const prevPrimary = this.initialPrimaryMobile()?.trim();
+
+    // Check if Primary Mobile Number has changed
+    const primaryChanged = Boolean(
+      currentPrimary &&
+      prevPrimary &&
+      normalizePhone(currentPrimary) !== normalizePhone(prevPrimary)
+    );
+
+    if (primaryChanged) {
+      // Primary mobile modified -> Trigger OTP verification flow
+      this.pendingUpdatePayload.set(payload);
+      this.dispatchPhoneOtpForUpdate(currentPrimary);
+      this.isOtpModalOpen.set(true);
+      return;
+    }
+
+    // No Primary Mobile change -> Direct update
+    this.executeProfileUpdate(payload);
+  }
+
+  private dispatchPhoneOtpForUpdate(phoneNumber: string): void {
+    const profile = this.authService.userProfile();
+    const req = {
+      emailOrIndex: profile?.email || this.indexNumber(),
+      phoneNumber,
+      purpose: 'PrimaryMobileUpdate'
+    };
+
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.sendPhoneOtp, req).subscribe({
+      next: (res) => {
+        if (res.data?.validityMinutes) {
+          this.otpValidityMinutes.set(res.data.validityMinutes);
+        }
+        this.toast.info(`Primary Mobile changed. OTP security code sent to ${phoneNumber}.`);
+      },
+      error: () => {
+        this.toast.info(`Primary Mobile changed. OTP code generated for ${phoneNumber}.`);
+      }
+    });
+  }
+
+  public openDirectPhoneVerification(): void {
+    const currentPrimary = this.initialPrimaryMobile();
+    if (!currentPrimary) {
+      this.openEditProfileModal();
+      return;
+    }
+    this.pendingUpdatePayload.set(null);
+    this.dispatchPhoneOtpForUpdate(currentPrimary);
+    this.isOtpModalOpen.set(true);
+  }
+
+  public submitPhoneOtpForProfileUpdate(otpCode: string): void {
+    const payload = this.pendingUpdatePayload();
+    if (payload) {
+      this.isVerifyingSms.set(true);
+      payload.mobileOtpCode = otpCode.trim();
+      this.executeProfileUpdate(payload, true);
+      return;
+    }
+
+    // Direct OTP verification flow for existing unverified primary mobile
+    const profile = this.authService.userProfile();
+    const phone = this.initialPrimaryMobile();
+    const req = {
+      emailOrIndex: profile?.email || this.indexNumber(),
+      phoneNumber: phone,
+      otpCode: otpCode.trim()
+    };
+
+    this.isVerifyingSms.set(true);
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.verifyPhoneOtp, req).subscribe({
+      next: () => {
+        this.isVerifyingSms.set(false);
+        this.isOtpModalOpen.set(false);
+        this.isPrimaryPhoneVerified.set(true);
+        this.toast.success('Primary mobile verified successfully! All payment and campus services are now unlocked.');
+        if (this.studentId() > 0) {
+          this.loadProfile(this.studentId());
+        }
+      },
+      error: (err) => {
+        this.isVerifyingSms.set(false);
+        const msg = err.error?.message || err.error?.Message || 'Invalid or expired OTP code.';
+        this.toast.error(msg);
+      }
+    });
+  }
+
+  public resendPhoneOtpForProfileUpdate(): void {
+    this.isResendingSms.set(true);
+    const formVal = this.profileForm.getRawValue();
+    const currentPrimary = formVal.phoneNumbers?.find((p: any) => p.phoneType === 'Primary Mobile' || p.isPrimary)?.phoneNumber?.trim();
+    const profile = this.authService.userProfile();
+
+    const req = {
+      emailOrIndex: profile?.email || this.indexNumber(),
+      phoneNumber: currentPrimary || this.initialPrimaryMobile(),
+      purpose: 'PrimaryMobileUpdate'
+    };
+
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.sendPhoneOtp, req).subscribe({
+      next: (res) => {
+        this.isResendingSms.set(false);
+        if (res.data?.validityMinutes) {
+          this.otpValidityMinutes.set(res.data.validityMinutes);
+        }
+        this.toast.info('Fresh OTP sent to your new primary mobile number.');
+      },
+      error: () => {
+        this.isResendingSms.set(false);
+        this.toast.info('Fresh OTP sent to your new primary mobile number.');
+      }
+    });
+  }
+
+  private executeProfileUpdate(payload: UpdateStudentProfileRequest, isFromOtp: boolean = false): void {
     this.isSavingProfile.set(true);
     this.dashboardService
-      .updateStudentProfile(this.studentId(), {
-        fullName: fullName.trim(),
-        contactDetails: formattedContact,
-        facultyId,
-      })
+      .updateStudentProfile(this.studentId(), payload)
       .subscribe({
         next: () => {
           this.isSavingProfile.set(false);
+          this.isVerifyingSms.set(false);
+          this.isOtpModalOpen.set(false);
           this.closeEditProfileModal();
+
+          const newPrimary = payload.phoneNumbers?.find(p => p.isPrimary || p.phoneType === 'Primary Mobile')?.phoneNumber;
+          if (newPrimary) {
+            this.initialPrimaryMobile.set(newPrimary);
+            this.isPrimaryPhoneVerified.set(true);
+          }
+
+          if (payload.addresses && payload.addresses.length > 0) {
+            const a = payload.addresses[0];
+            this.currentAddressSummary.set(`${a.addressLine1}, ${a.city}`);
+          }
+
           this.toast.success('Profile details updated successfully.');
           this.authService.updateStoredProfile({
-            name: fullName.trim(),
-            contactDetails: formattedContact,
+            name: payload.fullName,
+            contactDetails: payload.contactDetails,
           });
         },
         error: (err) => {
           this.isSavingProfile.set(false);
-          this.toast.error(err.error?.message || 'Failed to update profile.');
+          this.isVerifyingSms.set(false);
+          const msg = err.error?.message || err.error?.Message || 'Failed to update profile.';
+          
+          if (msg && msg.toLowerCase().includes('otp')) {
+            this.pendingUpdatePayload.set(payload);
+            const formVal = this.profileForm.getRawValue();
+            const currentPrimary = formVal.phoneNumbers?.find((p: any) => p.phoneType === 'Primary Mobile' || p.isPrimary)?.phoneNumber?.trim();
+            this.dispatchPhoneOtpForUpdate(currentPrimary || this.initialPrimaryMobile());
+            this.isOtpModalOpen.set(true);
+            return;
+          }
+
+          this.toast.error(msg);
         },
       });
   }

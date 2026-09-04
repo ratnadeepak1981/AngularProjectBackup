@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { StudentBillingService, FeePaymentItem } from '../services/student-billing.service';
-import { SystemSettingsService } from '../../../admin/system-settings/services/system-settings.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';

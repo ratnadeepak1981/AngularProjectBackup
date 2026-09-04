@@ -60,13 +60,25 @@
     (sortChange)="onSortChange($event)"
   >
     <ng-template #cellActions let-row>
-      <button
-        type="button"
-        (click)="openDeactivateModal(row)"
-        class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs rounded-lg border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-      >
-        Deactivate Faculty
-      </button>
+      @if (row.statusText === 'Active') {
+        <app-action-button
+          label="Deactivate"
+          icon="trash"
+          variant="danger"
+          size="sm"
+          tooltip="Deactivate faculty"
+          (btnClick)="openDeactivateModal(row)"
+        ></app-action-button>
+      } @else {
+        <app-action-button
+          label="Reactivate Faculty"
+          icon="refresh"
+          variant="success"
+          size="sm"
+          tooltip="Reactivate faculty"
+          (btnClick)="reactivateFaculty(row)"
+        ></app-action-button>
+      }
     </ng-template>
   </app-data-table>
 </div>

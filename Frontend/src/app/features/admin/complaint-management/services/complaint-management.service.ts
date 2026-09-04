@@ -13,7 +13,7 @@ export class ComplaintManagementService {
   getComplaints(status?: string): Observable<Complaint[]> {
     const params = status ? { status } : undefined;
     return this.api
-      .get<ApiResponse<Complaint[]> | Complaint[]>('/complaints', params)
+      .get<ApiResponse<Complaint[]> | Complaint[]>(this.api.routes.complaints.adminList, params)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
@@ -24,7 +24,7 @@ export class ComplaintManagementService {
 
   updateComplaintStatus(complaintId: number, dto: UpdateComplaintStatusDto): Observable<Complaint> {
     return this.api
-      .put<ApiResponse<Complaint>>(`/complaints/${complaintId}/status`, dto)
+      .put<ApiResponse<Complaint>>(this.api.routes.complaints.updateStatus(complaintId), dto)
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );
@@ -32,7 +32,7 @@ export class ComplaintManagementService {
 
   getCategories(): Observable<ComplaintCategory[]> {
     return this.api
-      .get<ApiResponse<ComplaintCategory[]> | ComplaintCategory[]>('/complaint-categories')
+      .get<ApiResponse<ComplaintCategory[]> | ComplaintCategory[]>(this.api.routes.complaints.categories)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
@@ -43,7 +43,7 @@ export class ComplaintManagementService {
 
   createCategory(name: string): Observable<ComplaintCategory> {
     return this.api
-      .post<ApiResponse<ComplaintCategory>>('/complaint-categories', { name })
+      .post<ApiResponse<ComplaintCategory>>(this.api.routes.complaints.createCategory, { name })
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );
@@ -51,7 +51,7 @@ export class ComplaintManagementService {
 
   deleteCategory(id: number): Observable<boolean> {
     return this.api
-      .delete<ApiResponse<any>>(`/complaint-categories/${id}`)
+      .delete<ApiResponse<any>>(this.api.routes.complaints.deleteCategory(id))
       .pipe(
         map(() => true)
       );
@@ -59,7 +59,7 @@ export class ComplaintManagementService {
 
   updateCategory(id: number, data: { name: string; isActive: boolean }): Observable<ComplaintCategory> {
     return this.api
-      .put<ApiResponse<ComplaintCategory>>(`/complaint-categories/${id}`, data)
+      .put<ApiResponse<ComplaintCategory>>(this.api.routes.complaints.updateCategory(id), data)
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );

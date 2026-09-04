@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ControlPanelCardComponent } from '../../../../shared/components/cards/control-panel-card/control-panel-card.component';
 import { SearchComponent } from '../../../../shared/components/tables-utilities/search/search.component';
-import { FilterComponent, FilterOption } from '../../../../shared/components/tables-utilities/filter/filter.component';
 import { ToastContainerComponent } from '../../../../shared/components/toast-container/toast-container.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { SystemSettingsService } from '../services/system-settings.service';
@@ -24,7 +23,6 @@ import { DropdownOption } from '../../../../core/models/common/dropdown-option.m
     PageHeaderComponent,
     ControlPanelCardComponent,
     SearchComponent,
-    FilterComponent,
     ToastContainerComponent,
     SelectDropdownComponent,
     DatePickerComponent,
@@ -39,10 +37,19 @@ export class SystemSettingsPageComponent implements OnInit {
   public readonly searchQuery = signal<string>('');
   public readonly selectedCategoryFilter = signal<string>('ALL');
   public readonly isLoading = signal<boolean>(false);
+  public readonly showSnapshotStrip = signal<boolean>(true);
+
+  public toggleSnapshotStrip(): void {
+    this.showSnapshotStrip.update((v) => !v);
+  }
 
   public readonly themeOptions = ThemeService.THEMES;
 
-  public readonly categoryFilterOptions: FilterOption[] = [
+  public setCategoryFilter(category: string): void {
+    this.selectedCategoryFilter.set(category);
+  }
+
+  public readonly categoryFilterOptions: { label: string; value: string }[] = [
     { label: 'All Setting Categories', value: 'ALL' },
     { label: '🏢 Organization & Academic', value: 'organization' },
     { label: '🧪 Laboratory & Seat Matrix', value: 'laboratory' },
@@ -82,6 +89,8 @@ export class SystemSettingsPageComponent implements OnInit {
   public readonly passwordComplexityTier = signal<string>('strong');
   public readonly passwordExpiryDays = signal<number>(90);
   public readonly passwordReuseHistoryLimit = signal<number>(5);
+  public readonly otpValidityMinutes = signal<number>(3);
+  public readonly maxOtpResendAttempts = signal<number>(5);
 
   public readonly passwordComplexityOptions: DropdownOption[] = [
     { value: 'basic', label: '🔓 Basic — Length Only (8+ Characters)' },
@@ -274,6 +283,8 @@ export class SystemSettingsPageComponent implements OnInit {
           if (dict['RequirePasswordComplexity']) this.passwordComplexityTier.set(dict['RequirePasswordComplexity']);
           if (dict['PasswordExpiryDays']) this.passwordExpiryDays.set(parseInt(dict['PasswordExpiryDays'], 10) || 90);
           if (dict['PasswordReuseHistoryLimit']) this.passwordReuseHistoryLimit.set(parseInt(dict['PasswordReuseHistoryLimit'], 10) || 5);
+          if (dict['OtpValidityMinutes']) this.otpValidityMinutes.set(parseInt(dict['OtpValidityMinutes'], 10) || 3);
+          if (dict['MaxOtpResendAttempts']) this.maxOtpResendAttempts.set(parseInt(dict['MaxOtpResendAttempts'], 10) || 5);
           if (dict['ThemeColor']) this.themeColor.set(dict['ThemeColor']);
           if (dict['FontSize']) this.fontSize.set(dict['FontSize']);
           if (dict['DefaultPageSize']) this.defaultPageSize.set(parseInt(dict['DefaultPageSize'], 10) || 5);
@@ -437,6 +448,8 @@ export class SystemSettingsPageComponent implements OnInit {
       RequirePasswordComplexity: this.passwordComplexityTier(),
       PasswordExpiryDays: this.passwordExpiryDays().toString(),
       PasswordReuseHistoryLimit: this.passwordReuseHistoryLimit().toString(),
+      OtpValidityMinutes: this.otpValidityMinutes().toString(),
+      MaxOtpResendAttempts: this.maxOtpResendAttempts().toString(),
       ThemeColor: this.themeColor(),
       FontSize: this.fontSize(),
       DefaultPageSize: this.defaultPageSize().toString(),

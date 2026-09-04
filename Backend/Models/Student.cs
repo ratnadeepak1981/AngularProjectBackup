@@ -21,5 +21,8 @@ namespace CampusServicesPortal.Models
 
         // 1-to-Many Relationship to Phone Numbers Table
         public virtual ICollection<StudentPhoneNumber> PhoneNumbers { get; set; } = new List<StudentPhoneNumber>();
+
+        // 1-to-Many Relationship to Addresses Table
+        public virtual ICollection<StudentAddress> Addresses { get; set; } = new List<StudentAddress>();
     }
 }

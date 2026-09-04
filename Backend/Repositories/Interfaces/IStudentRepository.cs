@@ -15,7 +15,11 @@ namespace CampusServicesPortal.Repositories.Interfaces
 
         // Core Profile & Search Operations
         Task<Student?> GetByIdAsync(int id);
+        Task<Student?> GetByIndexOrEmailAsync(string indexOrEmail);
         Task<IEnumerable<Student>> SearchStudentsAsync(string? search, string? faculty);
+
+        Task SyncPhoneNumbersAsync(int studentId, IEnumerable<StudentPhoneNumber> phoneNumbers);
+        Task SyncAddressesAsync(int studentId, IEnumerable<StudentAddress> addresses);
 
         Task<IEnumerable<StudentMasterList>> SearchMasterListAsync(string? search);
         Task<HashSet<string>> GetRegisteredIndexNumbersAsync();

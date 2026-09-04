@@ -73,7 +73,28 @@ namespace CampusServicesPortal.Services.Implementations
                     FacultyName = student?.Faculty?.Name ?? "Central Administration",
                     ContactDetails = student?.ContactDetails,
                     EmailVerified = student?.EmailVerified ?? false,
-                    IsActive = !student?.DeactivatedAt.HasValue ?? user.IsActive
+                    PhoneVerified = student?.PhoneNumbers.Any(p => p.IsPrimary && p.IsVerified) ?? false,
+                    IsActive = !student?.DeactivatedAt.HasValue ?? user.IsActive,
+                    PhoneNumbers = student?.PhoneNumbers.Select(p => new DTOs.Requests.Student.StudentPhoneNumberDto
+                    {
+                        Id = p.Id,
+                        PhoneType = p.PhoneType,
+                        PhoneNumber = p.PhoneNumber,
+                        IsPrimary = p.IsPrimary,
+                        IsVerified = p.IsVerified
+                    }).ToList() ?? new(),
+                    Addresses = student?.Addresses.Select(a => new DTOs.Requests.Student.StudentAddressDto
+                    {
+                        Id = a.Id,
+                        AddressType = a.AddressType,
+                        AddressLine1 = a.AddressLine1,
+                        AddressLine2 = a.AddressLine2,
+                        City = a.City,
+                        DistrictOrProvince = a.DistrictOrProvince,
+                        PostalCode = a.PostalCode,
+                        Country = a.Country,
+                        IsPrimary = a.IsPrimary
+                    }).ToList() ?? new()
                 }
             };
 
@@ -131,7 +152,28 @@ namespace CampusServicesPortal.Services.Implementations
                     FacultyName = student?.Faculty?.Name ?? "Central Administration",
                     ContactDetails = student?.ContactDetails,
                     EmailVerified = student?.EmailVerified ?? false,
-                    IsActive = !student?.DeactivatedAt.HasValue ?? user.IsActive
+                    PhoneVerified = student?.PhoneNumbers.Any(p => p.IsPrimary && p.IsVerified) ?? false,
+                    IsActive = !student?.DeactivatedAt.HasValue ?? user.IsActive,
+                    PhoneNumbers = student?.PhoneNumbers.Select(p => new DTOs.Requests.Student.StudentPhoneNumberDto
+                    {
+                        Id = p.Id,
+                        PhoneType = p.PhoneType,
+                        PhoneNumber = p.PhoneNumber,
+                        IsPrimary = p.IsPrimary,
+                        IsVerified = p.IsVerified
+                    }).ToList() ?? new(),
+                    Addresses = student?.Addresses.Select(a => new DTOs.Requests.Student.StudentAddressDto
+                    {
+                        Id = a.Id,
+                        AddressType = a.AddressType,
+                        AddressLine1 = a.AddressLine1,
+                        AddressLine2 = a.AddressLine2,
+                        City = a.City,
+                        DistrictOrProvince = a.DistrictOrProvince,
+                        PostalCode = a.PostalCode,
+                        Country = a.Country,
+                        IsPrimary = a.IsPrimary
+                    }).ToList() ?? new()
                 }
             };
 

@@ -32,6 +32,8 @@ namespace CampusServicesPortal.Repositories.Implementations
             return await _context.Students
                 .Include(s => s.Faculty)
                 .Include(s => s.User)
+                .Include(s => s.PhoneNumbers)
+                .Include(s => s.Addresses)
                 .FirstOrDefaultAsync(s => s.UserId == userId);
         }
 

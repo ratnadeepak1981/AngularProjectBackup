@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -13,411 +13,62 @@ namespace CampusServicesPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Students_IndexNumber",
-                table: "Students");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'LastPasswordChangedAt')
+                BEGIN
+                    ALTER TABLE [dbo].[Users] ADD [LastPasswordChangedAt] datetime2 NULL;
+                END
 
-            migrationBuilder.DeleteData(
-                table: "CertificateRequests",
-                keyColumn: "Id",
-                keyValue: 1);
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[FeeTypes]') AND name = 'IsActive')
+                BEGIN
+                    ALTER TABLE [dbo].[FeeTypes] ADD [IsActive] bit NOT NULL DEFAULT 1;
+                END
 
-            migrationBuilder.DeleteData(
-                table: "CertificateRequests",
-                keyColumn: "Id",
-                keyValue: 2);
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PasswordHistories')
+                BEGIN
+                    CREATE TABLE [dbo].[PasswordHistories] (
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [UserId] int NOT NULL,
+                        [PasswordHash] nvarchar(max) NOT NULL,
+                        [PasswordSalt] nvarchar(max) NOT NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        CONSTRAINT [PK_PasswordHistories] PRIMARY KEY CLUSTERED ([Id] ASC),
+                        CONSTRAINT [FK_PasswordHistories_Users_UserId] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE NONCLUSTERED INDEX [IX_PasswordHistories_UserId] ON [dbo].[PasswordHistories]([UserId] ASC);
+                END
 
-            migrationBuilder.DeleteData(
-                table: "CertificateTypes",
-                keyColumn: "Id",
-                keyValue: 3);
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'RefreshTokens')
+                BEGIN
+                    CREATE TABLE [dbo].[RefreshTokens] (
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [UserId] int NOT NULL,
+                        [Token] nvarchar(max) NOT NULL,
+                        [ExpiresAt] datetime2 NOT NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [RevokedAt] datetime2 NULL,
+                        [ReplacedByToken] nvarchar(max) NULL,
+                        CONSTRAINT [PK_RefreshTokens] PRIMARY KEY CLUSTERED ([Id] ASC),
+                        CONSTRAINT [FK_RefreshTokens_Users_UserId] FOREIGN KEY([UserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE NONCLUSTERED INDEX [IX_RefreshTokens_UserId] ON [dbo].[RefreshTokens]([UserId] ASC);
+                END
 
-            migrationBuilder.DeleteData(
-                table: "Complaints",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Complaints",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Events",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Events",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Events",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "FeePayments",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "FeePayments",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "FeePayments",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "FeePayments",
-                keyColumn: "Id",
-                keyValue: 4);
-
-            migrationBuilder.DeleteData(
-                table: "LabSeats",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "LabSeats",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "LabSeats",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "LabSeats",
-                keyColumn: "Id",
-                keyValue: 4);
-
-            migrationBuilder.DeleteData(
-                table: "Labs",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Notifications",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Notifications",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Rooms",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Rooms",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Rooms",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "StudentMasterLists",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "StudentMasterLists",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "StudentMasterLists",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "SystemSettings",
-                keyColumn: "SettingKey",
-                keyValue: "reservation-hold-minutes");
-
-            migrationBuilder.DeleteData(
-                table: "Users",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "ComplaintCategories",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "Hostels",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Hostels",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Labs",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Students",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Students",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Students",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "Venues",
-                keyColumn: "Id",
-                keyValue: 1);
-
-            migrationBuilder.DeleteData(
-                table: "Venues",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Venues",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "Users",
-                keyColumn: "Id",
-                keyValue: 2);
-
-            migrationBuilder.DeleteData(
-                table: "Users",
-                keyColumn: "Id",
-                keyValue: 3);
-
-            migrationBuilder.DeleteData(
-                table: "Users",
-                keyColumn: "Id",
-                keyValue: 4);
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "LastPasswordChangedAt",
-                table: "Users",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "IndexNumber",
-                table: "Students",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(50)",
-                oldMaxLength: 50);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "FullName",
-                table: "Students",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(150)",
-                oldMaxLength: 150);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "ContactDetails",
-                table: "Students",
-                type: "nvarchar(max)",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(250)",
-                oldMaxLength: 250,
-                oldNullable: true);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "IsActive",
-                table: "FeeTypes",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
-
-            migrationBuilder.CreateTable(
-                name: "PasswordHistories",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PasswordSalt = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PasswordHistories", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PasswordHistories_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RefreshTokens",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReplacedByToken = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RefreshTokens_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StudentPhoneNumbers",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    PhoneType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
-                    IsVerified = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StudentPhoneNumbers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StudentPhoneNumbers_Students_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "Students",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.UpdateData(
-                table: "CertificateTypes",
-                keyColumn: "Id",
-                keyValue: 1,
-                column: "Name",
-                value: "Official Academic Transcript");
-
-            migrationBuilder.UpdateData(
-                table: "CertificateTypes",
-                keyColumn: "Id",
-                keyValue: 2,
-                column: "Name",
-                value: "Bonafide Student Status Letter");
-
-            migrationBuilder.UpdateData(
-                table: "ComplaintCategories",
-                keyColumn: "Id",
-                keyValue: 1,
-                column: "Name",
-                value: "Hostel Room Maintenance");
-
-            migrationBuilder.UpdateData(
-                table: "ComplaintCategories",
-                keyColumn: "Id",
-                keyValue: 2,
-                column: "Name",
-                value: "Network WiFi Interruption");
-
-            migrationBuilder.UpdateData(
-                table: "Faculties",
-                keyColumn: "Id",
-                keyValue: 3,
-                column: "Name",
-                value: "Faculty of Business Management");
-
-            migrationBuilder.UpdateData(
-                table: "FeeTypes",
-                keyColumn: "Id",
-                keyValue: 1,
-                column: "IsActive",
-                value: true);
-
-            migrationBuilder.UpdateData(
-                table: "FeeTypes",
-                keyColumn: "Id",
-                keyValue: 2,
-                columns: new[] { "IsActive", "Name" },
-                values: new object[] { true, "Lab Fine / Equipment Fee" });
-
-            migrationBuilder.UpdateData(
-                table: "FeeTypes",
-                keyColumn: "Id",
-                keyValue: 3,
-                columns: new[] { "IsActive", "Name" },
-                values: new object[] { true, "Hostel Accommodation Fee" });
-
-            migrationBuilder.UpdateData(
-                table: "FeeTypes",
-                keyColumn: "Id",
-                keyValue: 4,
-                columns: new[] { "IsActive", "Name" },
-                values: new object[] { true, "Library Fine & Late Return" });
-
-            migrationBuilder.InsertData(
-                table: "FeeTypes",
-                columns: new[] { "Id", "IsActive", "Name" },
-                values: new object[] { 5, true, "Student Identity Card Renewal Fee" });
-
-            migrationBuilder.InsertData(
-                table: "SystemSettings",
-                columns: new[] { "SettingKey", "SettingValue" },
-                values: new object[,]
-                {
-                    { "LabBookingHoldMinutes", "15" },
-                    { "MaxDailyLabBookings", "1" }
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PasswordHistories_UserId",
-                table: "PasswordHistories",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_UserId",
-                table: "RefreshTokens",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StudentPhoneNumbers_StudentId",
-                table: "StudentPhoneNumbers",
-                column: "StudentId");
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'StudentPhoneNumbers')
+                BEGIN
+                    CREATE TABLE [dbo].[StudentPhoneNumbers] (
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [StudentId] int NOT NULL,
+                        [PhoneType] nvarchar(max) NOT NULL,
+                        [PhoneNumber] nvarchar(max) NOT NULL,
+                        [IsPrimary] bit NOT NULL,
+                        [IsVerified] bit NOT NULL,
+                        CONSTRAINT [PK_StudentPhoneNumbers] PRIMARY KEY CLUSTERED ([Id] ASC),
+                        CONSTRAINT [FK_StudentPhoneNumbers_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE NONCLUSTERED INDEX [IX_StudentPhoneNumbers_StudentId] ON [dbo].[StudentPhoneNumbers]([StudentId] ASC);
+                END
+            ");
         }
 
         /// <inheritdoc />

@@ -47,17 +47,17 @@ export class LoginComponent {
     this.router.navigate(['/auth/register']);
   }
 
-  // Forms
-  public readonly loginForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+  // Strongly Typed Forms
+  public readonly loginForm = this.fb.group({
+    email: this.fb.control('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+    password: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
   });
 
-  public readonly resetForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    token: [''],
-    newPassword: ['', [Validators.minLength(3)]],
-    confirmPassword: [''],
+  public readonly resetForm = this.fb.group({
+    email: this.fb.control('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+    token: this.fb.control('', { nonNullable: true }),
+    newPassword: this.fb.control('', { nonNullable: true, validators: [Validators.minLength(3)] }),
+    confirmPassword: this.fb.control('', { nonNullable: true }),
   });
 
   onLogin(): void {
@@ -77,7 +77,7 @@ export class LoginComponent {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.authService.login(this.loginForm.value).subscribe({
+    this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.toast.success('Authentication Successful! Redirecting...');
@@ -121,7 +121,7 @@ export class LoginComponent {
     }
 
     this.isResetLoading.set(true);
-    this.apiService.post(this.apiService.routes.password.forgotPassword, { email }).subscribe({
+    this.authService.requestPasswordReset(email).subscribe({
       next: () => {
         this.isResetLoading.set(false);
         this.toast.success('Reset code dispatched via SMS simulation! Please check SMS preview.');
@@ -149,8 +149,7 @@ export class LoginComponent {
     }
 
     this.isResetLoading.set(true);
-    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
-    this.apiService.post(this.apiService.routes.password.resetPassword, { token, newPassword }, { context }).subscribe({
+    this.authService.resetPassword({ token, newPassword }).subscribe({
       next: () => {
         this.isResetLoading.set(false);
         this.resetErrorMessage.set(null);

@@ -8,6 +8,11 @@ export interface AdminDashboardMetricsSummary {
   pendingComplaints: number;
   pendingCertificates: number;
   totalStudents: number;
+  pendingFeesCount: number;
+  pendingFeesAmount: number;
+  totalPaidFeesAmount: number;
+  totalLabs: number;
+  totalFaculties: number;
 }
 
 @Injectable({
@@ -49,12 +54,60 @@ export class AdminDashboardService {
       catchError(() => of(0))
     );
 
+    const billing$ = this.apiService.get<any>(this.apiService.routes.billing.ledger, { pageSize: 100 }).pipe(
+      map((res) => {
+        const payload = res?.data || res || {};
+        const items: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
+        const unpaid = items.filter((i) => (i.status || i.Status || '').toLowerCase() === 'unpaid');
+        const paid = items.filter((i) => (i.status || i.Status || '').toLowerCase() === 'paid');
+        const unpaidSum = unpaid.reduce((acc, i) => acc + Number(i.amount || i.Amount || 0), 0);
+        const paidSum = paid.reduce((acc, i) => acc + Number(i.amount || i.Amount || 0), 0);
+        return {
+          unpaidCount: unpaid.length,
+          unpaidAmount: unpaidSum,
+          paidAmount: paidSum,
+        };
+      }),
+      catchError(() => of({ unpaidCount: 0, unpaidAmount: 0, paidAmount: 0 }))
+    );
+
+    const labs$ = this.apiService.get<any>(this.apiService.routes.labs.list).pipe(
+      map((res) => {
+        const payload = res?.data || res || [];
+        return Array.isArray(payload) ? payload.length : (payload.items?.length || 0);
+      }),
+      catchError(() => of(0))
+    );
+
+    const faculties$ = this.apiService.get<any>(this.apiService.routes.faculties.list).pipe(
+      map((res) => {
+        const payload = res?.data || res || [];
+        return Array.isArray(payload) ? payload.length : (payload.items?.length || 0);
+      }),
+      catchError(() => of(0))
+    );
+
     return forkJoin({
       pendingHostels: hostels$,
       pendingComplaints: complaints$,
       pendingCertificates: certs$,
       totalStudents: students$,
-    });
+      billing: billing$,
+      totalLabs: labs$,
+      totalFaculties: faculties$,
+    }).pipe(
+      map((res) => ({
+        pendingHostels: res.pendingHostels,
+        pendingComplaints: res.pendingComplaints,
+        pendingCertificates: res.pendingCertificates,
+        totalStudents: res.totalStudents,
+        pendingFeesCount: res.billing.unpaidCount,
+        pendingFeesAmount: res.billing.unpaidAmount,
+        totalPaidFeesAmount: res.billing.paidAmount,
+        totalLabs: res.totalLabs,
+        totalFaculties: res.totalFaculties,
+      }))
+    );
   }
 
   getHoldMinutes(): Observable<number> {

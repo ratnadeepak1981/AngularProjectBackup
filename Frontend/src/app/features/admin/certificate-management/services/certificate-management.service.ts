@@ -13,7 +13,7 @@ export class CertificateManagementService {
   getRequests(status?: string): Observable<Certificate[]> {
     const params = status ? { status } : undefined;
     return this.api
-      .get<ApiResponse<Certificate[]> | Certificate[]>('/certificate-requests', params)
+      .get<ApiResponse<Certificate[]> | Certificate[]>(this.api.routes.certificates.adminList, params)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
@@ -24,7 +24,7 @@ export class CertificateManagementService {
 
   updateRequestStatus(requestId: number, status: string): Observable<Certificate> {
     return this.api
-      .put<ApiResponse<Certificate>>(`/certificate-requests/${requestId}/status`, { status })
+      .put<ApiResponse<Certificate>>(this.api.routes.certificates.updateStatus(requestId), { status })
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );
@@ -32,7 +32,7 @@ export class CertificateManagementService {
 
   getCertificateTypes(): Observable<CertificateType[]> {
     return this.api
-      .get<ApiResponse<CertificateType[]> | CertificateType[]>('/certificate-types')
+      .get<ApiResponse<CertificateType[]> | CertificateType[]>(this.api.routes.certificates.types)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
@@ -43,7 +43,7 @@ export class CertificateManagementService {
 
   createCertificateType(name: string): Observable<CertificateType> {
     return this.api
-      .post<ApiResponse<CertificateType>>('/certificate-types', { name })
+      .post<ApiResponse<CertificateType>>(this.api.routes.certificates.createType, { name })
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );
@@ -51,7 +51,7 @@ export class CertificateManagementService {
 
   deleteCertificateType(id: number): Observable<boolean> {
     return this.api
-      .delete<ApiResponse<any>>(`/certificate-types/${id}`)
+      .delete<ApiResponse<any>>(this.api.routes.certificates.deleteType(id))
       .pipe(
         map(() => true)
       );
@@ -59,7 +59,7 @@ export class CertificateManagementService {
 
   updateCertificateType(id: number, data: { name: string; isActive: boolean }): Observable<CertificateType> {
     return this.api
-      .put<ApiResponse<CertificateType>>(`/certificate-types/${id}`, data)
+      .put<ApiResponse<CertificateType>>(this.api.routes.certificates.updateType(id), data)
       .pipe(
         map((res: any) => res?.data || res?.Data || res)
       );

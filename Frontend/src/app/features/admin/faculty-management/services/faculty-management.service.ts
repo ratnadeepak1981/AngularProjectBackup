@@ -27,7 +27,7 @@ export class FacultyManagementService {
   }
 
   updateFaculty(id: number, payload: { name: string; code?: string }): Observable<ApiResponse<any>> {
-    return this.apiService.put<ApiResponse<any>>(`/faculties/${id}`, payload);
+    return this.apiService.put<ApiResponse<any>>(this.apiService.routes.faculties.update(id), payload);
   }
 
   deleteFaculty(id: number): Observable<ApiResponse<any>> {

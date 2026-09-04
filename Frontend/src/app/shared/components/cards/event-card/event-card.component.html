@@ -35,9 +35,23 @@
     </h3>
 
     <!-- Event Description -->
-    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 min-h-[32px]">
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 min-h-[32px]">
       {{ event().description || 'No additional event details provided.' }}
     </p>
+
+    <!-- Visual Capacity Bar [BRD Requirement] -->
+    <div class="mb-4 space-y-1" [title]="'Capacity: ' + seatPercentage() + '% filled'">
+      <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-500 ease-out"
+             [ngStyle]="{'width': seatPercentage() + '%'}"
+             [ngClass]="{
+               'bg-emerald-500': seatPercentage() < 75,
+               'bg-amber-500': seatPercentage() >= 75 && seatPercentage() < 95,
+               'bg-rose-500': seatPercentage() >= 95
+             }">
+        </div>
+      </div>
+    </div>
 
     <!-- Schedule Box -->
     <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 space-y-1.5 text-xs text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800 mb-5">

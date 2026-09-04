@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostListener, Input, Output, booleanAttribute } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppTooltipDirective } from '../../directives/tooltip.directive';
-import { AppButtonHoverDirective } from '../../directives/button-hover.directive';
+import { AppHighlightDirective } from '../../directives/highlight.directive';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'outline' | 'ghost' | 'flat';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -10,7 +10,7 @@ export type IconPosition = 'left' | 'right';
 @Component({
   selector: 'app-action-button',
   standalone: true,
-  imports: [CommonModule, AppTooltipDirective, AppButtonHoverDirective],
+  imports: [CommonModule, AppTooltipDirective, AppHighlightDirective],
   templateUrl: './action-button.component.html',
   styleUrl: './action-button.component.css',
 })

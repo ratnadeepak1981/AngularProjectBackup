@@ -82,7 +82,8 @@ public class LabService : ILabService
             Id = l.Id,
             Name = l.Name,
             LabType = l.LabType,
-            Capacity = l.Capacity
+            Capacity = l.Capacity,
+            SeatsBuilt = l.Seats != null ? l.Seats.Count : 0
         });
     }
 

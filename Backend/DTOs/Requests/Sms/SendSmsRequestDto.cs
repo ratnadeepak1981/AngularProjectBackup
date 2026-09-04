@@ -1,17 +1,19 @@
 namespace CampusServicesPortal.DTOs.Requests.Sms
 {
-    public enum SmsPurpose
+    public static class SmsPurposes
     {
-        ForgotPasswordOtp = 1,
-        PaymentOtp = 2,
-        PaymentReceipt = 3,
-        GeneralAlert = 4
+        public const string ForgotPasswordOtp = "ForgotPasswordOtp";
+        public const string PaymentOtp = "PaymentOtp";
+        public const string PaymentReceipt = "PaymentReceipt";
+        public const string GeneralAlert = "GeneralAlert";
+        public const string RegistrationOtp = "RegistrationOtp";
+        public const string PrimaryMobileUpdateOtp = "PrimaryMobileUpdateOtp";
     }
 
     public class SendSmsRequestDto
     {
         public string PhoneNumber { get; set; } = null!;
-        public SmsPurpose Purpose { get; set; } = SmsPurpose.ForgotPasswordOtp;
+        public string Purpose { get; set; } = SmsPurposes.ForgotPasswordOtp;
         public string? OtpCode { get; set; }
         public decimal? Amount { get; set; }
         public string? TransactionId { get; set; }

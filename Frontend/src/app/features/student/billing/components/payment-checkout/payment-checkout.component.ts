@@ -35,7 +35,7 @@ export class PaymentCheckoutComponent implements OnDestroy {
   // 3D Secure SMS OTP Modal Signals & Countdown Timer
   public readonly is3DSecureOpen = signal<boolean>(false);
   public readonly cardOtpCode = signal<string>('');
-  public readonly currentOtpToken = signal<string>('482910');
+  public readonly currentOtpToken = signal<string>('');
   public readonly validatedCardDetails = signal<any>(null);
   public readonly isPreviewingSms = signal<boolean>(false);
   public readonly smsPreviewHtml = signal<string>('');
@@ -157,9 +157,10 @@ export class PaymentCheckoutComponent implements OnDestroy {
         cardBrand: brand,
       };
 
+      const initialOtp = Math.floor(100000 + Math.random() * 900000).toString();
       this.validatedCardDetails.set(cardDetails);
       this.cardOtpCode.set('');
-      this.currentOtpToken.set('482910');
+      this.currentOtpToken.set(initialOtp);
       this.is3DSecureOpen.set(true);
       this.startTimer();
 
@@ -168,7 +169,7 @@ export class PaymentCheckoutComponent implements OnDestroy {
         .post<any>('/sms/send', {
           phoneNumber: '+94771234567',
           purpose: 2, // PaymentOtp
-          otpCode: '482910',
+          otpCode: initialOtp,
           amount: this.item?.amount || 5000.0,
           transactionId: `TXN-${this.item?.id || 101}`,
         })
@@ -177,7 +178,7 @@ export class PaymentCheckoutComponent implements OnDestroy {
             this.toast.success(`Payment OTP sent to +94 77 *** 4567! Valid for 5:00 minutes.`);
           },
           error: () => {
-            this.toast.success(`Payment OTP sent to +94 77 *** 4567! Code: 482910`);
+            this.toast.success(`Payment OTP sent to +94 77 *** 4567!`);
           },
         });
     } else if (ch === 'lankapay') {
@@ -205,13 +206,13 @@ export class PaymentCheckoutComponent implements OnDestroy {
 
     const otp = this.cardOtpCode().trim();
     if (!otp || otp.length !== 6 || !/^\d+$/.test(otp)) {
-      this.toast.error('Please enter a valid 6-digit numeric OTP code (e.g. 482910).');
+      this.toast.error('Please enter a valid 6-digit numeric OTP code.');
       return;
     }
 
     // Invalid OTP Check
     const validToken = this.currentOtpToken();
-    if (otp !== validToken && otp !== '482910' && otp !== '852914') {
+    if (otp !== validToken) {
       this.toast.error('Invalid OTP code entered. Please check your SMS or click "Resend OTP".');
       return;
     }

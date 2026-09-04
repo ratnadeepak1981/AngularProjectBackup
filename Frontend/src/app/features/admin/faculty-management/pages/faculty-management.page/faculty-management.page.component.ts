@@ -172,7 +172,21 @@ export class FacultyManagementPageComponent implements OnInit {
       },
       error: (err) => {
         this.isDeactivating.set(false);
-        this.toast.error(err.error?.message || 'Cannot deactivate faculty with active student registrations.');
+        const errorMsg = err.error?.message || err.error?.Message || err.error || 'Cannot deactivate faculty with active student registrations.';
+        this.toast.error(errorMsg);
+      },
+    });
+  }
+
+  reactivateFaculty(faculty: Faculty): void {
+    this.facultyService.updateFaculty(faculty.id, { name: faculty.name, code: faculty.code, isActive: true } as any).subscribe({
+      next: () => {
+        this.toast.success(`Faculty "${faculty.name}" was reactivated successfully.`);
+        this.loadFaculties();
+      },
+      error: (err) => {
+        const errorMsg = err.error?.message || err.error?.Message || err.error || 'Failed to reactivate faculty.';
+        this.toast.error(errorMsg);
       },
     });
   }

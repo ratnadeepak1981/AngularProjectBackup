@@ -78,6 +78,15 @@ export class DataTableComponent implements OnChanges {
     if (changes['pageSize']) {
       this.clientPageSize.set(this.pageSize || 5);
     }
+    if (changes['totalRecords'] || changes['data'] || changes['pageSize']) {
+      const total = this.serverSide ? (this.totalRecords || 0) : (this.data?.length || 0);
+      const size = this.clientPageSize() || 5;
+      const maxPage = Math.max(1, Math.ceil(total / size));
+      if (this.clientCurrentPage() > maxPage) {
+        this.clientCurrentPage.set(maxPage);
+        this.pageChange.emit(maxPage);
+      }
+    }
   }
 
   public readonly activeFilterCount = computed(() => {
@@ -164,8 +173,9 @@ export class DataTableComponent implements OnChanges {
       return list;
     }
 
-    const page = this.clientCurrentPage();
     const size = this.clientPageSize();
+    const maxPage = Math.max(1, Math.ceil(list.length / size));
+    const page = Math.min(this.clientCurrentPage(), maxPage);
     const start = (page - 1) * size;
     return list.slice(start, start + size);
   });
@@ -348,7 +358,11 @@ export class DataTableComponent implements OnChanges {
   }
 
   getCellValue(row: any, col: TableColumn<any>): any {
-    return row[col.key];
+    const raw = row[col.key];
+    if (col.format) {
+      return col.format(raw, row);
+    }
+    return raw;
   }
 
   getBadgeConfig(row: any, col: TableColumn<any>): { label: string; class: string } | null {

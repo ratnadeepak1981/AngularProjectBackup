@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
+import { ApiResponse } from '../../../../core/models/common/api-response.model';
 
 import { HostelRoom } from '../../../../core/models/hostel/room.model';
 import { HostelBuilding } from '../../../../core/models/hostel/hostel.model';
@@ -19,20 +20,20 @@ export interface HousingApplicationsGroup {
 export class HostelManagementService {
   private readonly apiService = inject(ApiService);
 
-  getPendingApplications(page: number = 1, size: number = 10): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.hostel.pendingApps, {
+  getPendingApplications(page: number = 1, size: number = 10): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.hostel.pendingApps, {
       pageNumber: page,
       pageSize: size,
     });
   }
 
-  getAllApplications(): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.hostel.allApps);
+  getAllApplications(): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.hostel.allApps);
   }
 
   getFormattedApplications(): Observable<HousingApplicationsGroup> {
     return this.getAllApplications().pipe(
-      map((res) => {
+      map((res: any) => {
         const payload = res?.data || res || [];
         const items: any[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
         const formatted: HousingApplication[] = items.map((a: any) => ({
@@ -58,8 +59,8 @@ export class HostelManagementService {
     );
   }
 
-  getHostelsMasterList(page: number = 1, size: number = 100): Observable<any> {
-    return this.apiService.get<any>(this.apiService.routes.hostel.selectHostels, {
+  getHostelsMasterList(page: number = 1, size: number = 100): Observable<ApiResponse<any>> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.hostel.selectHostels, {
       pageNumber: page,
       pageSize: size,
     });
@@ -67,59 +68,59 @@ export class HostelManagementService {
 
   getFormattedHostelsList(page: number = 1, size: number = 100): Observable<HostelBuilding[]> {
     return this.getHostelsMasterList(page, size).pipe(
-      map((res) => {
+      map((res: any) => {
         const payload = res?.data || res || {};
         return payload.items || payload.Items || (Array.isArray(payload) ? payload : []);
       })
     );
   }
 
-  updateApplicationStatus(id: number, status: 'Approved' | 'Rejected'): Observable<any> {
-    return this.apiService.put<any>(this.apiService.routes.hostel.updateStatus(id), {
+  updateApplicationStatus(id: number, status: 'Approved' | 'Rejected'): Observable<ApiResponse<any>> {
+    return this.apiService.put<ApiResponse<any>>(this.apiService.routes.hostel.updateStatus(id), {
       status,
     });
   }
 
-  assignRoom(applicationId: number, roomId: number): Observable<any> {
-    return this.apiService.put<any>(this.apiService.routes.hostel.assignRoom(applicationId), {
+  assignRoom(applicationId: number, roomId: number): Observable<ApiResponse<any>> {
+    return this.apiService.put<ApiResponse<any>>(this.apiService.routes.hostel.assignRoom(applicationId), {
       roomId,
     });
   }
 
-  createHostel(name: string): Observable<any> {
-    return this.apiService.post<any>(this.apiService.routes.hostel.hostels, {
+  createHostel(name: string): Observable<ApiResponse<HostelBuilding>> {
+    return this.apiService.post<ApiResponse<HostelBuilding>>(this.apiService.routes.hostel.hostels, {
       name,
     });
   }
 
-  updateHostel(id: number, name: string, location: string = 'Campus Main', isActive: boolean = true): Observable<any> {
-    return this.apiService.put<any>(this.apiService.routes.hostel.updateHostel(id), {
+  updateHostel(id: number, name: string, location: string = 'Campus Main', isActive: boolean = true): Observable<ApiResponse<HostelBuilding>> {
+    return this.apiService.put<ApiResponse<HostelBuilding>>(this.apiService.routes.hostel.updateHostel(id), {
       name,
       location,
       isActive,
     });
   }
 
-  deleteHostel(id: number): Observable<any> {
-    return this.apiService.delete<any>(this.apiService.routes.hostel.deleteHostel(id));
+  deleteHostel(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.hostel.deleteHostel(id));
   }
 
-  createRoom(hostelId: number, roomNumber: string, maxCapacity: number): Observable<any> {
-    return this.apiService.post<any>(this.apiService.routes.hostel.rooms(hostelId), {
+  createRoom(hostelId: number, roomNumber: string, maxCapacity: number): Observable<ApiResponse<HostelRoom>> {
+    return this.apiService.post<ApiResponse<HostelRoom>>(this.apiService.routes.hostel.rooms(hostelId), {
       roomNumber,
       maxCapacity,
     });
   }
 
-  updateRoom(id: number, roomNumber: string, maxCapacity: number, isActive: boolean = true): Observable<any> {
-    return this.apiService.put<any>(this.apiService.routes.hostel.updateRoom(id), {
+  updateRoom(id: number, roomNumber: string, maxCapacity: number, isActive: boolean = true): Observable<ApiResponse<HostelRoom>> {
+    return this.apiService.put<ApiResponse<HostelRoom>>(this.apiService.routes.hostel.updateRoom(id), {
       roomNumber,
       maxCapacity,
       isActive,
     });
   }
 
-  deleteRoom(id: number): Observable<any> {
-    return this.apiService.delete<any>(this.apiService.routes.hostel.deleteRoom(id));
+  deleteRoom(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.hostel.deleteRoom(id));
   }
 }

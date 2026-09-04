@@ -1,4 +1,14 @@
-import { Directive, ElementRef, HostListener, Input, Renderer2, OnDestroy, inject, signal } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  HostListener,
+  Input,
+  Renderer2,
+  OnDestroy,
+  inject,
+  PLATFORM_ID,
+} from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 @Directive({
   selector: '[appTooltip]',
@@ -7,11 +17,14 @@ import { Directive, ElementRef, HostListener, Input, Renderer2, OnDestroy, injec
 export class AppTooltipDirective implements OnDestroy {
   private readonly el = inject(ElementRef);
   private readonly renderer = inject(Renderer2);
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
 
   @Input('appTooltip') tooltipText: string = '';
   @Input() tooltipPosition: 'top' | 'bottom' | 'left' | 'right' = 'top';
 
   private tooltipElement: HTMLElement | null = null;
+  private animationTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
@@ -29,6 +42,8 @@ export class AppTooltipDirective implements OnDestroy {
   }
 
   private createTooltip(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.tooltipElement = this.renderer.createElement('div');
     const textNode = this.renderer.createText(this.tooltipText);
     this.renderer.appendChild(this.tooltipElement, textNode);
@@ -53,22 +68,26 @@ export class AppTooltipDirective implements OnDestroy {
     this.renderer.addClass(this.tooltipElement, 'scale-95');
     this.renderer.addClass(this.tooltipElement, 'whitespace-nowrap');
 
-    this.renderer.appendChild(document.body, this.tooltipElement);
+    const body = this.document.body;
+    if (body) {
+      this.renderer.appendChild(body, this.tooltipElement);
+    }
     this.positionTooltip();
 
     // Trigger smooth fade & scale-in animation
-    setTimeout(() => {
+    this.animationTimeoutId = setTimeout(() => {
       if (this.tooltipElement) {
         this.renderer.removeClass(this.tooltipElement, 'opacity-0');
         this.renderer.removeClass(this.tooltipElement, 'scale-95');
         this.renderer.addClass(this.tooltipElement, 'opacity-100');
         this.renderer.addClass(this.tooltipElement, 'scale-100');
       }
+      this.animationTimeoutId = null;
     }, 10);
   }
 
   private positionTooltip(): void {
-    if (!this.tooltipElement) return;
+    if (!this.tooltipElement || !isPlatformBrowser(this.platformId)) return;
 
     const hostRect = this.el.nativeElement.getBoundingClientRect();
     const tooltipRect = this.tooltipElement.getBoundingClientRect();
@@ -97,16 +116,25 @@ export class AppTooltipDirective implements OnDestroy {
     }
 
     // Keep within viewport bounds
-    left = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8));
-    top = Math.max(8, Math.min(top, window.innerHeight - tooltipRect.height - 8));
+    const winWidth = window?.innerWidth ?? 1024;
+    const winHeight = window?.innerHeight ?? 768;
+    left = Math.max(8, Math.min(left, winWidth - tooltipRect.width - 8));
+    top = Math.max(8, Math.min(top, winHeight - tooltipRect.height - 8));
 
     this.renderer.setStyle(this.tooltipElement, 'top', `${top}px`);
     this.renderer.setStyle(this.tooltipElement, 'left', `${left}px`);
   }
 
   private removeTooltip(): void {
+    if (this.animationTimeoutId) {
+      clearTimeout(this.animationTimeoutId);
+      this.animationTimeoutId = null;
+    }
     if (this.tooltipElement) {
-      this.renderer.removeChild(document.body, this.tooltipElement);
+      const body = this.document.body;
+      if (body) {
+        this.renderer.removeChild(body, this.tooltipElement);
+      }
       this.tooltipElement = null;
     }
   }

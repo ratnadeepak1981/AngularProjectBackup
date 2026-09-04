@@ -3,12 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ConfirmModalComponent } from '../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { AlertModalComponent } from '../../../shared/components/dialogs/alert-modal/alert-modal.component';
-
-import { HttpContext } from '@angular/common/http';
-import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interceptor';
 
 @Component({
   selector: 'app-forgot-password',
@@ -25,21 +22,22 @@ import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interc
 export class ForgotPasswordComponent {
   private readonly fb = inject(FormBuilder);
   private readonly apiService = inject(ApiService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   // Workflow Steps: 'email' (Step 1) | 'verify' (Step 2)
   public readonly step = signal<'email' | 'verify'>('email');
 
-  // Reactive Forms
-  public readonly requestOtpForm: FormGroup = this.fb.group({
-    email: ['ruwanbandara@univercity.co.lk', [Validators.required, Validators.email]],
+  // Strongly Typed Reactive Forms
+  public readonly requestOtpForm = this.fb.group({
+    email: this.fb.control('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
   });
 
-  public readonly resetPasswordForm: FormGroup = this.fb.group({
-    token: ['', [Validators.required]],
-    newPassword: ['', [Validators.required]],
-    confirmPassword: ['', [Validators.required]],
+  public readonly resetPasswordForm = this.fb.group({
+    token: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
+    newPassword: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
+    confirmPassword: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   public readonly errorMessage = signal<string | null>(null);
@@ -63,9 +61,9 @@ export class ForgotPasswordComponent {
       return;
     }
 
-    const e = this.requestOtpForm.value.email.trim();
+    const e = this.requestOtpForm.getRawValue().email.trim();
     this.isSubmitting.set(true);
-    this.apiService.post<any>(this.apiService.routes.password.forgotPassword, { email: e }).subscribe({
+    this.authService.requestPasswordReset(e).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.step.set('verify');
@@ -88,9 +86,9 @@ export class ForgotPasswordComponent {
       return;
     }
 
-    const e = this.requestOtpForm.value.email?.trim();
-    const { token, newPassword, confirmPassword } = this.resetPasswordForm.value;
-    const tok = token?.trim();
+    const e = this.requestOtpForm.getRawValue().email.trim();
+    const { token, newPassword, confirmPassword } = this.resetPasswordForm.getRawValue();
+    const tok = token.trim();
 
     if (newPassword !== confirmPassword) {
       this.errorMessage.set('New password and confirm password do not match.');
@@ -98,17 +96,12 @@ export class ForgotPasswordComponent {
     }
 
     this.isSubmitting.set(true);
-    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
-    this.apiService
-      .post<any>(
-        this.apiService.routes.password.resetPassword,
-        {
-          email: e,
-          token: tok,
-          newPassword: newPassword,
-        },
-        { context }
-      )
+    this.authService
+      .resetPassword({
+        email: e,
+        token: tok,
+        newPassword: newPassword,
+      })
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);

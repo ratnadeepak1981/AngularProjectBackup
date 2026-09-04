@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpContext } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
+import { ApiResponse } from '../../../../core/models/common/api-response.model';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { CampusEvent } from '../../../../core/models/event/event.model';
 
@@ -13,29 +14,29 @@ export type StudentEventDto = CampusEvent;
 export class EventService {
   private readonly api = inject(ApiService);
 
-  getAvailableEvents(): Observable<any> {
-    return this.api.get<any>(this.api.routes.events.list);
+  getAvailableEvents(): Observable<ApiResponse<StudentEventDto[]> | StudentEventDto[]> {
+    return this.api.get<ApiResponse<StudentEventDto[]> | StudentEventDto[]>(this.api.routes.events.list);
   }
 
   getFormattedEvents(): Observable<StudentEventDto[]> {
     return this.getAvailableEvents().pipe(
-      map((res) => {
+      map((res: any) => {
         const data = res?.data || res || [];
         return Array.isArray(data) ? data : [];
       })
     );
   }
 
-  registerForEvent(eventId: number): Observable<any> {
-    return this.api.post<any>(
+  registerForEvent(eventId: number): Observable<ApiResponse<any>> {
+    return this.api.post<ApiResponse<any>>(
       this.api.routes.events.register,
       { eventId },
       { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
     );
   }
 
-  cancelRegistration(eventId: number): Observable<any> {
-    return this.api.delete<any>(
+  cancelRegistration(eventId: number): Observable<ApiResponse<any>> {
+    return this.api.delete<ApiResponse<any>>(
       this.api.routes.events.cancelRegistration(eventId),
       { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
     );

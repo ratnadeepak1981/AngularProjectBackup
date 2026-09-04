@@ -145,6 +145,8 @@ namespace CampusServicesPortal.Controllers
                     ["RequirePasswordComplexity"] = "strong",
                     ["PasswordExpiryDays"] = "90",
                     ["PasswordReuseHistoryLimit"] = "5",
+                    ["OtpValidityMinutes"] = "3",
+                    ["MaxOtpResendAttempts"] = "5",
                     // Notifications & Templates
                     ["EnableEmailNotifications"] = "true",
                     ["EnableSmsNotifications"] = "false",

@@ -14,7 +14,7 @@ export class CertificateRequestService {
 
   getMyRequests(): Observable<Certificate[]> {
     return this.api
-      .get<ApiResponse<Certificate[]> | Certificate[]>('/certificate-requests/student')
+      .get<ApiResponse<Certificate[]> | Certificate[]>(this.api.routes.certificates.studentList)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
@@ -25,7 +25,7 @@ export class CertificateRequestService {
 
   submitRequest(dto: SubmitCertificateRequestDto): Observable<Certificate> {
     return this.api
-      .post<ApiResponse<Certificate>>('/certificate-requests', dto, {
+      .post<ApiResponse<Certificate>>(this.api.routes.certificates.submit, dto, {
         context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true),
       })
       .pipe(
@@ -35,7 +35,7 @@ export class CertificateRequestService {
 
   getCertificateTypes(): Observable<CertificateType[]> {
     return this.api
-      .get<ApiResponse<CertificateType[]> | CertificateType[]>('/certificate-types')
+      .get<ApiResponse<CertificateType[]> | CertificateType[]>(this.api.routes.certificates.types)
       .pipe(
         map((res: any) => {
           if (Array.isArray(res)) return res;
