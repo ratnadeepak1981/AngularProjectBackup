@@ -53,9 +53,18 @@ namespace CampusServicesPortal.Data
         public DbSet<CertificateType> CertificateTypes => Set<CertificateType>();
         public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
+        // Module 10: Audit Log Trail
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // --- MODULE 10 RULES (Audit Log Trail) ---
+            modelBuilder.Entity<AuditLog>().HasIndex(a => a.Timestamp);
+            modelBuilder.Entity<AuditLog>().HasIndex(a => new { a.Module, a.Action });
+            modelBuilder.Entity<AuditLog>().HasIndex(a => a.UserId);
+
 
             // --- MODULE 1 RULES (Student Profile & Unified Auth) ---
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();

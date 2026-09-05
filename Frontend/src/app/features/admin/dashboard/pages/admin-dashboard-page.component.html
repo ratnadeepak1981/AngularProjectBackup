@@ -36,8 +36,20 @@
       </span>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      <!-- Card 1: Unpaid Fees & Fines (CRITICAL FINANCIAL MONITOR) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <!-- Card 1: Security Alerts & Failed Logins (CRITICAL SECURITY MONITOR) -->
+      <app-dashboard-card
+        [title]="'Security Alerts'"
+        [value]="unreadSecurityAlerts()"
+        [icon]="'🚨'"
+        [iconVariant]="unreadSecurityAlerts() > 0 ? 'rose' : 'emerald'"
+        [valueVariant]="unreadSecurityAlerts() > 0 ? 'rose' : 'emerald'"
+        [linkText]="unreadSecurityAlerts() > 0 ? 'Inspect Failures (' + unreadSecurityAlerts() + ')' : 'All Clear'"
+        [linkRoute]="'/admin/audit-logs'"
+        [isLoading]="isLoadingMetrics()"
+      />
+
+      <!-- Card 2: Unpaid Fees & Fines (CRITICAL FINANCIAL MONITOR) -->
       <app-dashboard-card
         [title]="'Unpaid Fees & Fines'"
         [value]="formattedPendingFeesAmount()"
@@ -49,7 +61,7 @@
         [isLoading]="isLoadingMetrics()"
       />
 
-      <!-- Card 2: Pending Hostel Applications -->
+      <!-- Card 3: Pending Hostel Applications -->
       <app-dashboard-card
         [title]="'Pending Hostel Apps'"
         [value]="pendingHostels()"
@@ -61,7 +73,7 @@
         [isLoading]="isLoadingMetrics()"
       />
 
-      <!-- Card 3: Pending Helpdesk Tickets -->
+      <!-- Card 4: Pending Helpdesk Tickets -->
       <app-dashboard-card
         [title]="'Open Helpdesk Tickets'"
         [value]="pendingComplaints()"
@@ -73,7 +85,7 @@
         [isLoading]="isLoadingMetrics()"
       />
 
-      <!-- Card 4: Pending Certificate Requests -->
+      <!-- Card 5: Pending Certificate Requests -->
       <app-dashboard-card
         [title]="'Pending Certificates'"
         [value]="pendingCertificates()"

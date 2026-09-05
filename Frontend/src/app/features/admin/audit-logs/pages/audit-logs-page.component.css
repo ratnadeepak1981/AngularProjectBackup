@@ -1,0 +1,4 @@
+/* Scoped styles for Audit Logs Page */
+:host {
+  display: block;
+}

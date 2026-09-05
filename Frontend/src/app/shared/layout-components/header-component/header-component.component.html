@@ -60,6 +60,22 @@
       }
     </button>
 
+    <!-- 🔔 Notification / Security Audit Incidents Bell Button with Real-Time Badge -->
+    @if (authService.isAuthenticated()) {
+      <a
+        [routerLink]="authService.isAdmin() ? '/admin/audit-logs' : '/student/notification'"
+        [title]="authService.isAdmin() ? 'Security Incidents & Audit Log Console' : 'My Notifications'"
+        class="relative px-2.5 py-1.5 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer backdrop-blur-sm shadow-sm no-underline"
+      >
+        <span class="text-sm">🔔</span>
+        @if (unreadAlertsCount() > 0) {
+          <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white bg-rose-600 rounded-full shadow-xs animate-pulse">
+            {{ unreadAlertsCount() }}
+          </span>
+        }
+      </a>
+    }
+
     <!-- User Profile & Avatar -->
     @if (authService.isAuthenticated()) {
       <div class="flex items-center gap-2.5 pl-2 border-l border-white/20">

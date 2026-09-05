@@ -113,10 +113,10 @@ namespace CampusServicesPortal.Services.Implementations
                     return ServiceResult<HostelApplicationResponseDto>.Failure("Hostel application profile record not found.", 404);
                 }
 
-                // Rule #3: Application must be Approved (or RoomAssigned for transfers) before room assignment
-                if (application.Status != "Approved" && application.Status != "RoomAssigned")
+                // Rule #3: Application must be Pending, Approved, or RoomAssigned before room assignment
+                if (application.Status != "Approved" && application.Status != "RoomAssigned" && application.Status != "Pending")
                 {
-                    return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. Room assignment is only permitted for Approved applications.", 400);
+                    return ServiceResult<HostelApplicationResponseDto>.Failure("Transaction Aborted. Room assignment is only permitted for active or pending applications.", 400);
                 }
 
                 var room = await _hostelRepository.GetRoomByIdAsync(request.RoomId);

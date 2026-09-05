@@ -1,11 +1,22 @@
 <div class="space-y-4">
-  <!-- Top Level: Dynamic Hostel Tabs Component -->
+  <!-- Top Level: Dynamic Hostel Tabs Component with + Add Hostel Button -->
   @if (hostels.length > 0) {
-    <app-tab-component
-      [tabs]="hostelBuildingTabs()"
-      [activeTabId]="selectedHostelId.toString()"
-      (tabChange)="onHostelTabChange($event)"
-    />
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <app-tab-component
+        class="flex-1 min-w-0"
+        [tabs]="hostelBuildingTabs()"
+        [activeTabId]="selectedHostelId.toString()"
+        (tabChange)="onHostelTabChange($event)"
+      />
+      <app-action-button
+        label="+ Add Hostel Building"
+        icon="plus"
+        variant="primary"
+        size="sm"
+        tooltip="Create a new hostel building"
+        (btnClick)="openCreateHostelModal()"
+      ></app-action-button>
+    </div>
   }
 
   @if (!selectedHostel()) {
@@ -48,18 +59,28 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <app-action-button
+            label="+ Add Hostel"
+            icon="plus"
+            variant="primary"
+            size="sm"
+            tooltip="Create a new campus hostel building"
+            (btnClick)="openCreateHostelModal()"
+          ></app-action-button>
           <app-action-button
             label="Edit Hostel"
             icon="edit"
             variant="secondary"
+            size="sm"
             tooltip="Edit hostel building details"
             (btnClick)="openEditHostelModal(selectedHostel()!)"
           ></app-action-button>
           <app-action-button
-            label="Add Room"
+            label="+ Add Room"
             icon="plus"
-            variant="primary"
+            variant="outline"
+            size="sm"
             tooltip="Add room to hostel"
             (btnClick)="createRoom.emit(selectedHostel()!.id)"
           ></app-action-button>
@@ -67,6 +88,7 @@
             label="Deactivate Hostel"
             icon="x"
             variant="danger"
+            size="sm"
             tooltip="Deactivate hostel building"
             (btnClick)="deactivateHostel(selectedHostel()!)"
           ></app-action-button>

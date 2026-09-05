@@ -135,6 +135,12 @@ export class ApiService {
       holdMinutes: '/admin/system-settings/reservation-hold-minutes',
       pageSize: '/admin/system-settings/default-page-size',
     },
+    auditLogs: {
+      list: '/admin/audit-logs',
+      detail: (id: number) => `/admin/audit-logs/${id}`,
+      acknowledge: (id: number) => `/admin/audit-logs/${id}/acknowledge`,
+      acknowledgeAll: '/admin/audit-logs/acknowledge-all',
+    },
   };
 
   get<T>(

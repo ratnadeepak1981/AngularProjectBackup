@@ -19,6 +19,7 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
   public readonly themeService = inject(ThemeService);
   private readonly apiService = inject(ApiService);
 
+  public readonly unreadAlertsCount = signal<number>(0);
   public readonly isConnected = signal<boolean>(true);
   public readonly themes: ThemeOption[] = ThemeService.THEMES;
   private healthCheckInterval: any = null;
@@ -35,14 +36,44 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkBackendHealth();
+    this.loadUnreadNotifications();
     this.healthCheckInterval = setInterval(() => {
       this.checkBackendHealth();
+      this.loadUnreadNotifications();
     }, 15000);
   }
 
   ngOnDestroy(): void {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
+    }
+  }
+
+  loadUnreadNotifications(): void {
+    if (!this.authService.isAuthenticated()) return;
+
+    if (this.authService.isAdmin()) {
+      this.apiService.get<any>(this.apiService.routes.auditLogs.list, { isSuccess: false, isReviewed: false, pageSize: 1 }).subscribe({
+        next: (res) => {
+          const payload = res?.data || res || {};
+          const count = payload.totalCount ?? payload.totalRecords ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
+          this.unreadAlertsCount.set(count);
+        },
+        error: () => this.unreadAlertsCount.set(0),
+      });
+    } else {
+      const studentId = this.authService.userProfile()?.id || 0;
+      if (studentId > 0) {
+        this.apiService.get<any>(this.apiService.routes.notifications.studentFeed(studentId)).subscribe({
+          next: (res) => {
+            const payload = res?.data || res || [];
+            const items: any[] = Array.isArray(payload) ? payload : (payload.items || []);
+            const count = items.filter((n) => !n.isRead).length;
+            this.unreadAlertsCount.set(count);
+          },
+          error: () => this.unreadAlertsCount.set(0),
+        });
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Nortifcation;
+using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.MasterData;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories;
@@ -46,7 +46,16 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<object>> MarkNotificationAsReadAsync(int notificationId, int studentId)
         {
-            var notification = await _repository.GetByIdAndStudentIdAsync(notificationId, studentId);
+            Notification? notification;
+            if (studentId > 0)
+            {
+                notification = await _repository.GetByIdAndStudentIdAsync(notificationId, studentId);
+            }
+            else
+            {
+                notification = await _repository.GetByIdAsync(notificationId);
+            }
+
             if (notification == null)
                 return ServiceResult<object>.Failure("Notification record not found or access denied.", 404);
 
@@ -54,8 +63,6 @@ namespace CampusServicesPortal.Services.Implementations
 
             // Stage modification parameters inside EF tracking memory pool context
             await _repository.UpdateAsync(notification);
-
-            // FIXED: Independent sub-page state changes retain explicit standalone commits [INDEX]
             await _repository.SaveChangesAsync();
 
             return ServiceResult<object>.Success(new { Message = "Notification marked as read successfully." }, 200);

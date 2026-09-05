@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationMonitorService } from '../services/notification-monitor.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 import { Notification } from '../../../../core/models/system/notification.model';
 import { StudentProfile } from '../../../../core/models/auth/student-profile.model';
 import { Faculty } from '../../../../core/models/faculty/faculty.model';
@@ -28,6 +29,7 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
 })
 export class NotificationMonitorPageComponentComponent implements OnInit {
   private readonly monitorService = inject(NotificationMonitorService);
+  private readonly settingsService = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
 
   // Audit Table Signals
@@ -137,6 +139,10 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
           label: 'SYSTEMNOTICE',
           class: 'px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700',
         },
+        SECURITYALERT: {
+          label: 'SECURITYALERT',
+          class: 'px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700',
+        },
       },
     },
     { key: 'message', header: 'Message Content', sortable: true, filterable: true },
@@ -158,6 +164,7 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
       },
     },
     { key: 'formattedDate', header: 'Dispatched Date & Time', sortable: true, filterable: true },
+    { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
 
   // Computed Formatted Table Records
@@ -184,6 +191,23 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.settingsService.getAllSettings().subscribe({
+      next: (res) => {
+        const dict = (res as any)?.data || res;
+        if (dict) {
+          const raw = dict['DefaultPageSize'] || dict['PageSize'] || dict['AdminDefaultPageSize'];
+          if (raw) {
+            const parsed = parseInt(raw, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              this.pageSize.set(parsed);
+            }
+          }
+        }
+      },
+      error: () => {
+        this.pageSize.set(5);
+      },
+    });
     this.loadAuditLog();
     this.loadDirectories();
   }
@@ -307,6 +331,19 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
         this.isDispatching.set(false);
         this.toast.error(err.error?.message || 'Failed to dispatch internal notification alert.');
       },
+    });
+  }
+
+  markNotificationAsRead(notif: any): void {
+    if (!notif?.id) return;
+    this.monitorService.markAsRead(notif.id).subscribe({
+      next: () => {
+        this.toast.success('Notification marked as read.');
+        this.auditNotifications.update((list) =>
+          list.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+        );
+      },
+      error: () => this.toast.error('Failed to mark notification as read.'),
     });
   }
 

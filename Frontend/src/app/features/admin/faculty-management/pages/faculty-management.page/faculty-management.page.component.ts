@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FacultyManagementService } from '../../services/faculty-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { SystemSettingsService } from '../../../../../core/services/system-settings.service';
 import { Faculty } from '../../../../../core/models/faculty/faculty.model';
 import { PageHeaderComponent } from '../../../../../shared/components/page-header/page-header.component';
 import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
@@ -19,6 +20,7 @@ import { ActionButtonComponent } from '../../../../../shared/components/action-b
 })
 export class FacultyManagementPageComponent implements OnInit {
   private readonly facultyService = inject(FacultyManagementService);
+  private readonly settingsService = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
 
   // State Signals
@@ -26,7 +28,7 @@ export class FacultyManagementPageComponent implements OnInit {
   public readonly isLoading = signal<boolean>(false);
   public readonly searchTerm = signal<string>('');
   public readonly currentPage = signal<number>(1);
-  public readonly pageSize = signal<number>(10);
+  public readonly pageSize = signal<number>(5);
   public readonly sortColumn = signal<string>('name');
   public readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -87,7 +89,34 @@ export class FacultyManagementPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.settingsService.getAllSettings().subscribe({
+      next: (res) => {
+        const dict = (res as any)?.data || res;
+        if (dict) {
+          const raw = dict['DefaultPageSize'] || dict['PageSize'] || dict['AdminDefaultPageSize'];
+          if (raw) {
+            const parsed = parseInt(raw, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              this.pageSize.set(parsed);
+            }
+          }
+        }
+      },
+      error: () => {
+        // Fallback default
+        this.pageSize.set(5);
+      },
+    });
     this.loadFaculties();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
   }
 
   loadFaculties(): void {

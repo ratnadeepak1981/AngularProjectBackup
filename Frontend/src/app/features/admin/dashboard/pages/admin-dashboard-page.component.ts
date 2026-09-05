@@ -31,6 +31,7 @@ export class AdminDashboardPageComponent implements OnInit {
   public readonly pendingComplaints = signal<number>(0);
   public readonly pendingCertificates = signal<number>(0);
   public readonly totalStudents = signal<number>(0);
+  public readonly unreadSecurityAlerts = signal<number>(0);
 
   // Financial & Facility Signals
   public readonly pendingFeesCount = signal<number>(0);
@@ -46,7 +47,8 @@ export class AdminDashboardPageComponent implements OnInit {
       this.pendingHostels() +
       this.pendingComplaints() +
       this.pendingCertificates() +
-      this.pendingFeesCount()
+      this.pendingFeesCount() +
+      this.unreadSecurityAlerts()
     );
   });
 
@@ -121,6 +123,7 @@ export class AdminDashboardPageComponent implements OnInit {
         this.totalPaidFeesAmount.set(summary.totalPaidFeesAmount);
         this.totalLabs.set(summary.totalLabs);
         this.totalFaculties.set(summary.totalFaculties);
+        this.unreadSecurityAlerts.set(summary.unreadSecurityAlerts || 0);
         this.isLoadingMetrics.set(false);
       },
       error: () => {

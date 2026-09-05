@@ -7,6 +7,7 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 import { ToastService } from '../../../../core/services/toast.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 
 import { Lab } from '../../../../core/models/lab/lab.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
@@ -33,6 +34,7 @@ import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/
 })
 export class LabManagementPageComponent implements OnInit {
   private readonly labService = inject(LabManagementService);
+  private readonly settingsService = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
 
   // State Signals
@@ -41,6 +43,7 @@ export class LabManagementPageComponent implements OnInit {
   public readonly seats = signal<LabSeat[]>([]);
   public readonly bookingsHistory = signal<LabBookingRecord[]>([]);
   public readonly isLoading = signal(false);
+  public readonly pageSize = signal<number>(5);
 
   // Active Tab State ('labs-list' | 'seat-builder' | 'bookings-audit')
   public readonly activeTabId = signal<string>('labs-list');
@@ -93,6 +96,23 @@ export class LabManagementPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.settingsService.getAllSettings().subscribe({
+      next: (res) => {
+        const dict = (res as any)?.data || res;
+        if (dict) {
+          const raw = dict['DefaultPageSize'] || dict['PageSize'] || dict['AdminDefaultPageSize'];
+          if (raw) {
+            const parsed = parseInt(raw, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              this.pageSize.set(parsed);
+            }
+          }
+        }
+      },
+      error: () => {
+        this.pageSize.set(5);
+      },
+    });
     this.loadLabs();
     this.loadBookings();
   }

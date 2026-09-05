@@ -14,6 +14,7 @@ import { LabBookingRecord } from '../../services/lab-management.service';
 export class LabBookingsHistoryComponent {
   @Input() bookings: LabBookingRecord[] = [];
   @Input() loading: boolean = false;
+  @Input() pageSize: number = 5;
 
   public readonly columns: TableColumn[] = [
     { key: 'id', header: 'Booking Ref', sortable: true, filterable: true, type: 'text' },

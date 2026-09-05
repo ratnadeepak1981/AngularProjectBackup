@@ -137,6 +137,19 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'admin/audit-logs',
+        loadChildren: () =>
+          import('./features/admin/audit-logs/admin-audit.routes').then(
+            (m) => m.ADMIN_AUDIT_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/audit',
+        redirectTo: 'admin/audit-logs',
+        pathMatch: 'full',
+      },
+      {
         path: 'admin/lab-management',
         loadChildren: () =>
           import('./features/admin/lab-management/admin-lab.routes').then(

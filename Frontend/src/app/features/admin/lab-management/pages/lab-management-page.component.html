@@ -48,7 +48,7 @@
         <app-data-table
           [data]="labs()"
           [columns]="directoryColumns"
-          [pageSize]="10"
+          [pageSize]="pageSize()"
           [showSearch]="true"
           searchPlaceholder="Search laboratories by name, type, or capacity..."
         >
@@ -155,6 +155,7 @@
       <app-lab-bookings-history
         [bookings]="bookingsHistory()"
         [loading]="isLoading()"
+        [pageSize]="pageSize()"
       ></app-lab-bookings-history>
     </div>
   }

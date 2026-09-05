@@ -33,4 +33,8 @@ export class NotificationMonitorService {
   }): Observable<ApiResponse<any>> {
     return this.apiService.post<ApiResponse<any>>('/internal/notifications', payload);
   }
+
+  markAsRead(notificationId: number): Observable<ApiResponse<any>> {
+    return this.apiService.put<ApiResponse<any>>(`/notifications/${notificationId}/read`, {});
+  }
 }

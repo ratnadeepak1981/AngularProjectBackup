@@ -23,19 +23,25 @@ namespace CampusServicesPortal.Services.Implementations
         private readonly ISmsService _smsService;
         private readonly IMemoryCache _memoryCache;
         private readonly AppDbContext _context;
+        private readonly IAuditLogService _auditLogService;
+        private readonly INotificationService _notificationService;
 
         public AccountService(
             IAccountRepository accountRepository,
             IStudentRepository studentRepository,
             ISmsService smsService,
             IMemoryCache memoryCache,
-            AppDbContext context)
+            AppDbContext context,
+            IAuditLogService auditLogService,
+            INotificationService notificationService)
         {
             _accountRepository = accountRepository;
             _studentRepository = studentRepository;
             _smsService = smsService;
             _memoryCache = memoryCache;
             _context = context;
+            _auditLogService = auditLogService;
+            _notificationService = notificationService;
         }
 
         private static string NormalizePhoneKey(string raw)
@@ -65,11 +71,33 @@ namespace CampusServicesPortal.Services.Implementations
         {
             var student = await _accountRepository.GetStudentByVerificationTokenAsync(request.Token);
             if (student == null)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: null,
+                    userDisplayName: "Unknown Verification Subject",
+                    action: "EmailVerificationFailure",
+                    module: "Auth",
+                    entityId: null,
+                    description: "Email verification failed: Invalid or non-existent verification token.",
+                    isSuccess: false);
+
                 return ServiceResult<bool>.Failure("Invalid or expired email verification token.", 400);
+            }
 
             DateTime emailExpiresAtUtc = DateTime.SpecifyKind(student.EmailVerificationTokenExpiresAt ?? DateTime.MinValue, DateTimeKind.Utc);
             if (emailExpiresAtUtc < DateTime.UtcNow)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: student.UserId,
+                    userDisplayName: student.User?.Email ?? student.IndexNumber,
+                    action: "EmailVerificationFailure",
+                    module: "Auth",
+                    entityId: student.Id.ToString(),
+                    description: $"Email verification failed for student '{student.IndexNumber}': Verification token expired.",
+                    isSuccess: false);
+
                 return ServiceResult<bool>.Failure("Invalid or expired email verification token.", 400);
+            }
 
             student.EmailVerified = true;
             student.EmailVerificationToken = null;
@@ -177,11 +205,57 @@ namespace CampusServicesPortal.Services.Implementations
 
             if (!foundInCache)
             {
+                await _auditLogService.LogActivityAsync(
+                    userId: null,
+                    userDisplayName: !string.IsNullOrWhiteSpace(request.EmailOrIndex) ? request.EmailOrIndex : request.PhoneNumber,
+                    action: "OtpFailure",
+                    module: "Auth",
+                    entityId: null,
+                    description: $"SMS OTP verification failed for {request.PhoneNumber}: Verification OTP has expired ({validityMinutes}-minute limit).",
+                    isSuccess: false);
+
+                if (!string.IsNullOrWhiteSpace(request.EmailOrIndex))
+                {
+                    var st = await _studentRepository.GetByIndexOrEmailAsync(request.EmailOrIndex);
+                    if (st != null)
+                    {
+                        await _notificationService.SendInternalNotificationAsync(new DTOs.Requests.Nortifcation.CreateNotificationDto
+                        {
+                            StudentId = st.Id,
+                            Type = "SecurityAlert",
+                            Message = $"Security Alert: SMS OTP verification expired for student {st.IndexNumber} ({request.PhoneNumber})."
+                        });
+                    }
+                }
+
                 return ServiceResult<bool>.Failure($"The verification OTP has expired ({validityMinutes}-minute limit). Please click Resend SMS OTP to receive a fresh code.", 400);
             }
 
             if (cachedOtp != inputOtp)
             {
+                await _auditLogService.LogActivityAsync(
+                    userId: null,
+                    userDisplayName: !string.IsNullOrWhiteSpace(request.EmailOrIndex) ? request.EmailOrIndex : request.PhoneNumber,
+                    action: "OtpFailure",
+                    module: "Auth",
+                    entityId: null,
+                    description: $"SMS OTP verification failed for {request.PhoneNumber}: Invalid OTP code entered.",
+                    isSuccess: false);
+
+                if (!string.IsNullOrWhiteSpace(request.EmailOrIndex))
+                {
+                    var st = await _studentRepository.GetByIndexOrEmailAsync(request.EmailOrIndex);
+                    if (st != null)
+                    {
+                        await _notificationService.SendInternalNotificationAsync(new DTOs.Requests.Nortifcation.CreateNotificationDto
+                        {
+                            StudentId = st.Id,
+                            Type = "SecurityAlert",
+                            Message = $"Security Alert: Invalid SMS OTP entered for student {st.IndexNumber} ({request.PhoneNumber})."
+                        });
+                    }
+                }
+
                 return ServiceResult<bool>.Failure("Invalid OTP code entered. Please enter the valid 6-digit verification code.", 400);
             }
 

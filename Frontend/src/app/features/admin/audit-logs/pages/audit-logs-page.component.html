@@ -1,0 +1,387 @@
+<div class="space-y-5 pb-10">
+  <!-- Page Header -->
+  <app-page-header
+    [icon]="'📋'"
+    [title]="'Audit Log Trail'"
+    [description]="'Comprehensive, tamper-evident activity ledger tracking identity, administrative governance, and financial transactions.'"
+    [badgeText]="'Append-Only Audit System'"
+    [showIndexBadge]="false"
+  ></app-page-header>
+
+  <!-- Top Action & Analytics Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+    <!-- Quick Stats -->
+    <div class="flex items-center gap-6 text-xs">
+      <div>
+        <span class="text-[11px] font-bold uppercase text-slate-400 block">Total Audit Entries</span>
+        <span class="text-base font-bold text-slate-900 dark:text-white font-mono">
+          {{ totalRecords() | number }}
+        </span>
+      </div>
+      <div class="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+      <div>
+        <span class="text-[11px] font-bold uppercase text-slate-400 block">Storage Policy</span>
+        <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+          <span>🔒</span>
+          <span>Immutable Append-Only</span>
+        </span>
+      </div>
+      <div class="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+      <div>
+        <span class="text-[11px] font-bold uppercase text-slate-400 block">Page Size</span>
+        <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
+          {{ pageSize() }} per page
+        </span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex items-center gap-2 flex-wrap">
+      @if (unreviewedSecurityCount() > 0) {
+        <app-action-button
+          [label]="'Acknowledge All (' + unreviewedSecurityCount() + ')'"
+          icon="🛡️"
+          variant="danger"
+          size="sm"
+          [loading]="isAcknowledging()"
+          (btnClick)="acknowledgeAllSecurity()"
+          title="Acknowledge all pending security incidents"
+        ></app-action-button>
+      }
+      <app-action-button
+        label="Export CSV"
+        icon="📥"
+        variant="secondary"
+        size="sm"
+        [disabled]="isLoading() || auditLogs().length === 0"
+        (btnClick)="exportToCsv()"
+      ></app-action-button>
+      <app-action-button
+        label="Refresh Ledger"
+        icon="🔄"
+        variant="primary"
+        size="sm"
+        [loading]="isLoading()"
+        (btnClick)="loadAuditLogs()"
+      ></app-action-button>
+    </div>
+  </div>
+
+  <!-- Operational Domain Tabs -->
+  <app-tab-component
+    [tabs]="tabs()"
+    [activeTabId]="activeTabId()"
+    variant="3d"
+    (tabChange)="onTabChange($event)"
+  ></app-tab-component>
+
+  <!-- Filter & Search Controls Section (Clean Non-Overlapping Grid) -->
+  <div class="p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="space-y-4">
+      <!-- Full-Width Global Keyword Search Input -->
+      <div>
+        <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+          <span>🔍</span>
+          <span>Global Search Query</span>
+        </label>
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+            🔍
+          </span>
+          <input
+            type="text"
+            formControlName="searchTerm"
+            placeholder="Search across user emails, initiator names, IP addresses, entity IDs, action types, or descriptions..."
+            class="w-full h-11 pl-10 pr-4 text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs transition-shadow"
+          />
+        </div>
+      </div>
+
+      <!-- 6-Column Aligned Controls Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 items-end">
+        <!-- 1. Quick Date Range Preset -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <span>📅</span> Period Preset
+          </label>
+          <select
+            formControlName="datePreset"
+            (change)="onDatePresetChange($any($event.target).value)"
+            class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer shadow-2xs"
+          >
+            @for (opt of datePresetOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- 2. Date Range: From -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+            From Date
+          </label>
+          <input
+            type="date"
+            formControlName="fromDate"
+            (change)="filterForm.patchValue({ datePreset: 'custom' })"
+            class="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
+          />
+        </div>
+
+        <!-- 3. Date Range: To -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+            To Date
+          </label>
+          <input
+            type="date"
+            formControlName="toDate"
+            (change)="filterForm.patchValue({ datePreset: 'custom' })"
+            class="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
+          />
+        </div>
+
+        <!-- 4. Module Dropdown -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <span>📁</span> Module
+          </label>
+          <select
+            formControlName="module"
+            class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer shadow-2xs"
+          >
+            @for (opt of moduleOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- 5. Status Dropdown -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <span>⚡</span> Outcome
+          </label>
+          <select
+            formControlName="status"
+            class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer shadow-2xs"
+          >
+            @for (opt of statusOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- 6. Action Buttons -->
+        <div class="flex items-center gap-2 h-10">
+          <app-action-button
+            label="Filter"
+            icon="⚡"
+            variant="primary"
+            size="md"
+            [loading]="isLoading()"
+            class="flex-1"
+            (btnClick)="applyFilters()"
+          ></app-action-button>
+          <app-action-button
+            label="Reset"
+            icon="✕"
+            variant="secondary"
+            size="md"
+            class="flex-1"
+            (btnClick)="resetFilters()"
+          ></app-action-button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Main Data Table Container -->
+  <app-data-table
+    [columns]="columns"
+    [data]="displayedLogs()"
+    [serverSide]="activeTabId() !== 'correlated'"
+    [totalRecords]="activeTabId() === 'correlated' ? displayedLogs().length : totalRecords()"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize()"
+    [isLoading]="isLoading()"
+    [sortColumn]="currentSortBy()"
+    [sortDirection]="currentSortDir()"
+    emptyMessage="No audit log entries found matching current criteria."
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+    (sortChange)="onSortChange($event)"
+  >
+    <!-- Custom Cell: Audit ID -->
+    <ng-template #cellCustom let-row let-col="column">
+      @if (col.key === 'id') {
+        <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
+          #{{ row.id }}
+        </span>
+      } @else if (col.key === 'timestamp') {
+        <div class="font-mono text-[11px] text-slate-700 dark:text-slate-300 whitespace-nowrap">
+          {{ row.timestamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+        </div>
+      } @else if (col.key === 'userDisplayName') {
+        <div class="flex items-center gap-2 max-w-[180px]">
+          <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+            {{ (row.userDisplayName || 'SYS').slice(0, 2).toUpperCase() }}
+          </div>
+          <span class="truncate font-medium text-slate-800 dark:text-slate-200" [title]="row.userDisplayName || 'System Anonymous'">
+            {{ row.userDisplayName || 'System Anonymous' }}
+          </span>
+        </div>
+      } @else if (col.key === 'module') {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          {{ row.module }}
+        </span>
+      } @else if (col.key === 'action') {
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <!-- Action Type Badge with distinct icons -->
+          @if (row.action === 'Create') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <span>➕</span>
+              <span>Create</span>
+            </span>
+          } @else if (row.action === 'Delete') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <span>🗑️</span>
+              <span>Delete</span>
+            </span>
+          } @else if (row.action === 'Update') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              <span>✏️</span>
+              <span>Update</span>
+            </span>
+          } @else if (row.action === 'LoginFailure' || row.action === 'DeactivatedAccountLogin' || row.action === 'UnverifiedEmailLogin') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+              <span>🚫</span>
+              <span>{{ row.action }}</span>
+            </span>
+          } @else if (row.action === 'OtpFailure') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+              <span>📱</span>
+              <span>OTP Failed</span>
+            </span>
+          } @else if (row.action === 'PasswordResetSuccess') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+              <span>🔑</span>
+              <span>Password Reset</span>
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              <span>📌</span>
+              <span>{{ row.action }}</span>
+            </span>
+          }
+
+          <!-- Correlated Dual-Link Badge -->
+          @if (isRowCorrelated(row)) {
+            <span
+              class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+              title="Correlated Multi-Entity Transaction"
+            >
+              <span>🔗</span>
+              <span>Linked</span>
+            </span>
+          }
+        </div>
+      } @else if (col.key === 'entityId') {
+        <span class="font-mono text-slate-600 dark:text-slate-400">
+          {{ row.entityId || '—' }}
+        </span>
+      } @else if (col.key === 'isSuccess') {
+        <app-status-badge
+          [status]="row.isSuccess ? 'Success' : 'Failed'"
+          [variant]="row.isSuccess ? 'success' : 'danger'"
+          size="sm"
+        ></app-status-badge>
+      } @else if (col.key === 'isReviewed') {
+        @if (row.isSuccess) {
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+            title="Standard business transaction - routine sign-off automated"
+          >
+            <span>🔒</span>
+            <span>Auto-Cleared</span>
+          </span>
+        } @else if (!row.isReviewed) {
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 animate-pulse"
+            title="Action Required: Unreviewed Security Incident"
+          >
+            <span>🚨</span>
+            <span>Pending Triage</span>
+          </span>
+        } @else {
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+            [title]="'Acknowledged by ' + (row.reviewedBy || 'Admin') + (row.reviewedAt ? ' on ' + (row.reviewedAt | date: 'short') : '')"
+          >
+            <span>🛡️</span>
+            <span>Acknowledged</span>
+          </span>
+        }
+      } @else if (col.key === 'ipAddress') {
+        <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+          {{ row.ipAddress || '—' }}
+        </span>
+      }
+    </ng-template>
+
+    <!-- Custom Actions: View Diff & Acknowledge Buttons -->
+    <ng-template #cellActions let-row>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        @if (!row.isSuccess && !row.isReviewed) {
+          <button
+            type="button"
+            (click)="acknowledgeLog(row)"
+            [disabled]="isAcknowledging()"
+            class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+            title="Mark Security Incident as Reviewed"
+          >
+            <span>✓</span>
+            <span>Acknowledge</span>
+          </button>
+        }
+
+        @if (isRowCorrelated(row)) {
+          <button
+            type="button"
+            (click)="openDiffModal(row)"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-300 dark:border-indigo-700 transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
+            title="Inspect Synthesized Correlated Business Diff"
+          >
+            <!-- 2-Way Delta Exchange & Sparkle Icon -->
+            <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            <span>Smart Diff</span>
+            <span class="text-[11px] text-amber-500 font-normal">✨</span>
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="openDiffModal(row)"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
+            title="Inspect Record Details & Field State Changes"
+          >
+            <!-- File State & Inspector Icon -->
+            <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span>Diff</span>
+          </button>
+        }
+      </div>
+    </ng-template>
+  </app-data-table>
+
+  <!-- Audit Diff & Detail Modal -->
+  <app-audit-diff-modal
+    [isOpen]="isDiffModalOpen()"
+    [log]="selectedLog()"
+    [allLogs]="auditLogs()"
+    (close)="closeDiffModal()"
+  ></app-audit-diff-modal>
+</div>

@@ -39,6 +39,11 @@ export class HostelManagementPageComponent implements OnInit {
 
   public readonly activeTabId = signal<string>('pending-apps');
 
+  // Create Hostel Modal Signals
+  public readonly isCreateHostelModalOpen = signal<boolean>(false);
+  public readonly newHostelName = signal<string>('');
+  public readonly isCreatingHostel = signal<boolean>(false);
+
   // Modal Control Signals
   public readonly isAssignModalOpen = signal<boolean>(false);
   public readonly assignApp = signal<HousingApplication | null>(null);
@@ -173,6 +178,37 @@ export class HostelManagementPageComponent implements OnInit {
   openAssignRoomModal(app: HousingApplication): void {
     this.assignApp.set(app);
     this.isAssignModalOpen.set(true);
+  }
+
+  openCreateHostelModal(): void {
+    this.newHostelName.set('');
+    this.isCreateHostelModalOpen.set(true);
+  }
+
+  closeCreateHostelModal(): void {
+    this.isCreateHostelModalOpen.set(false);
+  }
+
+  submitCreateHostel(): void {
+    const name = this.newHostelName().trim();
+    if (!name) return;
+    this.isCreatingHostel.set(true);
+    this.hostelService.createHostel(name).subscribe({
+      next: (res: any) => {
+        this.isCreatingHostel.set(false);
+        this.toast.success(`Hostel "${name}" registered successfully!`);
+        this.closeCreateHostelModal();
+        this.loadData();
+        const createdId = res?.data?.id || res?.id;
+        if (createdId) {
+          this.selectedHostelId.set(createdId);
+        }
+      },
+      error: (err: any) => {
+        this.isCreatingHostel.set(false);
+        this.toast.error(err.error?.message || 'Failed to create hostel building.');
+      },
+    });
   }
 
   openCreateRoomModal(hostelId: number = 0): void {

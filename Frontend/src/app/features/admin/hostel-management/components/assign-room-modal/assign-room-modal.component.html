@@ -3,7 +3,7 @@
     <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span>{{ application?.assignedRoomNumber ? '🔄 Reassign / Transfer Room' : '🛏️ Assign Room to Student' }}</span>
+          <span>{{ application?.assignedRoomNumber ? '🔄 Reassign / Transfer Room' : (application?.status === 'Pending' ? '✨ Approve & Assign Room' : '🛏️ Assign Room to Student') }}</span>
         </h3>
         <button (click)="onClose()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
           ✕
@@ -56,7 +56,7 @@
           (btnClick)="onClose()"
         ></app-action-button>
         <app-action-button
-          [label]="application?.assignedRoomNumber ? 'Transfer Room' : 'Confirm Room Assignment'"
+          [label]="application?.assignedRoomNumber ? 'Transfer Room' : (application?.status === 'Pending' ? 'Approve & Assign Room' : 'Confirm Room Assignment')"
           icon="check"
           variant="primary"
           fullWidth="true"

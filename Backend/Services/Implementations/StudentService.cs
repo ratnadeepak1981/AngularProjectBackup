@@ -279,6 +279,7 @@ namespace CampusServicesPortal.Services.Implementations
 
                         updatedPhones.Add(new StudentPhoneNumber
                         {
+                            Id = p.Id ?? 0,
                             StudentId = id,
                             PhoneType = p.PhoneType,
                             PhoneNumber = p.PhoneNumber.Trim(),
@@ -301,6 +302,7 @@ namespace CampusServicesPortal.Services.Implementations
                     {
                         updatedAddresses.Add(new StudentAddress
                         {
+                            Id = a.Id ?? 0,
                             StudentId = id,
                             AddressType = a.AddressType,
                             AddressLine1 = a.AddressLine1.Trim(),

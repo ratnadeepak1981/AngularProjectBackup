@@ -116,31 +116,103 @@ namespace CampusServicesPortal.Repositories.Implementations
 
         public async Task SyncPhoneNumbersAsync(int studentId, IEnumerable<StudentPhoneNumber> phoneNumbers)
         {
-            var existing = await _context.StudentPhoneNumbers
+            var existingPhones = await _context.StudentPhoneNumbers
                 .Where(p => p.StudentId == studentId)
                 .ToListAsync();
 
-            _context.StudentPhoneNumbers.RemoveRange(existing);
+            var incomingList = phoneNumbers.ToList();
+            var matchedExisting = new HashSet<int>();
 
-            foreach (var phone in phoneNumbers)
+            foreach (var incoming in incomingList)
             {
-                phone.StudentId = studentId;
-                await _context.StudentPhoneNumbers.AddAsync(phone);
+                StudentPhoneNumber? existing = null;
+                if (incoming.Id > 0)
+                {
+                    existing = existingPhones.FirstOrDefault(e => e.Id == incoming.Id);
+                }
+
+                if (existing == null)
+                {
+                    existing = existingPhones
+                        .FirstOrDefault(e => !matchedExisting.Contains(e.Id) &&
+                                             string.Equals(e.PhoneType, incoming.PhoneType, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (existing != null)
+                {
+                    // In-place mutation -> EF Core marks entity as Modified with static Primary Key
+                    matchedExisting.Add(existing.Id);
+                    existing.PhoneType = incoming.PhoneType;
+                    existing.PhoneNumber = incoming.PhoneNumber;
+                    existing.IsPrimary = incoming.IsPrimary;
+                    existing.IsVerified = incoming.IsVerified;
+                }
+                else
+                {
+                    // Brand new phone number
+                    incoming.Id = 0;
+                    incoming.StudentId = studentId;
+                    await _context.StudentPhoneNumbers.AddAsync(incoming);
+                }
+            }
+
+            var toRemove = existingPhones.Where(e => !matchedExisting.Contains(e.Id)).ToList();
+            if (toRemove.Count > 0)
+            {
+                _context.StudentPhoneNumbers.RemoveRange(toRemove);
             }
         }
 
         public async Task SyncAddressesAsync(int studentId, IEnumerable<StudentAddress> addresses)
         {
-            var existing = await _context.StudentAddresses
+            var existingAddresses = await _context.StudentAddresses
                 .Where(a => a.StudentId == studentId)
                 .ToListAsync();
 
-            _context.StudentAddresses.RemoveRange(existing);
+            var incomingList = addresses.ToList();
+            var matchedExisting = new HashSet<int>();
 
-            foreach (var addr in addresses)
+            foreach (var incoming in incomingList)
             {
-                addr.StudentId = studentId;
-                await _context.StudentAddresses.AddAsync(addr);
+                StudentAddress? existing = null;
+                if (incoming.Id > 0)
+                {
+                    existing = existingAddresses.FirstOrDefault(e => e.Id == incoming.Id);
+                }
+
+                if (existing == null)
+                {
+                    existing = existingAddresses
+                        .FirstOrDefault(e => !matchedExisting.Contains(e.Id) &&
+                                             string.Equals(e.AddressType, incoming.AddressType, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (existing != null)
+                {
+                    // In-place mutation -> EF Core marks entity as Modified with static Primary Key
+                    matchedExisting.Add(existing.Id);
+                    existing.AddressType = incoming.AddressType;
+                    existing.AddressLine1 = incoming.AddressLine1;
+                    existing.AddressLine2 = incoming.AddressLine2;
+                    existing.City = incoming.City;
+                    existing.DistrictOrProvince = incoming.DistrictOrProvince;
+                    existing.PostalCode = incoming.PostalCode;
+                    existing.Country = incoming.Country;
+                    existing.IsPrimary = incoming.IsPrimary;
+                }
+                else
+                {
+                    // Brand new address
+                    incoming.Id = 0;
+                    incoming.StudentId = studentId;
+                    await _context.StudentAddresses.AddAsync(incoming);
+                }
+            }
+
+            var toRemove = existingAddresses.Where(e => !matchedExisting.Contains(e.Id)).ToList();
+            if (toRemove.Count > 0)
+            {
+                _context.StudentAddresses.RemoveRange(toRemove);
             }
         }
 

@@ -1,10 +1,16 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
+using CampusServicesPortal.DTOs.Requests.AuditLogs;
+using CampusServicesPortal.DTOs.Responses.AuditLogs;
+using CampusServicesPortal.Models;
 
 namespace CampusServicesPortal.Repositories.Interfaces
 {
     public interface IAuditLogRepository
     {
-        // Rule: Commits system actions, access failures, or high-risk administrative state changes to an audit trail
-        Task LogActivityAsync(int? studentId, string operationalAction, string clearDetails, string clientIpAddress);
+        Task AddLogAsync(AuditLog log);
+        Task<PagedAuditLogResultDto> GetAuditLogsAsync(AuditLogFilterDto filter);
+        Task<AuditLog?> GetAuditLogByIdAsync(long id);
+        Task<bool> MarkAsReviewedAsync(long id, string adminEmail);
+        Task<int> MarkAllAsReviewedAsync(string adminEmail);
     }
 }

@@ -1,6 +1,8 @@
 using CampusServicesPortal.Application.Interfaces.Repositories;
 using CampusServicesPortal.Data;
+using CampusServicesPortal.Data.Seeding;
 using CampusServicesPortal.Infrastructure.Repositories;
+using CampusServicesPortal.Interceptors;
 using CampusServicesPortal.Repositories;
 using CampusServicesPortal.Repositories.Implementations;
 using CampusServicesPortal.Repositories.Interfaces;
@@ -71,10 +73,17 @@ namespace CampusServicesPortal
                 });
             });
 
-            builder.Services.AddDbContext<AppDbContext>(options =>
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+
+            builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            {
+                var interceptor = serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>();
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("CampusServicesPortalConnection"),
-                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+                .AddInterceptors(interceptor);
+            });
 
             // Core Identity Service & Repository Registrations
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -162,6 +171,9 @@ namespace CampusServicesPortal
                 CampusServicesPortal.Services.Interfaces.ICertificateService,
                 CampusServicesPortal.Services.Implementations.CertificateService>();
 
+            // Module 10: Audit Log Trail
+            builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
             // Module 3 & 4 Hold Sweeper Daemon Worker [PDF: 0.1.12, 0.1.19]
             builder.Services.AddHostedService<BookingExpiryWorker>();
@@ -223,6 +235,21 @@ namespace CampusServicesPortal
             app.UseAuthorization();
 
             app.MapControllers();
+
+            // Seed initial Audit Log trail if empty
+            using (var scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    AuditLogDataSeeder.SeedAuditLogsAsync(context).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Error occurred during initial database seeding.");
+                }
+            }
 
             app.Run();
         }

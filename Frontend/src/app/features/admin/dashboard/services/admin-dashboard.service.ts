@@ -13,6 +13,7 @@ export interface AdminDashboardMetricsSummary {
   totalPaidFeesAmount: number;
   totalLabs: number;
   totalFaculties: number;
+  unreadSecurityAlerts: number;
 }
 
 @Injectable({
@@ -87,6 +88,14 @@ export class AdminDashboardService {
       catchError(() => of(0))
     );
 
+    const securityAlerts$ = this.apiService.get<any>(this.apiService.routes.auditLogs.list, { isSuccess: false, isReviewed: false, pageSize: 1 }).pipe(
+      map((res) => {
+        const payload = res?.data || res || {};
+        return payload.totalCount ?? payload.totalRecords ?? (Array.isArray(payload) ? payload.length : (payload.items?.length || 0));
+      }),
+      catchError(() => of(0))
+    );
+
     return forkJoin({
       pendingHostels: hostels$,
       pendingComplaints: complaints$,
@@ -95,6 +104,7 @@ export class AdminDashboardService {
       billing: billing$,
       totalLabs: labs$,
       totalFaculties: faculties$,
+      unreadSecurityAlerts: securityAlerts$,
     }).pipe(
       map((res) => ({
         pendingHostels: res.pendingHostels,
@@ -106,6 +116,7 @@ export class AdminDashboardService {
         totalPaidFeesAmount: res.billing.paidAmount,
         totalLabs: res.totalLabs,
         totalFaculties: res.totalFaculties,
+        unreadSecurityAlerts: res.unreadSecurityAlerts,
       }))
     );
   }

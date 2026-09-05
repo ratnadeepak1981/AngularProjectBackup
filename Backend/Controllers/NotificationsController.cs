@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,11 +47,15 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "Notifications collection compiled and retrieved successfully.");
         }
 
-        // PUT /api/notifications/{id}/read — Mark a student notification as read [PDF: 0.1.16]
+        // PUT /api/notifications/{id}/read — Mark a notification as read
         [HttpPut("{id}/read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
-            int studentId = GetCurrentStudentId();
+            int studentId = 0;
+            if (User.IsInRole("Student"))
+            {
+                studentId = GetCurrentStudentId();
+            }
             var result = await _notificationService.MarkNotificationAsReadAsync(id, studentId);
             return ProcessServiceResult(result, "Notification status flag flipped to read successfully.");
         }

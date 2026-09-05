@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +39,12 @@ namespace CampusServicesPortal.Repositories
             // Security Constraint: Ensures a student can only retrieve owned notifications [PDF: 0.1.16]
             return await _context.Notifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.StudentId == studentId);
+        }
+
+        public async Task<Notification?> GetByIdAsync(int id)
+        {
+            return await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id);
         }
 
         public async Task AddAsync(Notification notification)

@@ -93,7 +93,10 @@ export class AssignRoomModalComponent implements OnChanges {
     this.isSubmitting.set(true);
     this.hostelService.assignRoom(app.id, roomId).subscribe({
       next: () => {
-        this.toast.success(`Room assigned to ${app.studentName} successfully.`);
+        const msg = app.status === 'Pending'
+          ? `Housing application approved and room assigned to ${app.studentName} successfully.`
+          : `Room assigned to ${app.studentName} successfully.`;
+        this.toast.success(msg);
         this.isSubmitting.set(false);
         this.onClose();
         this.assigned.emit();

@@ -21,11 +21,19 @@ namespace CampusServicesPortal.Services.Implementations
     {
         private readonly IAuthRepository _authRepository;
         private readonly IConfiguration _config;
+        private readonly IAuditLogService _auditLogService;
+        private readonly INotificationService _notificationService;
 
-        public AuthService(IAuthRepository authRepository, IConfiguration config)
+        public AuthService(
+            IAuthRepository authRepository,
+            IConfiguration config,
+            IAuditLogService auditLogService,
+            INotificationService notificationService)
         {
             _authRepository = authRepository;
             _config = config;
+            _auditLogService = auditLogService;
+            _notificationService = notificationService;
         }
 
         public async Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginRequestDto request)
@@ -33,17 +41,71 @@ namespace CampusServicesPortal.Services.Implementations
             var user = await _authRepository.GetUserByEmailAsync(request.Email);
 
             if (user == null || !VerifyPasswordHash(request.Password, user.PasswordHash))
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: user?.Id,
+                    userDisplayName: request.Email,
+                    action: "LoginFailure",
+                    module: "Auth",
+                    entityId: user?.Id.ToString(),
+                    description: $"Failed login attempt for '{request.Email}': Invalid credentials provided.",
+                    isSuccess: false);
+
+                if (user != null)
+                {
+                    var st = await _authRepository.GetStudentByUserIdWithFacultyAsync(user.Id);
+                    if (st != null)
+                    {
+                        await _notificationService.SendInternalNotificationAsync(new DTOs.Requests.Nortifcation.CreateNotificationDto
+                        {
+                            StudentId = st.Id,
+                            Type = "SecurityAlert",
+                            Message = $"Security Alert: Failed login attempt for '{request.Email}' (Index: {st.IndexNumber}). Invalid password entered."
+                        });
+                    }
+                }
+
                 return ServiceResult<AuthResponseDto>.Failure("Invalid login credentials provided.", 401);
+            }
 
             var student = await _authRepository.GetStudentByUserIdWithFacultyAsync(user.Id);
 
             if (user.Role == "Student" && student != null)
             {
                 if (!student.EmailVerified)
-                    return ServiceResult<AuthResponseDto>.Failure("Access Denied. Your email address has not been verified yet.", 403);
+                {
+                    await _auditLogService.LogActivityAsync(
+                        userId: user.Id,
+                        userDisplayName: user.Email,
+                        action: "UnverifiedEmailLogin",
+                        module: "Auth",
+                        entityId: user.Id.ToString(),
+                        description: $"Login rejected for student '{user.Email}': Email address has not been verified.",
+                        isSuccess: false);
 
-                if (student.DeactivatedAt.HasValue)
+                    return ServiceResult<AuthResponseDto>.Failure("Access Denied. Your email address has not been verified yet.", 403);
+                }
+
+                if (student.DeactivatedAt.HasValue || !user.IsActive)
+                {
+                    await _auditLogService.LogActivityAsync(
+                        userId: user.Id,
+                        userDisplayName: user.Email,
+                        action: "DeactivatedAccountLogin",
+                        module: "Auth",
+                        entityId: user.Id.ToString(),
+                        description: $"Login rejected for account '{user.Email}': Student portal account has been deactivated.",
+                        isSuccess: false);
+
+                    await _notificationService.SendInternalNotificationAsync(new DTOs.Requests.Nortifcation.CreateNotificationDto
+                    {
+                        StudentId = student.Id,
+                        Type = "SecurityAlert",
+                        Message = $"Security Alert: Unauthorized access attempt blocked for deactivated student '{user.Email}' (Index: {student.IndexNumber})."
+                    });
+
                     return ServiceResult<AuthResponseDto>.Failure("Authentication Failed. This student portal account has been deactivated.", 403);
+                }
             }
 
             var tokenString = GenerateJwtToken(user, student?.Id ?? 0);
@@ -106,18 +168,62 @@ namespace CampusServicesPortal.Services.Implementations
             var existingToken = await _authRepository.GetRefreshTokenAsync(request.RefreshToken);
 
             if (existingToken == null)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: null,
+                    userDisplayName: "Unknown Token Principal",
+                    action: "RefreshTokenFailure",
+                    module: "Auth",
+                    entityId: null,
+                    description: "Token refresh failed: Invalid refresh token supplied.",
+                    isSuccess: false);
+
                 return ServiceResult<AuthResponseDto>.Failure("Invalid refresh token supplied.", 401);
+            }
 
             if (!existingToken.IsActive)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: existingToken.UserId,
+                    userDisplayName: existingToken.User?.Email ?? "Token User",
+                    action: "RefreshTokenFailure",
+                    module: "Auth",
+                    entityId: existingToken.UserId.ToString(),
+                    description: "Token refresh failed: Expired or revoked refresh token.",
+                    isSuccess: false);
+
                 return ServiceResult<AuthResponseDto>.Failure("Expired or revoked refresh token. Please sign in again.", 401);
+            }
 
             var user = existingToken.User;
             if (user == null || !user.IsActive)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: user?.Id,
+                    userDisplayName: user?.Email ?? "Unknown User",
+                    action: "DeactivatedAccountTokenRefresh",
+                    module: "Auth",
+                    entityId: user?.Id.ToString(),
+                    description: $"Token refresh rejected: Associated user account '{user?.Email}' is deactivated.",
+                    isSuccess: false);
+
                 return ServiceResult<AuthResponseDto>.Failure("Associated user account is deactivated.", 403);
+            }
 
             var student = await _authRepository.GetStudentByUserIdWithFacultyAsync(user.Id);
             if (user.Role == "Student" && student != null && student.DeactivatedAt.HasValue)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: user.Id,
+                    userDisplayName: user.Email,
+                    action: "DeactivatedAccountTokenRefresh",
+                    module: "Auth",
+                    entityId: user.Id.ToString(),
+                    description: $"Token refresh rejected: Associated student account '{user.Email}' is deactivated.",
+                    isSuccess: false);
+
                 return ServiceResult<AuthResponseDto>.Failure("Associated student account has been deactivated.", 403);
+            }
 
             // Execute Refresh Token Rotation: Revoke old token and issue new token pair
             var newRefreshTokenString = GenerateSecureRandomToken();

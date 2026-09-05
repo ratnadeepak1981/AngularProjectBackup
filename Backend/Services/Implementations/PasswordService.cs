@@ -11,10 +11,12 @@ namespace CampusServicesPortal.Services.Implementations
     public class PasswordService : IPasswordService
     {
         private readonly IPasswordRepository _passwordRepository;
+        private readonly IAuditLogService _auditLogService;
 
-        public PasswordService(IPasswordRepository passwordRepository)
+        public PasswordService(IPasswordRepository passwordRepository, IAuditLogService auditLogService)
         {
             _passwordRepository = passwordRepository;
+            _auditLogService = auditLogService;
         }
 
         public async Task<ServiceResult<object>> ForgotPasswordAsync(ForgotPasswordRequestDto request)
@@ -58,7 +60,18 @@ namespace CampusServicesPortal.Services.Implementations
             }
 
             if (tokenRecord == null || tokenRecord.IsUsed)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: null,
+                    userDisplayName: "Unknown Password Reset Subject",
+                    action: "PasswordResetFailure",
+                    module: "Auth",
+                    entityId: null,
+                    description: "Password reset failed: Invalid, expired, or already used reset token pointer.",
+                    isSuccess: false);
+
                 return ServiceResult<object>.Failure("Invalid, expired, or already used reset token pointer.", 400);
+            }
 
             var studentProfile = await _passwordRepository.GetStudentByIdAsync(tokenRecord.StudentId);
             var userProfile = studentProfile?.User;
@@ -81,12 +94,30 @@ namespace CampusServicesPortal.Services.Implementations
             // 2. Minimum Length Enforcement
             if (newPassword.Length < minLength)
             {
+                await _auditLogService.LogActivityAsync(
+                    userId: userProfile.Id,
+                    userDisplayName: userProfile.Email,
+                    action: "PasswordPolicyViolation",
+                    module: "Auth",
+                    entityId: userProfile.Id.ToString(),
+                    description: $"Password reset failed for '{userProfile.Email}': Password must be at least {minLength} characters long.",
+                    isSuccess: false);
+
                 return ServiceResult<object>.Failure($"Password policy error: Password must be at least {minLength} characters long.", 400);
             }
 
             // 3. Password Complexity Enforcement
             if (!ValidatePasswordComplexity(newPassword, complexityTier, minLength, out var complexityErrorMessage))
             {
+                await _auditLogService.LogActivityAsync(
+                    userId: userProfile.Id,
+                    userDisplayName: userProfile.Email,
+                    action: "PasswordPolicyViolation",
+                    module: "Auth",
+                    entityId: userProfile.Id.ToString(),
+                    description: $"Password reset failed for '{userProfile.Email}': {complexityErrorMessage}",
+                    isSuccess: false);
+
                 return ServiceResult<object>.Failure($"Password complexity error: {complexityErrorMessage}", 400);
             }
 
@@ -95,6 +126,15 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 if (!string.IsNullOrEmpty(userProfile.PasswordHash) && BCrypt.Net.BCrypt.Verify(newPassword, userProfile.PasswordHash))
                 {
+                    await _auditLogService.LogActivityAsync(
+                        userId: userProfile.Id,
+                        userDisplayName: userProfile.Email,
+                        action: "PasswordPolicyViolation",
+                        module: "Auth",
+                        entityId: userProfile.Id.ToString(),
+                        description: $"Password reset failed for '{userProfile.Email}': Cannot reuse current active password.",
+                        isSuccess: false);
+
                     return ServiceResult<object>.Failure("Password policy error: You cannot reuse your current active password.", 400);
                 }
 
@@ -103,6 +143,15 @@ namespace CampusServicesPortal.Services.Implementations
                 {
                     if (!string.IsNullOrEmpty(hist.PasswordHash) && BCrypt.Net.BCrypt.Verify(newPassword, hist.PasswordHash))
                     {
+                        await _auditLogService.LogActivityAsync(
+                            userId: userProfile.Id,
+                            userDisplayName: userProfile.Email,
+                            action: "PasswordPolicyViolation",
+                            module: "Auth",
+                            entityId: userProfile.Id.ToString(),
+                            description: $"Password reset failed for '{userProfile.Email}': Cannot reuse any of the last {reuseLimit} previous passwords.",
+                            isSuccess: false);
+
                         return ServiceResult<object>.Failure($"Password policy error: You cannot reuse any of your last {reuseLimit} previous passwords.", 400);
                     }
                 }
@@ -127,6 +176,15 @@ namespace CampusServicesPortal.Services.Implementations
             await _passwordRepository.UpdateUserAsync(userProfile);
             await _passwordRepository.UpdateResetTokenStatusAsync(tokenRecord);
             await _passwordRepository.RevokeAllUserSessionsAsync(userProfile.Id);
+
+            await _auditLogService.LogActivityAsync(
+                userId: userProfile.Id,
+                userDisplayName: userProfile.Email,
+                action: "PasswordResetSuccess",
+                module: "Auth",
+                entityId: userProfile.Id.ToString(),
+                description: $"Password reset successfully completed for user '{userProfile.Email}'.",
+                isSuccess: true);
 
             return ServiceResult<object>.Success(new { Message = "Password updated successfully! You can now log in." }, 200);
         }

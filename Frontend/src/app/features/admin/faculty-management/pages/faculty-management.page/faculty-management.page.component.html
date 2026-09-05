@@ -58,6 +58,8 @@
     [sortIconStyle]="'svg-arrows'"
     [emptyMessage]="'No university faculties found matching search criteria.'"
     (sortChange)="onSortChange($event)"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
   >
     <ng-template #cellActions let-row>
       @if (row.statusText === 'Active') {
